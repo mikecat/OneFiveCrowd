@@ -231,14 +231,42 @@ function dequeueKey() {
 }
 
 function keyDown() {
+	event.preventDefault();
 	var key = event.key;
-	if (key.length === 1) {
+	if (event.ctrlKey) {
+		if (key === "a" || key === "A") keyInput(0x12); // 行頭へ
+		if (key === "c" || key === "C") keyInput(0x1b); // ESC
+		else if (key === "e" || key === "E") keyInput(0x17); // 行末へ
+		else if (key === "k" || key === "K") keyInput(0x0c); // カーソル以降を削除
+		else if (key === "l" || key === "L") keyInput("\x13\x0c"); // 全て削除
+	} else if (key.length === 1) {
 		var keyCode = key.charCodeAt(0);
 		// アルファベット大文字と小文字を入れ替える
 		if (0x61 <= keyCode && keyCode <= 0x7a) keyCode -= 0x20;
 		else if (0x41 <= keyCode && keyCode <= 0x5a) keyCode += 0x20;
+		if (event.altKey) {
+			if (0x21 <= keyCode && keyCode <= 0x29) keyCode += 0x81 - 0x21;
+			else if (keyCode === 0x2c) keyCode = 0x3c;
+			else if (keyCode === 0x2d) keyCode = 0xad;
+			else if (keyCode === 0x2e) keyCode = 0xbe;
+			else if (keyCode === 0x2f) keyCode = 0xbf;
+			else if (0x30 <= keyCode && keyCode <= 0x39) keyCode += 0xe0 - 0x30;
+			else if (keyCode === 0x3c) keyCode = 0x5c;
+			else if (keyCode === 0x3d) keyCode = 0x4d;
+			else if (keyCode === 0x3e) keyCode = 0x5e;
+			else if (keyCode === 0x3f) keyCode = 0x3f;
+			else if (0x41 <= keyCode && keyCode <= 0x56) keyCode += 0xea - 0x41;
+			else if (0x57 <= keyCode && keyCode <= 0x5a) keyCode += 0xe0 - 0x57;
+			else if (0x5b <= keyCode && keyCode <= 0x5d) keyCode += 0xdb - 0x5b;
+			else if (keyCode === 0x5e) keyCode = 0xa0;
+			else if (keyCOde === 0x5f) keyCode = 0x7c;
+			else if (0x61 <= keyCode && keyCode <= 0x76) keyCode += 0x8a - 0x61;
+			else if (0x77 <= keyCode && keyCode <= 0x7a) keyCode += 0x80 - 0x77;
+			else if (keyCode === 0x7e) keyCode = 0x40;
+		}
 		keyInput(keyCode);
 	}
+	return false;
 }
 
 // 画面に文字を書き込む
