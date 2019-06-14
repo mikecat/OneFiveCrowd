@@ -332,6 +332,35 @@ function putChar(c, isInsert = false) {
 		putChar(0x20, isInsert);
 		putChar(0x20, isInsert);
 		break;
+	case 0x0a: // 改行
+		while (ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] != 0) {
+			if (cursorX + 1 < SCREEN_WIDTH) {
+				cursorX++;
+			} else {
+				if (cursorY + 1 < SCREEN_HEIGHT) {
+					cursorX = 0;
+					cursorY++;
+				} else {
+					break;
+				}
+			}
+		}
+		cursorX = 0;
+		if (cursorY + 1 < SCREEN_HEIGHT) {
+			cursorY++;
+		} else {
+			for (var y = 1; y < SCREEN_HEIGHT; y++) {
+				for (var x = 0; x < SCREEN_WIDTH; x++) {
+					ramBytes[VRAM_ADDR + (y - 1) * SCREEN_WIDTH + x] =
+						ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x];
+				}
+			}
+			for (var x = 0; x < SCREEN_WIDTH; x++) {
+				ramBytes[VRAM_ADDR + (SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
+			}
+			vramDirty = true;
+		}
+		break;
 	case 0x0c: // カーソル位置以降を全削除
 		{
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
