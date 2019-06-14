@@ -264,6 +264,7 @@ function keyDown() {
 			else if (0x77 <= keyCode && keyCode <= 0x7a) keyCode += 0x80 - 0x77;
 			else if (keyCode === 0x7e) keyCode = 0x40;
 		}
+		if (event.shiftKey && keyCode == 0x20) keyCode = 0x0e;
 		keyInput(keyCode);
 	}
 	return false;
