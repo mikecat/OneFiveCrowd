@@ -332,6 +332,12 @@ function putChar(c, isInsert = false) {
 		putChar(0x20, isInsert);
 		putChar(0x20, isInsert);
 		break;
+	case 0x0d: // 無視
+		break;
+	case 0x0f: // 無視
+		break;
+	case 0x11: // 無視
+		break;
 	case 0x12: // カーソルを行頭に移動
 		while ((cursorX > 0 || cursorY > 0) &&
 		ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] != 0) {
