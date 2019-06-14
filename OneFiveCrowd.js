@@ -328,6 +328,43 @@ function putChar(c, isInsert = false) {
 			vramDirty = true;
 		}
 		break;
+	case 0x09: // Tab
+		putChar(0x20, isInsert);
+		putChar(0x20, isInsert);
+		break;
+	case 0x12: // カーソルを行頭に移動
+		while ((cursorX > 0 || cursorY > 0) &&
+		ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] != 0) {
+			if (cursorX > 0) {
+				cursorX--;
+			} else {
+				cursorX = SCREEN_WIDTH - 1;
+				cursorY--;
+			}
+		}
+		break;
+	case 0x13: // カーソルを左上に移動
+		cursorX = 0;
+		cursorY = 0;
+		break;
+	case 0x14: // カーソルを左下に移動
+		cursorX = 0;
+		cursorY = SCREEN_HEIGHT - 1;
+		break;
+	case 0x17: // カーソルを行末に移動
+		while (ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] != 0) {
+			if (cursorX + 1 < SCREEN_WIDTH) {
+				cursorX++;
+			} else {
+				if (cursorY + 1 < SCREEN_HEIGHT) {
+					cursorX = 0;
+					cursorY++;
+				} else {
+					break;
+				}
+			}
+		}
+		break;
 	case 0x1c: // カーソルを左に移動
 		if (cursorX > 0) {
 			cursorX--;
