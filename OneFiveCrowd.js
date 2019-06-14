@@ -233,7 +233,11 @@ function dequeueKey() {
 function keyDown() {
 	var key = event.key;
 	if (key.length === 1) {
-		keyInput(key.charCodeAt(0));
+		var keyCode = key.charCodeAt(0);
+		// アルファベット大文字と小文字を入れ替える
+		if (0x61 <= keyCode && keyCode <= 0x7a) keyCode -= 0x20;
+		else if (0x41 <= keyCode && keyCode <= 0x5a) keyCode += 0x20;
+		keyInput(keyCode);
 	}
 }
 
