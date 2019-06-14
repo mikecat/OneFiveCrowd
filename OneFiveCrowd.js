@@ -24,6 +24,9 @@ const CRAM_ADDR = 0x0;
 const ARRAY_ADDR = CRAM_ADDR + 0x100;
 const VRAM_ADDR = ARRAY_ADDR + 0x100;
 const PRG_ADDR = VRAM_ADDR + 0x300;
+const KEY_ADDR = PRG_ADDR + 0x400 + 3;
+
+const KEY_MAX = 126;
 
 // ROMとRAMのバッファ
 const romData = new ArrayBuffer(32 * 1024);
@@ -50,6 +53,9 @@ const writeArray = isLittleEndian ? function(id, value) {
 	// 非リトルエンディアン環境用
 	ramView.setInt16(ARRAY_ADDR + 2 * id, value,  true);
 };
+
+// キー入力でブロックした時、ブロック解除での飛び先
+var keyCallback = null;
 
 // カーソル位置
 var cursorX = 0;
@@ -176,6 +182,7 @@ function initSystem() {
 	// 各種状態の初期化
 	commandCLP();
 	commandCLV();
+	commandCLK();
 	commandCLS();
 	commandNEW();
 	updateScreen();
@@ -183,6 +190,9 @@ function initSystem() {
 	// カーソルを点滅させる
 	if (cursorTimerId !== null) clearInterval(cursorTimerId);
 	cursorTimerId = setInterval(toggleCursor, 500);
+
+	// インタラクティブモードに入る
+	setTimeout(doInteractive, 0);
 }
 
 function toggleCursor() {
@@ -190,11 +200,40 @@ function toggleCursor() {
 	updateScreen();
 }
 
+function keyInput(key) {
+	if (typeof(key) === "number") {
+		if (ramBytes[KEY_ADDR] < KEY_MAX) {
+			ramBytes[KEY_ADDR + 1 + ramBytes[KEY_ADDR]] = key;
+			ramBytes[KEY_ADDR]++;
+		}
+	} else {
+		if (key.length === 0) return;
+		for (var i = 0; ramBytes[KEY_ADDR] < KEY_MAX && i < key.length; i++) {
+			ramBytes[KEY_ADDR + 1 + ramBytes[KEY_ADDR]] = key.charCodeAt(i);
+			ramBytes[KEY_ADDR]++;
+		}
+	}
+	if (keyCallback !== null) {
+		setTimeout(keyCallback, 0);
+		keyCallback = null;
+	}
+}
+
+function dequeueKey() {
+	var nKey = ramBytes[KEY_ADDR];
+	if (nKey <= 0) return -1;
+	var key = ramBytes[KEY_ADDR + 1];
+	for (var i = 1; i < nKey; i++) {
+		ramBytes[KEY_ADDR + i] = ramBytes[KEY_ADDR + i + 1];
+	}
+	ramBytes[KEY_ADDR]--;
+	return key;
+}
+
 function keyDown() {
 	var key = event.key;
 	if (key.length === 1) {
-		putChar(key.charCodeAt(0), true);
-		updateScreen();
+		keyInput(key.charCodeAt(0));
 	}
 }
 
@@ -270,6 +309,24 @@ function putChar(c, isInsert = false) {
 		vramDirty = true;
 		break;
 	}
+}
+
+function doInteractive() {
+	for (;;) {
+		var key = dequeueKey();
+		if (key < 0) {
+			// キー入力がないので、処理を保留する
+			updateScreen();
+			keyCallback = doInteractive;
+			return;
+		}
+		putChar(key, true);
+	}
+}
+
+function commandCLK() {
+	// キーバッファを初期化する
+	ramBytes[KEY_ADDR] = 0;
 }
 
 function commandNEW() {
