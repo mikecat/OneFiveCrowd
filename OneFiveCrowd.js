@@ -200,22 +200,10 @@ function toggleCursor() {
 	updateScreen();
 }
 
-function keyInput(key) {
-	if (typeof(key) === "number") {
-		if (ramBytes[KEY_ADDR] < KEY_MAX) {
-			ramBytes[KEY_ADDR + 1 + ramBytes[KEY_ADDR]] = key;
-			ramBytes[KEY_ADDR]++;
-		}
-	} else {
-		if (key.length === 0) return;
-		for (var i = 0; ramBytes[KEY_ADDR] < KEY_MAX && i < key.length; i++) {
-			ramBytes[KEY_ADDR + 1 + ramBytes[KEY_ADDR]] = key.charCodeAt(i);
-			ramBytes[KEY_ADDR]++;
-		}
-	}
-	if (keyCallback !== null) {
-		setTimeout(keyCallback, 0);
-		keyCallback = null;
+function enqueueKey(key) {
+	if (ramBytes[KEY_ADDR] < KEY_MAX) {
+		ramBytes[KEY_ADDR + 1 + ramBytes[KEY_ADDR]] = key;
+		ramBytes[KEY_ADDR]++;
 	}
 }
 
@@ -228,6 +216,21 @@ function dequeueKey() {
 	}
 	ramBytes[KEY_ADDR]--;
 	return key;
+}
+
+function keyInput(key, invokeCallback = true) {
+	if (typeof(key) === "number") {
+		enqueueKey(key);
+	} else {
+		if (key.length === 0) return;
+		for (var i = 0; i < key.length; i++) {
+			keyInput(key.charCodeAt(i), false);
+		}
+	}
+	if (invokeCallback && keyCallback !== null) {
+		setTimeout(keyCallback, 0);
+		keyCallback = null;
+	}
 }
 
 const specialKeyDict = {
