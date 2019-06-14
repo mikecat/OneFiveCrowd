@@ -246,7 +246,7 @@ const specialKeyDict = {
 	"PageUp"     : 0x13,
 	"PageDown"   : 0x14,
 	"End"        : 0x17,
-	"F1"  : "\x13\x1c",
+	"F1"  : "\x13\x0c",
 	"F2"  : "\x18LOAD",
 	"F3"  : "\x18SAVE",
 	"F4"  : "\x18\x0cLIST\x0a",
