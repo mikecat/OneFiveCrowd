@@ -309,6 +309,25 @@ function keyDown() {
 function putChar(c, isInsert = false) {
 	if (cursorX < 0 || SCREEN_WIDTH <= cursorX || cursorY < 0 || SCREEN_HEIGHT <= cursorY) return;
 	switch (c) {
+	case 0x08: // Backspace
+		if (cursorX > 0 || (cursorY > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH - 1] != 0)) {
+			const limit = SCREEN_HEIGHT * SCREEN_WIDTH - 1;
+			const start = cursorY * SCREEN_WIDTH + cursorX - 1;
+			var stop;
+			for (stop = start; stop < limit && ramBytes[VRAM_ADDR + stop] != 0; stop++);
+			for (var i = start; i < stop; i++) {
+				ramBytes[VRAM_ADDR + i] = ramBytes[VRAM_ADDR + i + 1];
+			}
+			ramBytes[VRAM_ADDR + stop] = 0;
+			if (cursorX > 0) {
+				cursorX--;
+			} else {
+				cursorX = SCREEN_WIDTH - 1;
+				cursorY--;
+			}
+			vramDirty = true;
+		}
+		break;
 	case 0x1c: // カーソルを左に移動
 		if (cursorX > 0) {
 			cursorX--;
