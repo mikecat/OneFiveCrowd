@@ -230,6 +230,30 @@ function dequeueKey() {
 	return key;
 }
 
+const specialKeyDict = {
+	"Tab"        : "  ",
+	"Escape"     : 0x1b,
+	"ArrowLeft"  : 0x1c,
+	"ArrowRight" : 0x1d,
+	"ArrowUp"    : 0x1e,
+	"ArrowDown"  : 0x1f,
+	"Backspace"  : 0x08,
+	"Delete"     : 0x7f,
+	"Home"       : 0x12,
+	"PageUp"     : 0x13,
+	"PageDown"   : 0x14,
+	"End"        : 0x17,
+	"F1"  : "\x13\x1c",
+	"F2"  : "\x18LOAD",
+	"F3"  : "\x18SAVE",
+	"F4"  : "\x18\x0cLIST\x0a",
+	"F5"  : "\x18RUN\x0a",
+	"F6"  : "\x18?FREE()\x0a",
+	"F7"  : "\x18OUT0\x0a",
+	"F8"  : "\x18VIDEO1\x0a",
+	"F9"  : "\x18\x0cFILES\x0a"
+};
+
 function keyDown() {
 	event.preventDefault();
 	var key = event.key;
@@ -239,6 +263,8 @@ function keyDown() {
 		else if (key === "e" || key === "E") keyInput(0x17); // 行末へ
 		else if (key === "k" || key === "K") keyInput(0x0c); // カーソル以降を削除
 		else if (key === "l" || key === "L") keyInput("\x13\x0c"); // 全て削除
+		else if (key === "Shift") keyInput(0x0f); // アルファベット/カナ切り替え
+		else if (key === "Alt") keyInput(0x11); // 挿入/上書き切り替え
 	} else if (key.length === 1) {
 		var keyCode = key.charCodeAt(0);
 		// アルファベット大文字と小文字を入れ替える
@@ -266,6 +292,12 @@ function keyDown() {
 		}
 		if (event.shiftKey && keyCode == 0x20) keyCode = 0x0e;
 		keyInput(keyCode);
+	} else if (!event.altKey) {
+		if (key === "Enter") {
+			keyInput(event.shiftKey ? 0x10 : 0x0a);
+		} else if (key in specialKeyDict) {
+			keyInput(specialKeyDict[key]);
+		}
 	}
 	return false;
 }
