@@ -309,6 +309,44 @@ function keyDown() {
 function putChar(c, isInsert = false) {
 	if (cursorX < 0 || SCREEN_WIDTH <= cursorX || cursorY < 0 || SCREEN_HEIGHT <= cursorY) return;
 	switch (c) {
+	case 0x1c: // カーソルを左に移動
+		if (cursorX > 0) {
+			cursorX--;
+		} else if (cursorY > 0 && (!isInsert || ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH - 1] != 0)) {
+			cursorX = SCREEN_WIDTH - 1;
+			cursorY--;
+		}
+		break;
+	case 0x1d: // カーソルを右に移動
+		if (!isInsert || ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] != 0) {
+			if (cursorX + 1 < SCREEN_WIDTH) {
+				cursorX++;
+			} else if (cursorY + 1 < SCREEN_HEIGHT) {
+				cursorX = 0;
+				cursorY++;
+			}
+		}
+		break;
+	case 0x1e: // カーソルを上に移動
+		if (cursorY > 0) {
+			cursorY--;
+			if (isInsert && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] == 0) {
+				while (cursorX > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] == 0) {
+					cursorX--;
+				}
+			}
+		}
+		break;
+	case 0x1f: // カーソルを下に移動
+		if (cursorY + 1 < SCREEN_HEIGHT) {
+			cursorY++;
+			if (isInsert && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] == 0) {
+				while (cursorX > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] == 0) {
+					cursorX--;
+				}
+			}
+		}
+		break;
 	default:
 		if (isInsert) {
 			// 挿入のために、以降の文字列をずらす
