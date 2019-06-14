@@ -332,6 +332,15 @@ function putChar(c, isInsert = false) {
 		putChar(0x20, isInsert);
 		putChar(0x20, isInsert);
 		break;
+	case 0x0c: // カーソル位置以降を全削除
+		{
+			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
+			for (var i = cursorY * SCREEN_WIDTH + cursorX; i < limit; i++) {
+				ramBytes[VRAM_ADDR + i] = 0;
+			}
+			vramDirty = true;
+		}
+		break;
 	case 0x0d: // 無視
 		break;
 	case 0x0f: // 無視
@@ -369,6 +378,25 @@ function putChar(c, isInsert = false) {
 					break;
 				}
 			}
+		}
+		break;
+	case 0x18: // カーソルがある行を削除
+		{
+			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
+			var start = cursorY * SCREEN_WIDTH + cursorX;
+			if (start > 0 && ramBytes[VRAM_ADDR + start] == 0) start--;
+			var stop = start;
+			if (ramBytes[VRAM_ADDR + start] != 0) {
+				for (; start > 0 && ramBytes[VRAM_ADDR + start - 1] != 0; start--);
+			}
+			for (; stop < limit && ramBytes[VRAM_ADDR + stop] != 0; stop++);
+			if (start == stop) break;
+			for (var i = start; i < stop; i++) {
+				ramBytes[VRAM_ADDR + i] = 0;
+			}
+			cursorX = start % SCREEN_WIDTH;
+			cursorY = ~~(start / SCREEN_WIDTH);
+			vramDirty = true;
 		}
 		break;
 	case 0x1c: // カーソルを左に移動
