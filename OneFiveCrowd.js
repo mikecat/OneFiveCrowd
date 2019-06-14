@@ -403,6 +403,19 @@ function putChar(c, isInsert = false) {
 			}
 		}
 		break;
+	case 0x7f: // Delete
+		{
+			const limit = SCREEN_HEIGHT * SCREEN_WIDTH - 1;
+			const start = cursorY * SCREEN_WIDTH + cursorX;
+			var stop;
+			for (stop = start; stop < limit && ramBytes[VRAM_ADDR + stop] != 0; stop++);
+			for (var i = start; i < stop; i++) {
+				ramBytes[VRAM_ADDR + i] = ramBytes[VRAM_ADDR + i + 1];
+			}
+			ramBytes[VRAM_ADDR + stop] = 0;
+			vramDirty = true;
+		}
+		break;
 	default:
 		if (isInsert) {
 			// 挿入のために、以降の文字列をずらす
