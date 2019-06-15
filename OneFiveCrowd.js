@@ -306,7 +306,23 @@ function keyDown() {
 }
 
 // 画面に文字を書き込む
+var moveCursorMode = false, moveCursorX = null;
 function putChar(c, isInsert = false) {
+	if (moveCursorMode) {
+		if (moveCursorX === null) {
+			moveCursorX = c - 32;
+			if (moveCursorX < 0) moveCursorX = 0;
+			if (moveCursorX >= SCREEN_WIDTH) moveCursorX = SCREEN_WIDTH - 1;
+		} else {
+			cursorX = moveCursorX;
+			cursorY = c - 32;
+			if (cursorY < -1) cursorY = -1;
+			if (cursorY >= SCREEN_HEIGHT) cursorY = SCREEN_HEIGHT - 1;
+			moveCurssorMode = false;
+			moveCursorX = null;
+		}
+		return;
+	}
 	if (cursorX < 0 || SCREEN_WIDTH <= cursorX || cursorY < 0 || SCREEN_HEIGHT <= cursorY) return;
 	switch (c) {
 	case 0x08: // Backspace
@@ -394,6 +410,10 @@ function putChar(c, isInsert = false) {
 	case 0x14: // カーソルを左下に移動
 		cursorX = 0;
 		cursorY = SCREEN_HEIGHT - 1;
+		break;
+	case 0x15: // カーソルを指定位置に移動
+		moveCursorMode = true;
+		moveCursorX = null;
 		break;
 	case 0x17: // カーソルを行末に移動
 		while (ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] !== 0) {
@@ -582,6 +602,8 @@ function commandCLS() {
 	// カーソルの位置を左上に戻す
 	cursorX = 0;
 	cursorY = 0;
+	moveCursorMode = false;
+	moveCursorX = null;
 	vramDirty = true;
 }
 
