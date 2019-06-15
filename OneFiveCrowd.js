@@ -388,6 +388,50 @@ function putChar(c, isInsert = false) {
 		break;
 	case 0x0d: // 無視
 		break;
+	case 0x0e: // 空白挿入
+		{
+			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
+			var start = cursorY * SCREEN_WIDTH + cursorX;
+			var end;
+			for (end = start; end < limit && ramBytes[VRAM_ADDR + end] !== 0; end++);
+			if (end === limit) {
+				// 最後まで詰まっている
+				if (cursorY > 0) {
+					for (var y = 1; y < SCREEN_HEIGHT; y++) {
+						for (var x = 0; x < SCREEN_WIDTH; x++) {
+							ramBytes[VRAM_ADDR + (y - 1) * SCREEN_WIDTH + x] =
+								ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x];
+						}
+					}
+					for (var x = 0; x < SCREEN_WIDTH; x++) {
+						ramBytes[VRAM_ADDR + (SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
+					}
+					cursorY--;
+					start -= SCREEN_WIDTH;
+					end -= SCREEN_WIDTH;
+				}
+			} else if (~~(end / SCREEN_WIDTH) + 1 < SCREEN_HEIGHT &&
+			end % SCREEN_WIDTH === SCREEN_WIDTH - 1 && ramBytes[VRAM_ADDR + end + 1] !== 0) {
+				// 空行を挿入してからやる
+				const endY = ~~(end / SCREEN_WIDTH) + 1;
+				for (var y = SCREEN_HEIGHT - 1; y > endY; y--) {
+					for (var x = 0; x < SCREEN_WIDTH; x++) {
+						ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x] =
+							ramBytes[VRAM_ADDR + (y - 1) * SCREEN_WIDTH + x];
+					}
+				}
+				for (var x = 0; x < SCREEN_WIDTH; x++) {
+ 					ramBytes[VRAM_ADDR + endY * SCREEN_WIDTH + x] = 0;
+				}
+			}
+			if (end === limit) end--;
+			for (var i = end; i > start; i--) {
+				ramBytes[VRAM_ADDR + i] = ramBytes[VRAM_ADDR + i - 1];
+			}
+			ramBytes[VRAM_ADDR + start] = 0x20;
+			vramDirty = true;
+		}
+		break;
 	case 0x0f: // 無視
 		break;
 	case 0x11: // 無視
