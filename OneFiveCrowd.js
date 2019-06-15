@@ -314,7 +314,7 @@ function putChar(c, isInsert = false) {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH - 1;
 			const start = cursorY * SCREEN_WIDTH + cursorX - 1;
 			var stop;
-			for (stop = start; stop < limit && ramBytes[VRAM_ADDR + stop] != 0; stop++);
+			for (stop = start; stop < limit && ramBytes[VRAM_ADDR + stop] !== 0; stop++);
 			for (var i = start; i < stop; i++) {
 				ramBytes[VRAM_ADDR + i] = ramBytes[VRAM_ADDR + i + 1];
 			}
@@ -333,7 +333,7 @@ function putChar(c, isInsert = false) {
 		putChar(0x20, isInsert);
 		break;
 	case 0x0a: // 改行
-		while (ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] != 0) {
+		while (ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] !== 0) {
 			if (cursorX + 1 < SCREEN_WIDTH) {
 				cursorX++;
 			} else {
@@ -378,7 +378,7 @@ function putChar(c, isInsert = false) {
 		break;
 	case 0x12: // カーソルを行頭に移動
 		while ((cursorX > 0 || cursorY > 0) &&
-		ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] != 0) {
+		ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] !== 0) {
 			if (cursorX > 0) {
 				cursorX--;
 			} else {
@@ -396,7 +396,7 @@ function putChar(c, isInsert = false) {
 		cursorY = SCREEN_HEIGHT - 1;
 		break;
 	case 0x17: // カーソルを行末に移動
-		while (ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] != 0) {
+		while (ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] !== 0) {
 			if (cursorX + 1 < SCREEN_WIDTH) {
 				cursorX++;
 			} else {
@@ -413,12 +413,12 @@ function putChar(c, isInsert = false) {
 		{
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
 			var start = cursorY * SCREEN_WIDTH + cursorX;
-			if (start > 0 && ramBytes[VRAM_ADDR + start] == 0) start--;
+			if (start > 0 && ramBytes[VRAM_ADDR + start] === 0) start--;
 			var stop = start;
-			if (ramBytes[VRAM_ADDR + start] != 0) {
-				for (; start > 0 && ramBytes[VRAM_ADDR + start - 1] != 0; start--);
+			if (ramBytes[VRAM_ADDR + start] !== 0) {
+				for (; start > 0 && ramBytes[VRAM_ADDR + start - 1] !== 0; start--);
 			}
-			for (; stop < limit && ramBytes[VRAM_ADDR + stop] != 0; stop++);
+			for (; stop < limit && ramBytes[VRAM_ADDR + stop] !== 0; stop++);
 			if (start == stop) break;
 			for (var i = start; i < stop; i++) {
 				ramBytes[VRAM_ADDR + i] = 0;
@@ -431,13 +431,13 @@ function putChar(c, isInsert = false) {
 	case 0x1c: // カーソルを左に移動
 		if (cursorX > 0) {
 			cursorX--;
-		} else if (cursorY > 0 && (!isInsert || ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH - 1] != 0)) {
+		} else if (cursorY > 0 && (!isInsert || ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH - 1] !== 0)) {
 			cursorX = SCREEN_WIDTH - 1;
 			cursorY--;
 		}
 		break;
 	case 0x1d: // カーソルを右に移動
-		if (!isInsert || ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] != 0) {
+		if (!isInsert || ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] !== 0) {
 			if (cursorX + 1 < SCREEN_WIDTH) {
 				cursorX++;
 			} else if (cursorY + 1 < SCREEN_HEIGHT) {
@@ -449,8 +449,8 @@ function putChar(c, isInsert = false) {
 	case 0x1e: // カーソルを上に移動
 		if (cursorY > 0) {
 			cursorY--;
-			if (isInsert && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] == 0) {
-				while (cursorX > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] == 0) {
+			if (isInsert && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] === 0) {
+				while (cursorX > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] === 0) {
 					cursorX--;
 				}
 			}
@@ -459,8 +459,8 @@ function putChar(c, isInsert = false) {
 	case 0x1f: // カーソルを下に移動
 		if (cursorY + 1 < SCREEN_HEIGHT) {
 			cursorY++;
-			if (isInsert && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] == 0) {
-				while (cursorX > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] == 0) {
+			if (isInsert && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] === 0) {
+				while (cursorX > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] === 0) {
 					cursorX--;
 				}
 			}
@@ -471,7 +471,7 @@ function putChar(c, isInsert = false) {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH - 1;
 			const start = cursorY * SCREEN_WIDTH + cursorX;
 			var stop;
-			for (stop = start; stop < limit && ramBytes[VRAM_ADDR + stop] != 0; stop++);
+			for (stop = start; stop < limit && ramBytes[VRAM_ADDR + stop] !== 0; stop++);
 			for (var i = start; i < stop; i++) {
 				ramBytes[VRAM_ADDR + i] = ramBytes[VRAM_ADDR + i + 1];
 			}
@@ -505,7 +505,7 @@ function putChar(c, isInsert = false) {
 					// カーソルが最初の行にあるなら、最後の文字を犠牲にする
 					zeroPoint--;
 				}
-			} else if (zeroPoint % SCREEN_WIDTH == SCREEN_WIDTH - 1 &&
+			} else if (zeroPoint % SCREEN_WIDTH === SCREEN_WIDTH - 1 &&
 			zeroPoint + 1 < SCREEN_WIDTH * SCREEN_HEIGHT) {
 				// 次の行に行きそうな場合、1行下げる
 				var zeroPointY = ~~(zeroPoint / SCREEN_WIDTH);
