@@ -608,7 +608,7 @@ function putChar(c, isInsert = false) {
 			var cursorPoint = cursorY * SCREEN_WIDTH + cursorX;
 			var zeroPoint = cursorPoint;
 			while (zeroPoint < SCREEN_WIDTH * SCREEN_HEIGHT &&
-				ramBytes[VRAM_ADDR + zeroPoint] != 0) zeroPoint++;
+				ramBytes[VRAM_ADDR + zeroPoint] !== 0) zeroPoint++;
 			if (zeroPoint >= SCREEN_WIDTH * SCREEN_HEIGHT) {
 				// 画面の最後まで埋まっている場合
 				if (cursorY > 0) {
@@ -623,6 +623,7 @@ function putChar(c, isInsert = false) {
 						ramBytes[VRAM_ADDR + (SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
 					}
 					cursorY--;
+					cursorPoint -= SCREEN_WIDTH;
 					zeroPoint -= SCREEN_WIDTH;
 				} else {
 					// カーソルが最初の行にあるなら、最後の文字を犠牲にする
