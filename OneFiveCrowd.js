@@ -570,7 +570,7 @@ function putChar(c, isInsert = false) {
 					zeroPoint--;
 				}
 			} else if (zeroPoint % SCREEN_WIDTH === SCREEN_WIDTH - 1 &&
-			zeroPoint + 1 < SCREEN_WIDTH * SCREEN_HEIGHT) {
+			zeroPoint + 1 < SCREEN_WIDTH * SCREEN_HEIGHT && ramBytes[VRAM_ADDR + zeroPoint + 1] !== 0) {
 				// 次の行に行きそうな場合、1行下げる
 				var zeroPointY = ~~(zeroPoint / SCREEN_WIDTH);
 				for (var y = SCREEN_HEIGHT - 2; y > zeroPointY; y--) {
