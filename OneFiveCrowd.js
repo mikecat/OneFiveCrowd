@@ -434,6 +434,65 @@ function putChar(c, isInsert = false) {
 		break;
 	case 0x0f: // 無視
 		break;
+	case 0x10: // 行分割
+		{
+			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
+			var start = cursorY * SCREEN_WIDTH + cursorX;
+			var end;
+			for (end = start; end < limit && ramBytes[VRAM_ADDR + end] !== 0; end++);
+			var endX = (end === limit ? SCREEN_WIDTH : end % SCREEN_WIDTH);
+			var endY = (end === limit ? SCREEN_HEIGHT - 1 : ~~(end / SCREEN_WIDTH));
+			if (cursorX <= endX) {
+				// 新しい行を要求する
+				var shiftUp = false;
+				if (cursorY > 0) {
+					for (var x = 0; x < SCREEN_WIDTH; x++) {
+						if (ramBytes[VRAM_ADDR + (SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] !== 0) {
+							shiftUp = true;
+							break;
+						}
+					}
+				}
+				if (shiftUp) {
+					// 行末がある行までを上に上げる
+					for (var y = 0; y < endY; y++) {
+						for (var x = 0; x < SCREEN_WIDTH; x++) {
+							ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x] =
+								ramBytes[VRAM_ADDR + (y + 1) * SCREEN_WIDTH + x];
+						}
+					}
+					for (var x = 0; x < SCREEN_WIDTH; x++) {
+						ramBytes[VRAM_ADDR + endY * SCREEN_WIDTH + x] = 0;
+					}
+					cursorY--;
+					start -= SCREEN_WIDTH;
+					end -= SCREEN_WIDTH;
+				} else {
+					// 行末がある行の次からを下に下げる
+					for (var y = SCREEN_HEIGHT - 2; y > endY; y--) {
+						for (var x = 0; x < SCREEN_WIDTH; x++) {
+							ramBytes[VRAM_ADDR + (y + 1) * SCREEN_WIDTH + x] =
+								ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x];
+						}
+					}
+					for (var x = 0; x < SCREEN_WIDTH; x++) {
+						ramBytes[VRAM_ADDR + (endY + 1) * SCREEN_WIDTH + x] = 0;
+					}
+				}
+			}
+			// 行分割の操作を行う
+			var dest = ~~((start + SCREEN_WIDTH) / SCREEN_WIDTH) * SCREEN_WIDTH;
+			for (var i = end - 1; i >= start; i--) {
+				ramBytes[VRAM_ADDR + i - start + dest] = ramBytes[VRAM_ADDR + i];
+			}
+			for (var i = start; i < dest; i++) {
+				ramBytes[VRAM_ADDR + i] = 0;
+			}
+			cursorX = 0;
+			cursorY = ~~(dest / SCREEN_WIDTH);
+			vramDirty = true;
+		}
+		break;
 	case 0x11: // 無視
 		break;
 	case 0x12: // カーソルを行頭に移動
