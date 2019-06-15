@@ -410,8 +410,8 @@ function putChar(c, isInsert = false) {
 					start -= SCREEN_WIDTH;
 					end -= SCREEN_WIDTH;
 				}
-			} else if (~~(end / SCREEN_WIDTH) + 1 < SCREEN_HEIGHT &&
-			end % SCREEN_WIDTH === SCREEN_WIDTH - 1 && ramBytes[VRAM_ADDR + end + 1] !== 0) {
+			} else if (end % SCREEN_WIDTH === SCREEN_WIDTH - 1 &&
+			end + 1 < limit && ramBytes[VRAM_ADDR + end + 1] !== 0) {
 				// 空行を挿入してからやる
 				const endY = ~~(end / SCREEN_WIDTH) + 1;
 				for (var y = SCREEN_HEIGHT - 1; y > endY; y--) {
