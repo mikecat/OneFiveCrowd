@@ -696,8 +696,16 @@ function doInteractive() {
 						ramBytes[CMD_ADDR + i - start] = ramBytes[VRAM_ADDR + i];
 					}
 					ramBytes[CMD_ADDR + end - start] = 0;
-					// TODO: 実行部分に渡す
-					compile(CMD_ADDR);
+					try {
+						// TODO: 実行部分に渡す
+						compile(CMD_ADDR);
+					} catch (e) {
+						// TODO: PRINT文の機能を作ったら、それを使う
+						const es = "" + e + "\n";
+						for (var i = 0; i < es.length; i++) {
+							putChar(es.charCodeAt(i), false);
+						}
+					}
 				} else {
 					// TODO: PRINT文の機能を作ったら、それを使う
 					const message = "Line too long\n";
@@ -715,8 +723,9 @@ function compile(addr) {
 	for (var i = addr; addr < ramBytes.length && ramBytes[i] !== 0; i++) {
 		source += String.fromCharCode(ramBytes[i]);
 	}
-	// TODO: 処理する
-	console.log(source);
+	const tokens = lexer(source, addr);
+	// TODO: パース
+	console.log(tokens);
 	return [];
 }
 
