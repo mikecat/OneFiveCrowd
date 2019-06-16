@@ -16,6 +16,8 @@ const SCREEN_WIDTH = 32;
 const SCREEN_HEIGHT = 24;
 
 const ARRAY_SIZE = 102;
+const KEY_MAX = 126;
+const CMD_MAX = 200; // 本体の長さ。終端の0でさらに1バイト使う。
 
 // ROM上の物理アドレス
 const CROM_ADDR = 0x1000;
@@ -25,8 +27,7 @@ const ARRAY_ADDR = CRAM_ADDR + 0x100;
 const VRAM_ADDR = ARRAY_ADDR + 0x100;
 const PRG_ADDR = VRAM_ADDR + 0x300;
 const KEY_ADDR = PRG_ADDR + 0x400 + 3;
-
-const KEY_MAX = 126;
+const CMD_ADDR = KEY_ADDR + 1 + KEY_MAX;
 
 // ROMとRAMのバッファ
 const romData = new ArrayBuffer(32 * 1024);
@@ -683,7 +684,40 @@ function doInteractive() {
 			return;
 		}
 		putChar(key, true);
+		if (key === 0x0a && cursorY > 0) {
+			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
+			var start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
+			var end = start;
+			if (ramBytes[VRAM_ADDR + start] !== 0) {
+				while (start > 0 && ramBytes[VRAM_ADDR + start - 1] !== 0) start--;
+				while (end < limit && ramBytes[VRAM_ADDR + end] !== 0) end++;
+				if (end - start <= CMD_MAX) {
+					for (var i = start; i < end; i++) {
+						ramBytes[CMD_ADDR + i - start] = ramBytes[VRAM_ADDR + i];
+					}
+					ramBytes[CMD_ADDR + end - start] = 0;
+					// TODO: 実行部分に渡す
+					compile(CMD_ADDR);
+				} else {
+					// TODO: PRINT文の機能を作ったら、それを使う
+					const message = "Line too long\n";
+					for (var i = 0; i < message.length; i++) {
+						putChar(message.charCodeAt(i), false);
+					}
+				}
+			}
+		}
 	}
+}
+
+function compile(addr) {
+	var source = "";
+	for (var i = addr; addr < ramBytes.length && ramBytes[i] !== 0; i++) {
+		source += String.fromCharCode(ramBytes[i]);
+	}
+	// TODO: 処理する
+	console.log(source);
+	return [];
 }
 
 function commandCLK() {
