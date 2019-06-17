@@ -63,6 +63,7 @@ const getTokenInfo = (function(tokens) {
 	"RESET", "IN", "ANA", "OUT", "PWM", "DEC$", "HEX$", "BIN$", ">>", "<<",
 	"BPS", "I2CR", "I2CW", "USR", "&&", "||", "CLO", "LANG", "LINE", "SRND",
 	"COPY", "STR$", "LEN", "UART", "OK", "IoT.IN", "IoT.OUT", "SWITCH",
+	"LEFT", "RIGHT", "UP", "DOWN", "SPACE", "MOD",
 	":", "+", "-", "*", "/", "%", "(", ")", "=", "<", ">", ",", "[", "]", ";",
 	"&", "|", "^", "~", "?", "'",
 	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
@@ -145,4 +146,89 @@ function lexer(str, firstAddr = 0) {
 		}
 	}
 	return result;
+}
+
+/*
+            line ::= command
+                   | command line_separator line
+                   | if_command line
+                   | comment
+  line_separator ::= ":" | "ELSE"
+         command ::= (空) 
+                   | print_command
+                   | for_command
+                   | input_command
+                   | let_command
+                   | label_definition
+                   | general_command
+   print_command ::= "PRINT" print_arguments
+                   | "?" print_arguments
+ print_arguments ::= (空)
+                   | print_argument print_separator print_arguments
+  print_argument ::= string
+                   | print_modifier
+                   | expr
+ print_separator ::= "," | ";"
+  print_modifier ::= modifier_name "(" arguments ")"
+      if_command ::= "IF" expr "THEN"
+                   | "IF" expr
+     for_command ::= "FOR" variable "=" expr "TO" expr
+                   | "FOR" variable "=" expr "TO" expr "STEP" expr
+   input_command ::= "INPUT" variable
+                   | "INPUT" string "," variable
+     let_command ::= "LET" variable "," arguments
+                   | variable "=" expr
+label_definition ::= label label_junk
+      label_junk ::= (空)
+                   | (line_separatorを除く任意のトークン) label_junk
+         comment ::= "REM" comment_content
+                   | "'" comment_content
+ comment_content ::= (空)
+                   | (任意のトークン)
+ general_command ::= command_name arguments
+       arguments ::= (空)
+                   | argument_list
+   argument_list ::= expr
+                   | expr "," argument_list
+        variable ::= "A" | "B" | ... | "Y" | "Z"
+                   | "[" expr "]"
+
+   modifier_name ::= "CHR$" | "DEC$" | "HEX$" | "BIN$" | "STR$"
+    command_name ::= "LED" | "WAIT" | "RUN" | "LIST" | "GOTO" | "END" | "NEW"
+                   | "LOCATE" | "LC" | "CLS" | "SAVE" | "LOAD" | "FILES | "BEEP"
+                   | "PLAY" | "TEMPO" | "CLT" | "SCROLL" | "NEXT" | "CLV"
+                   | "CLEAR" | "CLK" | "GOSUB" | "GSB" | "RETURN" | "RTN"
+                   | "STOP" | "CONT" | "RENUM" | "LRUN" | "SLEEP" | "VIDEO"
+                   | "POKE" | "CLP" | "HELP" | "RESET" | "OUT" | "PWM" | "BPS"
+                   | "CLO" | "SRND" | "COPY" | "UART" | "OK" | "IoT.OUT" | "SWITCH"
+   function_name ::= "BTN" | "TICK" | "INKEY" | "ASC" | "SCR" | "VPEEK" | "ABS"
+                   | "SOUND" | "FREE" | "VER" | "FILE" | "PEEK" | "IN" | "ANA"
+                   | "I2CR" | "I2CW" | "USR" | "LANG" | "LINE" | "LEN" | "IoT.IN"
+
+            expr ::= expr7
+           expr7 ::= expr6
+                   | expr7 expr7_op expr6
+        expr7_op ::= "OR" | "||"
+           expr6 ::= expr5
+                   | expr6 expr6_op expr5
+        expr6_op ::= "AND" | "&&"
+           expr5 ::= expr4
+                   | expr5 expr5_op expr4
+        expr5_op ::= "=" | "==" | "<>" | "!=" | "<" | ">" | "<=" | ">="
+           expr4 ::= expr3
+                   | expr4 expr4_op expr3
+        expr4_op ::= "+" | "-" | "|"
+           expr3 ::= expr2
+                   | expr3 expr3_op expr2
+        expr3_op ::= "*" | "/" | "%" | "MOD" | "<<" | ">>" | "&" | "^"
+           expr2 ::= expr1
+                   | expr2_op expr2
+        expr2_op ::= "-" | "~" | "!" | "NOT"
+           expr1 ::= "(" expr7 ")"
+                   | "LEFT | "RIGHT" | "UP" | "DOWN" | "SPACE"
+                   | integer | variable | label | string
+*/
+
+function parser(tokens) {
+	
 }
