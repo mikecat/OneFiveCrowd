@@ -139,9 +139,11 @@ function updateScreen() {
 	} else if (cursorOn && (cursorX != cursorDispX || cursorY != cursorDispY)) {
 		// カーソルの位置がずれている
 		// 古い位置のカーソルを消す
-		mainScreenContext.putImageData(
-			fontImages[vramView[cursorDispY * SCREEN_WIDTH + cursorDispX]],
-			cursorDispX * 16, cursorDispY * 16);
+		if (cursorDispX >= 0 && cursorDispY >= 0) {
+			mainScreenContext.putImageData(
+				fontImages[vramView[cursorDispY * SCREEN_WIDTH + cursorDispX]],
+				cursorDispX * 16, cursorDispY * 16);
+		}
 		// 新しい位置にカーソルを描く
 		if (0 <= cursorX && cursorX < SCREEN_WIDTH && 0 <= cursorY && cursorY < SCREEN_HEIGHT) {
 			var imageData = mainScreenContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
