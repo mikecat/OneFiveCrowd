@@ -84,6 +84,10 @@ const getTokenByValidChars = function(str, validChars, start = 0) {
 
 // トークン情報の配列を返す
 function lexer(str, firstAddr = 0) {
+	const createTokenInfo = function(kind, token, address) {
+		return {"kind": kind, "token": token, "address": address};
+	};
+
 	const result = [];
 	for (let i = 0; i < str.length;) {
 		const c = str.charAt(i);
@@ -96,7 +100,7 @@ function lexer(str, firstAddr = 0) {
 			if (tokenInfo.token === "") {
 				throw "Invalid token";
 			} else {
-				result.push({"token": "#" + tokenInfo.token, "address": firstAddr + i});
+				result.push(createTokenInfo("number", "#" + tokenInfo.token, firstAddr + i));
 				i = tokenInfo.nextIndex;
 			}
 		} else if (c === "`") {
@@ -105,7 +109,7 @@ function lexer(str, firstAddr = 0) {
 			if (tokenInfo.token === "") {
 				throw "Invalid token";
 			} else {
-				result.push({"token": "`" + tokenInfo.token, "address": firstAddr + i});
+				result.push(createTokenInfo("number", "`" + tokenInfo.token, firstAddr + i));
 				i = tokenInfo.nextIndex;
 			}
 		} else if ("0123456789".indexOf(c) >= 0) {
@@ -114,7 +118,7 @@ function lexer(str, firstAddr = 0) {
 			if (tokenInfo.token === "") {
 				throw "Invalid token";
 			} else {
-				result.push({"token": tokenInfo.token, "address": firstAddr + i});
+				result.push(createTokenInfo("number", tokenInfo.token, firstAddr + i));
 				i = tokenInfo.nextIndex;
 			}
 		} else if (c === "\"") {
@@ -122,24 +126,24 @@ function lexer(str, firstAddr = 0) {
 			const strStart = i++;
 			while (i < str.length && str.charAt(i) !== "\"") i++;
 			if (i < str.length) i++;
-			result.push({"token": str.substring(strStart, i), "address": firstAddr + strStart});
+			result.push(createTokenInfo("string", str.substring(strStart, i), firstAddr + strStart));
 		} else if (c === "@") {
 			// ラベル
 			const labelStart = i++;
 			const antiCharacters = blankChars + ":";
 			while (i < str.length && antiCharacters.indexOf(str.charAt(i)) < 0) i++;
-			result.push({"token": str.substring(labelStart, i), "address": firstAddr + labelStart});
+			result.push(createTokenInfo("label", str.substring(labelStart, i), firstAddr + labelStart));
 		} else {
 			// その他のトークン
 			const tokenInfo = getTokenInfo(str, i);
 			if (tokenInfo === null) {
 				throw "Invalid token";
 			} else {
-				result.push({"token": tokenInfo.token, "address": firstAddr + i});
+				result.push(createTokenInfo("keyword", tokenInfo.token, firstAddr + i));
 				i = tokenInfo.nextIndex;
 				if (tokenInfo.token === "REM" || tokenInfo.token === "'") {
 					// コメント
-					result.push({"token": str.substr(i), "address": firstAddr + i});
+					result.push(createTokenInfo("comment", str.substr(i), firstAddr + i));
 					i = str.length;
 				}
 			}
