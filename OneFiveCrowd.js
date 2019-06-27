@@ -37,7 +37,13 @@ const romView = new DataView(romData);
 const ramView = new DataView(ramData);
 const romBytes = new Uint8Array(romData);
 const ramBytes = new Uint8Array(ramData);
+// 役割ごとのRAMのビュー
+const cramView = new Uint8Array(ramData, CRAM_ADDR, 0x100);
 const arrayView = new Int16Array(ramData, ARRAY_ADDR, ARRAY_SIZE + 26);
+const vramView = new Uint8Array(ramData, VRAM_ADDR, 0x300);
+const prgView = new Uint8Array(ramData, PRG_ADDR, 0x400);
+const keyView = new Uint8Array(ramData, KEY_ADDR, 1 + KEY_MAX);
+const cmdView = new Uint8Array(ramData, CMD_ADDR, CMD_MAX + 1);
 
 // 環境に応じて変数と配列のアクセス方法を決定する
 const readArray = isLittleEndian ? function(id) {
@@ -99,7 +105,7 @@ function updateScreen() {
 	if (fontDirty) {
 		// RAM上のフォントデータを更新する
 		for (var i = 0; i < 0x20; i++) {
-			dataToFontImage(fontImages[0xE0 + i], ramBytes, CRAM_ADDR + i * 8);
+			dataToFontImage(fontImages[0xE0 + i], cramView, i * 8);
 		}
 		fontDirty = false;
 		vramDirty = true;
@@ -109,7 +115,7 @@ function updateScreen() {
 		for (var y = 0; y < SCREEN_HEIGHT; y++) {
 			for (var x = 0; x < SCREEN_WIDTH; x++) {
 				mainScreenContext.putImageData(
-					fontImages[ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x]], x * 16, y * 16);
+					fontImages[vramView[y * SCREEN_WIDTH + x]], x * 16, y * 16);
 			}
 		}
 		if (cursorOn) {
@@ -134,7 +140,7 @@ function updateScreen() {
 		// カーソルの位置がずれている
 		// 古い位置のカーソルを消す
 		mainScreenContext.putImageData(
-			fontImages[ramBytes[VRAM_ADDR + cursorDispY * SCREEN_WIDTH + cursorDispX]],
+			fontImages[vramView[cursorDispY * SCREEN_WIDTH + cursorDispX]],
 			cursorDispX * 16, cursorDispY * 16);
 		// 新しい位置にカーソルを描く
 		if (0 <= cursorX && cursorX < SCREEN_WIDTH && 0 <= cursorY && cursorY < SCREEN_HEIGHT) {
@@ -153,7 +159,7 @@ function updateScreen() {
 	} else if (!cursorOn && cursorDispX >= 0 && cursorDispY >= 0) {
 		// カーソルが消えたので、消す
 		mainScreenContext.putImageData(
-			fontImages[ramBytes[VRAM_ADDR + cursorDispY * SCREEN_WIDTH + cursorDispX]],
+			fontImages[vramView[cursorDispY * SCREEN_WIDTH + cursorDispX]],
 			cursorDispX * 16, cursorDispY * 16);
 		cursorDispX = cursorDispY = -1;
 	}
@@ -202,20 +208,20 @@ function toggleCursor() {
 }
 
 function enqueueKey(key) {
-	if (ramBytes[KEY_ADDR] < KEY_MAX) {
-		ramBytes[KEY_ADDR + 1 + ramBytes[KEY_ADDR]] = key;
-		ramBytes[KEY_ADDR]++;
+	if (keyView[0] < KEY_MAX) {
+		keyView[1 + keyView[0]] = key;
+		keyView[0]++;
 	}
 }
 
 function dequeueKey() {
-	var nKey = ramBytes[KEY_ADDR];
+	var nKey = keyView[0];
 	if (nKey <= 0) return -1;
-	var key = ramBytes[KEY_ADDR + 1];
+	var key = keyView[1];
 	for (var i = 1; i < nKey; i++) {
-		ramBytes[KEY_ADDR + i] = ramBytes[KEY_ADDR + i + 1];
+		keyView[i] = keyView[i + 1];
 	}
-	ramBytes[KEY_ADDR]--;
+	keyView[0]--;
 	return key;
 }
 
@@ -327,15 +333,15 @@ function putChar(c, isInsert = false) {
 	if (cursorX < 0 || SCREEN_WIDTH <= cursorX || cursorY < 0 || SCREEN_HEIGHT <= cursorY) return;
 	switch (c) {
 	case 0x08: // Backspace
-		if (cursorX > 0 || (cursorY > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH - 1] != 0)) {
+		if (cursorX > 0 || (cursorY > 0 && vramView[cursorY * SCREEN_WIDTH - 1] != 0)) {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH - 1;
 			const start = cursorY * SCREEN_WIDTH + cursorX - 1;
 			var stop;
-			for (stop = start; stop < limit && ramBytes[VRAM_ADDR + stop] !== 0; stop++);
+			for (stop = start; stop < limit && vramView[stop] !== 0; stop++);
 			for (var i = start; i < stop; i++) {
-				ramBytes[VRAM_ADDR + i] = ramBytes[VRAM_ADDR + i + 1];
+				vramView[i] = vramView[i + 1];
 			}
-			ramBytes[VRAM_ADDR + stop] = 0;
+			vramView[stop] = 0;
 			if (cursorX > 0) {
 				cursorX--;
 			} else {
@@ -350,7 +356,7 @@ function putChar(c, isInsert = false) {
 		putChar(0x20, isInsert);
 		break;
 	case 0x0a: // 改行
-		while (ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] !== 0) {
+		while (vramView[cursorY * SCREEN_WIDTH + cursorX] !== 0) {
 			if (cursorX + 1 < SCREEN_WIDTH) {
 				cursorX++;
 			} else {
@@ -368,12 +374,12 @@ function putChar(c, isInsert = false) {
 		} else {
 			for (var y = 1; y < SCREEN_HEIGHT; y++) {
 				for (var x = 0; x < SCREEN_WIDTH; x++) {
-					ramBytes[VRAM_ADDR + (y - 1) * SCREEN_WIDTH + x] =
-						ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x];
+					vramView[(y - 1) * SCREEN_WIDTH + x] =
+						vramView[y * SCREEN_WIDTH + x];
 				}
 			}
 			for (var x = 0; x < SCREEN_WIDTH; x++) {
-				ramBytes[VRAM_ADDR + (SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
+				vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
 			}
 			vramDirty = true;
 		}
@@ -382,7 +388,7 @@ function putChar(c, isInsert = false) {
 		{
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
 			for (var i = cursorY * SCREEN_WIDTH + cursorX; i < limit; i++) {
-				ramBytes[VRAM_ADDR + i] = 0;
+				vramView[i] = 0;
 			}
 			vramDirty = true;
 		}
@@ -394,42 +400,42 @@ function putChar(c, isInsert = false) {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
 			var start = cursorY * SCREEN_WIDTH + cursorX;
 			var end;
-			for (end = start; end < limit && ramBytes[VRAM_ADDR + end] !== 0; end++);
+			for (end = start; end < limit && vramView[end] !== 0; end++);
 			if (end === limit) {
 				// 最後まで詰まっている
 				if (cursorY > 0) {
 					for (var y = 1; y < SCREEN_HEIGHT; y++) {
 						for (var x = 0; x < SCREEN_WIDTH; x++) {
-							ramBytes[VRAM_ADDR + (y - 1) * SCREEN_WIDTH + x] =
-								ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x];
+							vramView[(y - 1) * SCREEN_WIDTH + x] =
+								vramView[y * SCREEN_WIDTH + x];
 						}
 					}
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
-						ramBytes[VRAM_ADDR + (SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
+						vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
 					}
 					cursorY--;
 					start -= SCREEN_WIDTH;
 					end -= SCREEN_WIDTH;
 				}
 			} else if (end % SCREEN_WIDTH === SCREEN_WIDTH - 1 &&
-			end + 1 < limit && ramBytes[VRAM_ADDR + end + 1] !== 0) {
+			end + 1 < limit && vramView[end + 1] !== 0) {
 				// 空行を挿入してからやる
 				const endY = ~~(end / SCREEN_WIDTH) + 1;
 				for (var y = SCREEN_HEIGHT - 1; y > endY; y--) {
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
-						ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x] =
-							ramBytes[VRAM_ADDR + (y - 1) * SCREEN_WIDTH + x];
+						vramView[y * SCREEN_WIDTH + x] =
+							vramView[(y - 1) * SCREEN_WIDTH + x];
 					}
 				}
 				for (var x = 0; x < SCREEN_WIDTH; x++) {
- 					ramBytes[VRAM_ADDR + endY * SCREEN_WIDTH + x] = 0;
+ 					vramView[endY * SCREEN_WIDTH + x] = 0;
 				}
 			}
 			if (end === limit) end--;
 			for (var i = end; i > start; i--) {
-				ramBytes[VRAM_ADDR + i] = ramBytes[VRAM_ADDR + i - 1];
+				vramView[i] = vramView[i - 1];
 			}
-			ramBytes[VRAM_ADDR + start] = 0x20;
+			vramView[start] = 0x20;
 			vramDirty = true;
 		}
 		break;
@@ -440,7 +446,7 @@ function putChar(c, isInsert = false) {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
 			var start = cursorY * SCREEN_WIDTH + cursorX;
 			var end;
-			for (end = start; end < limit && ramBytes[VRAM_ADDR + end] !== 0; end++);
+			for (end = start; end < limit && vramView[end] !== 0; end++);
 			var endX = (end === limit ? SCREEN_WIDTH : end % SCREEN_WIDTH);
 			var endY = (end === limit ? SCREEN_HEIGHT - 1 : ~~(end / SCREEN_WIDTH));
 			if (cursorX <= endX) {
@@ -448,7 +454,7 @@ function putChar(c, isInsert = false) {
 				var shiftUp = false;
 				if (cursorY > 0) {
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
-						if (ramBytes[VRAM_ADDR + (SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] !== 0) {
+						if (vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] !== 0) {
 							shiftUp = true;
 							break;
 						}
@@ -458,12 +464,12 @@ function putChar(c, isInsert = false) {
 					// 行末がある行までを上に上げる
 					for (var y = 0; y < endY; y++) {
 						for (var x = 0; x < SCREEN_WIDTH; x++) {
-							ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x] =
-								ramBytes[VRAM_ADDR + (y + 1) * SCREEN_WIDTH + x];
+							vramView[y * SCREEN_WIDTH + x] =
+								vramView[(y + 1) * SCREEN_WIDTH + x];
 						}
 					}
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
-						ramBytes[VRAM_ADDR + endY * SCREEN_WIDTH + x] = 0;
+						vramView[endY * SCREEN_WIDTH + x] = 0;
 					}
 					cursorY--;
 					start -= SCREEN_WIDTH;
@@ -472,22 +478,22 @@ function putChar(c, isInsert = false) {
 					// 行末がある行の次からを下に下げる
 					for (var y = SCREEN_HEIGHT - 2; y > endY; y--) {
 						for (var x = 0; x < SCREEN_WIDTH; x++) {
-							ramBytes[VRAM_ADDR + (y + 1) * SCREEN_WIDTH + x] =
-								ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x];
+							vramView[(y + 1) * SCREEN_WIDTH + x] =
+								vramView[y * SCREEN_WIDTH + x];
 						}
 					}
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
-						ramBytes[VRAM_ADDR + (endY + 1) * SCREEN_WIDTH + x] = 0;
+						vramView[(endY + 1) * SCREEN_WIDTH + x] = 0;
 					}
 				}
 			}
 			// 行分割の操作を行う
 			var dest = ~~((start + SCREEN_WIDTH) / SCREEN_WIDTH) * SCREEN_WIDTH;
 			for (var i = end - 1; i >= start; i--) {
-				ramBytes[VRAM_ADDR + i - start + dest] = ramBytes[VRAM_ADDR + i];
+				vramView[i - start + dest] = vramView[i];
 			}
 			for (var i = start; i < dest; i++) {
-				ramBytes[VRAM_ADDR + i] = 0;
+				vramView[i] = 0;
 			}
 			cursorX = 0;
 			cursorY = ~~(dest / SCREEN_WIDTH);
@@ -498,7 +504,7 @@ function putChar(c, isInsert = false) {
 		break;
 	case 0x12: // カーソルを行頭に移動
 		while ((cursorX > 0 || cursorY > 0) &&
-		ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] !== 0) {
+		vramView[cursorY * SCREEN_WIDTH + cursorX - 1] !== 0) {
 			if (cursorX > 0) {
 				cursorX--;
 			} else {
@@ -520,7 +526,7 @@ function putChar(c, isInsert = false) {
 		moveCursorX = null;
 		break;
 	case 0x17: // カーソルを行末に移動
-		while (ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] !== 0) {
+		while (vramView[cursorY * SCREEN_WIDTH + cursorX] !== 0) {
 			if (cursorX + 1 < SCREEN_WIDTH) {
 				cursorX++;
 			} else {
@@ -537,15 +543,15 @@ function putChar(c, isInsert = false) {
 		{
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
 			var start = cursorY * SCREEN_WIDTH + cursorX;
-			if (start > 0 && ramBytes[VRAM_ADDR + start] === 0) start--;
+			if (start > 0 && vramView[start] === 0) start--;
 			var stop = start;
-			if (ramBytes[VRAM_ADDR + start] !== 0) {
-				for (; start > 0 && ramBytes[VRAM_ADDR + start - 1] !== 0; start--);
+			if (vramView[start] !== 0) {
+				for (; start > 0 && vramView[start - 1] !== 0; start--);
 			}
-			for (; stop < limit && ramBytes[VRAM_ADDR + stop] !== 0; stop++);
+			for (; stop < limit && vramView[stop] !== 0; stop++);
 			if (start == stop) break;
 			for (var i = start; i < stop; i++) {
-				ramBytes[VRAM_ADDR + i] = 0;
+				vramView[i] = 0;
 			}
 			cursorX = start % SCREEN_WIDTH;
 			cursorY = ~~(start / SCREEN_WIDTH);
@@ -555,13 +561,13 @@ function putChar(c, isInsert = false) {
 	case 0x1c: // カーソルを左に移動
 		if (cursorX > 0) {
 			cursorX--;
-		} else if (cursorY > 0 && (!isInsert || ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH - 1] !== 0)) {
+		} else if (cursorY > 0 && (!isInsert || vramView[cursorY * SCREEN_WIDTH - 1] !== 0)) {
 			cursorX = SCREEN_WIDTH - 1;
 			cursorY--;
 		}
 		break;
 	case 0x1d: // カーソルを右に移動
-		if (!isInsert || ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] !== 0) {
+		if (!isInsert || vramView[cursorY * SCREEN_WIDTH + cursorX] !== 0) {
 			if (cursorX + 1 < SCREEN_WIDTH) {
 				cursorX++;
 			} else if (cursorY + 1 < SCREEN_HEIGHT) {
@@ -573,8 +579,8 @@ function putChar(c, isInsert = false) {
 	case 0x1e: // カーソルを上に移動
 		if (cursorY > 0) {
 			cursorY--;
-			if (isInsert && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] === 0) {
-				while (cursorX > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] === 0) {
+			if (isInsert && vramView[cursorY * SCREEN_WIDTH + cursorX] === 0) {
+				while (cursorX > 0 && vramView[cursorY * SCREEN_WIDTH + cursorX - 1] === 0) {
 					cursorX--;
 				}
 			}
@@ -583,8 +589,8 @@ function putChar(c, isInsert = false) {
 	case 0x1f: // カーソルを下に移動
 		if (cursorY + 1 < SCREEN_HEIGHT) {
 			cursorY++;
-			if (isInsert && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] === 0) {
-				while (cursorX > 0 && ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX - 1] === 0) {
+			if (isInsert && vramView[cursorY * SCREEN_WIDTH + cursorX] === 0) {
+				while (cursorX > 0 && vramView[cursorY * SCREEN_WIDTH + cursorX - 1] === 0) {
 					cursorX--;
 				}
 			}
@@ -595,11 +601,11 @@ function putChar(c, isInsert = false) {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH - 1;
 			const start = cursorY * SCREEN_WIDTH + cursorX;
 			var stop;
-			for (stop = start; stop < limit && ramBytes[VRAM_ADDR + stop] !== 0; stop++);
+			for (stop = start; stop < limit && vramView[stop] !== 0; stop++);
 			for (var i = start; i < stop; i++) {
-				ramBytes[VRAM_ADDR + i] = ramBytes[VRAM_ADDR + i + 1];
+				vramView[i] = vramView[i + 1];
 			}
-			ramBytes[VRAM_ADDR + stop] = 0;
+			vramView[stop] = 0;
 			vramDirty = true;
 		}
 		break;
@@ -609,19 +615,19 @@ function putChar(c, isInsert = false) {
 			var cursorPoint = cursorY * SCREEN_WIDTH + cursorX;
 			var zeroPoint = cursorPoint;
 			while (zeroPoint < SCREEN_WIDTH * SCREEN_HEIGHT &&
-				ramBytes[VRAM_ADDR + zeroPoint] !== 0) zeroPoint++;
+				vramView[zeroPoint] !== 0) zeroPoint++;
 			if (zeroPoint >= SCREEN_WIDTH * SCREEN_HEIGHT) {
 				// 画面の最後まで埋まっている場合
 				if (cursorY > 0) {
 					// カーソルが最初の行に無いなら、1行上げる
 					for (var y = 1; y < SCREEN_HEIGHT; y++) {
 						for (var x = 0; x < SCREEN_WIDTH; x++) {
-							ramBytes[VRAM_ADDR + (y - 1) * SCREEN_WIDTH + x]
-								= ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x];
+							vramView[(y - 1) * SCREEN_WIDTH + x]
+								= vramView[y * SCREEN_WIDTH + x];
 						}
 					}
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
-						ramBytes[VRAM_ADDR + (SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
+						vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
 					}
 					cursorY--;
 					cursorPoint -= SCREEN_WIDTH;
@@ -631,25 +637,25 @@ function putChar(c, isInsert = false) {
 					zeroPoint--;
 				}
 			} else if (zeroPoint % SCREEN_WIDTH === SCREEN_WIDTH - 1 &&
-			zeroPoint + 1 < SCREEN_WIDTH * SCREEN_HEIGHT && ramBytes[VRAM_ADDR + zeroPoint + 1] !== 0) {
+			zeroPoint + 1 < SCREEN_WIDTH * SCREEN_HEIGHT && vramView[zeroPoint + 1] !== 0) {
 				// 次の行に行きそうな場合、1行下げる
 				var zeroPointY = ~~(zeroPoint / SCREEN_WIDTH);
 				for (var y = SCREEN_HEIGHT - 2; y > zeroPointY; y--) {
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
-						ramBytes[VRAM_ADDR + (y + 1) * SCREEN_WIDTH + x]
-							= ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x];
+						vramView[(y + 1) * SCREEN_WIDTH + x]
+							= vramView[y * SCREEN_WIDTH + x];
 					}
 				}
 				for (var x = 0; x < SCREEN_WIDTH; x++) {
-					ramBytes[VRAM_ADDR + (zeroPointY + 1) * SCREEN_WIDTH + x] = 0;
+					vramView[(zeroPointY + 1) * SCREEN_WIDTH + x] = 0;
 				}
 			}
 			for (var i = zeroPoint; i > cursorPoint; i--) {
-				ramBytes[VRAM_ADDR + i] = ramBytes[VRAM_ADDR + i - 1];
+				vramView[i] = vramView[i - 1];
 			}
 		}
 		// 文字を書き込む
-		ramBytes[VRAM_ADDR + cursorY * SCREEN_WIDTH + cursorX] = c;
+		vramView[cursorY * SCREEN_WIDTH + cursorX] = c;
 		cursorX++;
 		if (cursorX >= SCREEN_WIDTH) {
 			// 次の行に行く
@@ -660,12 +666,12 @@ function putChar(c, isInsert = false) {
 				// 最終行だったので、1行上げる
 				for (var y = 1; y < SCREEN_HEIGHT; y++) {
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
-						ramBytes[VRAM_ADDR + (y - 1) * SCREEN_WIDTH + x]
-							= ramBytes[VRAM_ADDR + y * SCREEN_WIDTH + x];
+						vramView[(y - 1) * SCREEN_WIDTH + x]
+							= vramView[y * SCREEN_WIDTH + x];
 					}
 				}
 				for (var x = 0; x < SCREEN_WIDTH; x++) {
-					ramBytes[VRAM_ADDR + (SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
+					vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
 				}
 			}
 		}
@@ -688,14 +694,14 @@ function doInteractive() {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
 			var start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
 			var end = start;
-			if (ramBytes[VRAM_ADDR + start] !== 0) {
-				while (start > 0 && ramBytes[VRAM_ADDR + start - 1] !== 0) start--;
-				while (end < limit && ramBytes[VRAM_ADDR + end] !== 0) end++;
+			if (vramView[start] !== 0) {
+				while (start > 0 && vramView[start - 1] !== 0) start--;
+				while (end < limit && vramView[end] !== 0) end++;
 				if (end - start <= CMD_MAX) {
 					for (var i = start; i < end; i++) {
-						ramBytes[CMD_ADDR + i - start] = ramBytes[VRAM_ADDR + i];
+						cmdView[i - start] = vramView[i];
 					}
-					ramBytes[CMD_ADDR + end - start] = 0;
+					cmdView[end - start] = 0;
 					try {
 						// TODO: 実行部分に渡す
 						compile(CMD_ADDR);
@@ -731,20 +737,20 @@ function compile(addr) {
 
 function commandCLK() {
 	// キーバッファを初期化する
-	ramBytes[KEY_ADDR] = 0;
+	keyView[0] = 0;
 }
 
 function commandNEW() {
 	// RAMのプログラム領域を初期化する
 	for (var i = 0; i < 0x400; i++) {
-		ramBytes[PRG_ADDR + i] = 0;
+		prgView[i] = 0;
 	}
 }
 
 function commandCLS() {
 	// VRAMを初期化する
 	for (var i = 0; i < 0x300; i++) {
-		ramBytes[VRAM_ADDR + i] = 0;
+		vramView[i] = 0;
 	}
 	// カーソルの位置を左上に戻す
 	cursorX = 0;
@@ -756,8 +762,8 @@ function commandCLS() {
 
 function commandCLV() {
 	// 配列と変数を初期化する
-	for (var i = 0; i < 0x100; i++) {
-		ramBytes[ARRAY_ADDR + i] = 0;
+	for (var i = 0; i < ARRAY_SIZE + 26; i++) {
+		arrayView[i] = 0;
 	}
 }
 
@@ -765,7 +771,7 @@ function commandCLP() {
 	// RAMのフォント領域を初期化する
 	for (var i = 0; i < 0x20; i++) {
 		for (var j = 0; j < 8; j++) {
-			ramBytes[CRAM_ADDR + i * 8 + j] = ijfont_1_1[(0xE0 + i) * 8 + j];
+			cramView[i * 8 + j] = ijfont_1_1[(0xE0 + i) * 8 + j];
 		}
 	}
 	fontDirty = true;
