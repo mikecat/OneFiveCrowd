@@ -47,7 +47,7 @@ const getTokenInfo = (function(tokens) {
 			lastTokenIndex = str.length
 		}
 		if (lastToken !== null) {
-			return [lastToken, lastTokenIndex];
+			return {"token": lastToken, "nextIndex": lastTokenIndex};
 		} else {
 			return null;
 		}
@@ -70,19 +70,19 @@ const getTokenInfo = (function(tokens) {
 	"N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
 ]);
 
-// [トークン, トークンの次の文字の位置]を返す
+// トークンとトークンの次の文字の位置を返す
 const getTokenByValidChars = function(str, validChars, start = 0) {
 	let token = "";
 	for (let i = start; i < str.length; i++) {
 		const c = str.charAt(i);
 		if (blankChars.indexOf(c) >= 0) continue;
-		if (validChars.indexOf(c) < 0) return [token, i];
+		if (validChars.indexOf(c) < 0) return {"token": token, "nextIndex": i};
 		token += c;
 	}
-	return [token, str.length];
+	return {"token": token, "nextIndex": str.length};
 };
 
-// トークンを[文字列, アドレス]の配列で返す
+// トークン情報の配列を返す
 function lexer(str, firstAddr = 0) {
 	const result = [];
 	for (let i = 0; i < str.length;) {
@@ -93,53 +93,53 @@ function lexer(str, firstAddr = 0) {
 		} else if (c === "#") {
 			// 16進数
 			const tokenInfo = getTokenByValidChars(str, "0123456789abcdefABCDEF", i + 1);
-			if (tokenInfo[0] === "") {
+			if (tokenInfo.token === "") {
 				throw "Invalid token";
 			} else {
-				result.push(["#" + tokenInfo[0], firstAddr + i]);
-				i = tokenInfo[1];
+				result.push({"token": "#" + tokenInfo.token, "address": firstAddr + i});
+				i = tokenInfo.nextIndex;
 			}
 		} else if (c === "`") {
 			// 2進数
 			const tokenInfo = getTokenByValidChars(str, "01", i + 1);
-			if (tokenInfo[0] === "") {
+			if (tokenInfo.token === "") {
 				throw "Invalid token";
 			} else {
-				result.push(["`" + tokenInfo[0], firstAddr + i]);
-				i = tokenInfo[1];
+				result.push({"token": "`" + tokenInfo.token, "address": firstAddr + i});
+				i = tokenInfo.nextIndex;
 			}
 		} else if ("0123456789".indexOf(c) >= 0) {
 			// 10進数
 			const tokenInfo = getTokenByValidChars(str, "0123456789", i);
-			if (tokenInfo[0] === "") {
+			if (tokenInfo.token === "") {
 				throw "Invalid token";
 			} else {
-				result.push([tokenInfo[0], firstAddr + i]);
-				i = tokenInfo[1];
+				result.push({"token": tokenInfo.token, "address": firstAddr + i});
+				i = tokenInfo.nextIndex;
 			}
 		} else if (c === "\"") {
 			// 文字列
 			const strStart = i++;
 			while (i < str.length && str.charAt(i) !== "\"") i++;
 			if (i < str.length) i++;
-			result.push([str.substring(strStart, i), firstAddr + strStart]);
+			result.push({"token": str.substring(strStart, i), "address": firstAddr + strStart});
 		} else if (c === "@") {
 			// ラベル
 			const labelStart = i++;
 			const antiCharacters = blankChars + ":";
 			while (i < str.length && antiCharacters.indexOf(str.charAt(i)) < 0) i++;
-			result.push([str.substring(labelStart, i), firstAddr + labelStart]);
+			result.push({"token": str.substring(labelStart, i), "address": firstAddr + labelStart});
 		} else {
 			// その他のトークン
 			const tokenInfo = getTokenInfo(str, i);
 			if (tokenInfo === null) {
 				throw "Invalid token";
 			} else {
-				result.push([tokenInfo[0], firstAddr + i]);
-				i = tokenInfo[1];
-				if (tokenInfo[0] === "REM" || tokenInfo[0] === "'") {
+				result.push({"token": tokenInfo.token, "address": firstAddr + i});
+				i = tokenInfo.nextIndex;
+				if (tokenInfo.token === "REM" || tokenInfo.token === "'") {
 					// コメント
-					result.push([str.substr(i), firstAddr + i]);
+					result.push({"token": str.substr(i), "address": firstAddr + i});
 					i = str.length;
 				}
 			}
