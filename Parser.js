@@ -63,7 +63,8 @@ const getTokenInfo = (function(tokens) {
 	"RESET", "IN", "ANA", "OUT", "PWM", "DEC$", "HEX$", "BIN$", ">>", "<<",
 	"BPS", "I2CR", "I2CW", "USR", "&&", "||", "CLO", "LANG", "LINE", "SRND",
 	"COPY", "STR$", "LEN", "UART", "OK", "IoT.IN", "IoT.OUT", "SWITCH",
-	"LEFT", "RIGHT", "UP", "DOWN", "SPACE", "MOD",
+	"LEFT", "RIGHT", "UP", "DOWN", "SPACE", "MOD", "DRAW", "POINT",
+	"COS", "SIN", "WS.LED",
 	":", "+", "-", "*", "/", "%", "(", ")", "=", "<", ">", ",", "[", "]", ";",
 	"&", "|", "^", "~", "?", "'",
 	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
@@ -205,9 +206,11 @@ label_definition ::= label label_junk
                    | "STOP" | "CONT" | "RENUM" | "LRUN" | "SLEEP" | "VIDEO"
                    | "POKE" | "CLP" | "HELP" | "RESET" | "OUT" | "PWM" | "BPS"
                    | "CLO" | "SRND" | "COPY" | "UART" | "OK" | "IoT.OUT" | "SWITCH"
+                   | "DRAW" | "WS.LED"
    function_name ::= "BTN" | "TICK" | "INKEY" | "ASC" | "SCR" | "VPEEK" | "ABS"
                    | "SOUND" | "FREE" | "VER" | "FILE" | "PEEK" | "IN" | "ANA"
                    | "I2CR" | "I2CW" | "USR" | "LANG" | "LINE" | "LEN" | "IoT.IN"
+                   | "RND" | "POINT" | "COS" | "SIN"
 
             expr ::= expr7
            expr7 ::= expr6
