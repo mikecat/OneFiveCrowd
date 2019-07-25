@@ -243,6 +243,13 @@ label_definition ::= label label_junk
                    | integer | variable | label | string
 */
 
+const variableIndice = {
+	"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6,
+	"H": 7, "I": 8, "J": 9, "K":10, "L":11, "M":12, "N":13,
+	"O":14, "P":15, "Q":16, "R":17, "S":18, "T":19, "U":20,
+	"V":21, "W":22, "X":23, "Y":24, "Z":25
+};
+
 var parser = (function() {
 	// 指定位置のトークンがキーワード"token"かをチェックする
 	function checkToken(tokens, index, token) {
@@ -297,7 +304,7 @@ var parser = (function() {
 	}
 
 	function command(tokens, index) {
-		const candidates = [label_definition];
+		const candidates = [input_command, label_definition];
 		for (let i = 0; i < candidates.length; i++) {
 			const ret = candidates[i](tokens, index);
 			if (ret !== null) {
@@ -305,6 +312,30 @@ var parser = (function() {
 			}
 		}
 		return buildParseResult("command", [], index);
+	}
+
+	function input_command(tokens, index) {
+		if (checkToken(tokens, index, "INPUT")) {
+			const variable1 = variable(tokens, index + 1);
+			if (variable1 !== null) {
+				return buildParseResult("input_command", [tokens[index], variable1.node], variable1.nextIndex);
+			} else {
+				if (checkTokenKind(tokens, index + 1, "string") && checkToken(tokens, index + 2, ",")) {
+					const variable2 = variable(tokens, index + 3);
+					if (variable2 !== null) {
+						return buildParseResult("input_command",
+							[tokens[index], tokens[index + 1], tokens[index + 2], variable2.node],
+							variable2.nextIndex);
+					} else {
+						return null;
+					}
+				} else {
+					return null;
+				}
+			}
+		} else {
+			return null;
+		}
 	}
 
 	function label_definition(tokens, index) {
@@ -347,6 +378,15 @@ var parser = (function() {
 			return buildParseResult("comment_content", [tokens[index]], index + 1);
 		} else {
 			return buildParseResult("comment_content", [], index);
+		}
+	}
+
+	function variable(tokens, index) {
+		if (checkTokenSet(tokens, index, variableIndice)) {
+			return buildParseResult("variable", [tokens[index]], index + 1);
+		// TODO: "[" expr "]"
+		} else {
+			return null;
 		}
 	}
 
