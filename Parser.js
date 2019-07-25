@@ -277,7 +277,12 @@ var parser = (function() {
 		if (r1 !== null) {
 			return buildParseResult("line", [r1.node], r1.nextIndex);
 		}
-		// TODO: if_command line
+		const r2 = if_command(tokens, index);
+		if (r2 !== null) {
+			const r2_2 = line(tokens, r2.nextIndex);
+			if (r2_2 === null) return null;
+			return buildParseResult("line", [r2.node, r2_2.node], r2_2.nextIndex);
+		}
 		const r3 = command(tokens, index);
 		if (r3 !== null) {
 			const r3_2 = line_separator(tokens, r3.nextIndex);
@@ -312,6 +317,21 @@ var parser = (function() {
 			}
 		}
 		return buildParseResult("command", [], index);
+	}
+
+	function if_command(tokens, index) {
+		if (checkToken(tokens, index, "IF")) {
+			const eres = expr(tokens, index + 1);
+			if (eres === null) return null;
+			if (checkToken(tokens, eres.nextIndex, "THEN")) {
+				return buildParseResult("if_command",
+					[tokens[index], eres.node, tokens[eres.nextIndex]], eres.nextIndex + 1);
+			} else {
+				return buildParseResult("if_command", [tokens[index], eres.node], eres.nextIndex);
+			}
+		} else {
+			return null;
+		}
 	}
 
 	function input_command(tokens, index) {
@@ -388,6 +408,14 @@ var parser = (function() {
 		} else {
 			return null;
 		}
+	}
+
+	function expr(tokens, index) {
+		// TODO
+		if (checkTokenKind(tokens, index, "number")) {
+			return buildParseResult("expr", [tokens[index]], index + 1);
+		}
+		return null;
 	}
 
 	return function (tokens) {
