@@ -261,11 +261,38 @@ var parser = (function() {
 
 	// 各種パースを行う
 	function line(tokens, index) {
-		const r3 = comment(tokens, index);
+		const r1 = comment(tokens, index);
+		if (r1 !== null) {
+			return buildParseResult("line", [r1.node], r1.nextIndex);
+		}
+		// TODO: if_command line
+		const r3 = command(tokens, index);
 		if (r3 !== null) {
-			return buildParseResult("line", [r3.node], r3.nextIndex);
+			const r3_2 = line_separator(tokens, r3.nextIndex);
+			if (r3_2 !== null) {
+				const r3_3 = line(tokens, r3_2.nextIndex);
+				if (r3_3 !== null) {
+					return buildParseResult("line", [r3.node, r3_2.node, r3_3.node], r3_3.nextIndex);
+				} else {
+					return null;
+				}
+			} else {
+				return buildParseResult("line", [r3.node], r3.nextIndex);
+			}
 		}
 		return null;
+	}
+
+	function line_separator(tokens, index) {
+		if (checkToken(tokens, index, ":") || checkToken(tokens, index, "ELSE")) {
+			return buildParseResult("line_separator", [tokens[index]], index + 1);
+		} else {
+			return null;
+		}
+	}
+
+	function command(tokens, index) {
+		return buildParseResult("command", [], index);
 	}
 
 	function comment(tokens, index) {
@@ -293,7 +320,7 @@ var parser = (function() {
 
 	return function (tokens) {
 		const res = line(tokens, 0);
-		if (res === null || res.nextIndex < res.length) {
+		if (res === null || res.nextIndex < tokens.length) {
 			return null;
 		}
 		return res.node;
