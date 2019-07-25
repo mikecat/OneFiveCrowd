@@ -254,6 +254,11 @@ var parser = (function() {
 		return index < tokens.length && tokens[index].kind === "keyword" && (tokens[index].token in tokenSet);
 	}
 
+	// 指定位置のトークンが指定の種類かをチェックする
+	function checkTokenKind(tokens, index, tokenKind) {
+		return index < tokens.length && tokens[index].kind === tokenKind;
+	}
+
 	// パース結果オブジェクトを構築する
 	function buildParseResult(nodeKind, children, nextIndex) {
 		return {"node": {"kind": nodeKind, "nodes": children}, "nextIndex": nextIndex};
@@ -303,7 +308,7 @@ var parser = (function() {
 	}
 
 	function label_definition(tokens, index) {
-		if (index < tokens.length && tokens[index].kind === "label") {
+		if (checkTokenKind(tokens, index, "label")) {
 			const junk = label_junk(tokens, index + 1);
 			if (junk === null) return null;
 			return buildParseResult("label_definition", [tokens[index], junk.node], junk.nextIndex);
