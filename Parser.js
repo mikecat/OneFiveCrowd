@@ -404,7 +404,15 @@ var parser = (function() {
 	function variable(tokens, index) {
 		if (checkTokenSet(tokens, index, variableIndice)) {
 			return buildParseResult("variable", [tokens[index]], index + 1);
-		// TODO: "[" expr "]"
+		} else if (checkToken(tokens, index, "[")) {
+			const eret = expr(tokens, index + 1);
+			if (eret === null) return null;
+			if (checkToken(tokens, eret.nextIndex, "]")) {
+				return buildParseResult("variable",
+					[tokens[index], eret.node, tokens[eret.nextIndex]], eret.nextIndex + 1);
+			} else {
+				return null;
+			}
 		} else {
 			return null;
 		}
