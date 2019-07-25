@@ -146,7 +146,7 @@ function lexer(str, firstAddr = 0) {
 				i = tokenInfo.nextIndex;
 				if (tokenInfo.token === "REM" || tokenInfo.token === "'") {
 					// コメント
-					result.push(createTokenInfo("comment", str.substr(i), firstAddr + i));
+					result.push(createTokenInfo("comment_token", str.substr(i), firstAddr + i));
 					i = str.length;
 				}
 			} else {
