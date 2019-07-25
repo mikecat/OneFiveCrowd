@@ -263,7 +263,7 @@ var parser = (function() {
 	function line(tokens, index) {
 		const r3 = comment(tokens, index);
 		if (r3 !== null) {
-			return buildParseResult("line", r3.node, r3.nextIndex);
+			return buildParseResult("line", [r3.node], r3.nextIndex);
 		}
 		return null;
 	}
