@@ -243,6 +243,59 @@ label_definition ::= label label_junk
                    | integer | variable | label | string
 */
 
-function parser(tokens) {
-	return {"kind": "comment", "nodes": []}; // 仮
-}
+var parser = (function() {
+	// 指定位置のトークンがキーワード"token"かをチェックする
+	function checkToken(tokens, index, token) {
+		return index < tokens.length && tokens[index].kind === "keyword" && tokens[index].token === token;
+	}
+
+	// 指定位置のトークンが連想配列のキーとしてあるかをチェックする
+	function checkTokenSet(tokens, index, tokenSet) {
+		return index < tokens.length && tokens[index].kind === "keyword" && (tokens[index].token in tokenSet);
+	}
+
+	// パース結果オブジェクトを構築する
+	function buildParseResult(nodeKind, children, nextIndex) {
+		return {"node": {"kind": nodeKind, "nodes": children}, "nextIndex": nextIndex};
+	}
+
+	// 各種パースを行う
+	function line(tokens, index) {
+		const r3 = comment(tokens, index);
+		if (r3 !== null) {
+			return buildParseResult("line", r3.node, r3.nextIndex);
+		}
+		return null;
+	}
+
+	function comment(tokens, index) {
+		const result = [];
+		if (checkToken(tokens, index, "REM") || checkToken(tokens, index, "'")) {
+			result.push(tokens[index]);
+			index++;
+			const r = comment_content(tokens, index);
+			if (r === null) return null;
+			result.push(r.node);
+			index = r.nextIndex;
+			return buildParseResult("comment", result, index);
+		} else {
+			return null;
+		}
+	}
+
+	function comment_content(tokens, index) {
+		if (index < tokens.length) {
+			return buildParseResult("comment_content", [tokens[index]], index + 1);
+		} else {
+			return buildParseResult("comment_content", [], index);
+		}
+	}
+
+	return function (tokens) {
+		const res = line(tokens, 0);
+		if (res === null || res.nextIndex < res.length) {
+			return null;
+		}
+		return res.node;
+	};
+})();
