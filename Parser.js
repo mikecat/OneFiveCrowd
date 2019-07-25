@@ -292,7 +292,34 @@ var parser = (function() {
 	}
 
 	function command(tokens, index) {
+		const candidates = [label_definition];
+		for (let i = 0; i < candidates.length; i++) {
+			const ret = candidates[i](tokens, index);
+			if (ret !== null) {
+				return buildParseResult("command", [ret.node], ret.nextIndex);
+			}
+		}
 		return buildParseResult("command", [], index);
+	}
+
+	function label_definition(tokens, index) {
+		if (index < tokens.length && tokens[index].kind === "label") {
+			const junk = label_junk(tokens, index + 1);
+			if (junk === null) return null;
+			return buildParseResult("label_definition", [tokens[index], junk.node], junk.nextIndex);
+		} else {
+			return null;
+		}
+	}
+
+	function label_junk(tokens, index) {
+		if (tokens.length <= index || line_separator(tokens, index) !== null) {
+			return buildParseResult("label_junk", [], index);
+		} else {
+			const junk = label_junk(tokens, index + 1);
+			if (junk === null) return null;
+			return buildParseResult("label_junk", [tokens[index], junk.node], junk.nextIndex);
+		}
 	}
 
 	function comment(tokens, index) {
