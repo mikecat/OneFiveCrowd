@@ -99,7 +99,8 @@ function lexer(str, firstAddr = 0) {
 			// 16進数
 			const tokenInfo = getTokenByValidChars(str, "0123456789abcdefABCDEF", i + 1);
 			if (tokenInfo.token === "") {
-				throw "Invalid token";
+				result.push(createTokenInfo("invalid", str.charAt(i), firstAddr + i));
+				i++;
 			} else {
 				result.push(createTokenInfo("number", "#" + tokenInfo.token, firstAddr + i));
 				i = tokenInfo.nextIndex;
@@ -108,7 +109,8 @@ function lexer(str, firstAddr = 0) {
 			// 2進数
 			const tokenInfo = getTokenByValidChars(str, "01", i + 1);
 			if (tokenInfo.token === "") {
-				throw "Invalid token";
+				result.push(createTokenInfo("invalid", str.charAt(i), firstAddr + i));
+				i++;
 			} else {
 				result.push(createTokenInfo("number", "`" + tokenInfo.token, firstAddr + i));
 				i = tokenInfo.nextIndex;
@@ -117,7 +119,8 @@ function lexer(str, firstAddr = 0) {
 			// 10進数
 			const tokenInfo = getTokenByValidChars(str, "0123456789", i);
 			if (tokenInfo.token === "") {
-				throw "Invalid token";
+				result.push(createTokenInfo("invalid", str.charAt(i), firstAddr + i));
+				i++;
 			} else {
 				result.push(createTokenInfo("number", tokenInfo.token, firstAddr + i));
 				i = tokenInfo.nextIndex;
@@ -137,9 +140,8 @@ function lexer(str, firstAddr = 0) {
 		} else {
 			// その他のトークン
 			const tokenInfo = getTokenInfo(str, i);
-			if (tokenInfo === null) {
-				throw "Invalid token";
-			} else {
+			if (tokenInfo !== null) {
+				// 登録されているキーワード
 				result.push(createTokenInfo("keyword", tokenInfo.token, firstAddr + i));
 				i = tokenInfo.nextIndex;
 				if (tokenInfo.token === "REM" || tokenInfo.token === "'") {
@@ -147,6 +149,10 @@ function lexer(str, firstAddr = 0) {
 					result.push(createTokenInfo("comment", str.substr(i), firstAddr + i));
 					i = str.length;
 				}
+			} else {
+				// その他(不正)
+				result.push(createTokenInfo("invalid", str.charAt(i), firstAddr + i));
+				i++;
 			}
 		}
 	}
