@@ -732,8 +732,9 @@ function compile(addr) {
 		source += String.fromCharCode(ramBytes[i]);
 	}
 	const tokens = lexer(source, addr);
-	// TODO: パース
 	console.log(tokens);
+	const ast = parser(tokens);
+	console.log(ast);
 	return [];
 }
 

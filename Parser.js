@@ -243,5 +243,5 @@ label_definition ::= label label_junk
 */
 
 function parser(tokens) {
-	
+	return {"kind": "comment", "nodes": []}; // 仮
 }
