@@ -175,6 +175,7 @@ function lexer(str, firstAddr = 0) {
    print_command ::= "PRINT" print_arguments
                    | "?" print_arguments
  print_arguments ::= (空)
+                   | print_argument
                    | print_argument print_separator print_arguments
   print_argument ::= string
                    | print_modifier
