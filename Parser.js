@@ -239,8 +239,9 @@ function_arguments ::= (空)
                      | expr2_op expr2
           expr2_op ::= "-" | "~" | "!" | "NOT"
              expr1 ::= "(" expr7 ")"
+                     | function_name "(" function_arguments ")"
                      | "LEFT | "RIGHT" | "UP" | "DOWN" | "SPACE"
-                     | integer | variable | label | string
+                     | number | variable | label | string
 */
 
 const printModifiers = {
@@ -300,6 +301,34 @@ const basicCommands = {
 	"SWITCH" : null,
 	"DRAW"   : null,
 	"WS.LED" : null
+};
+
+const basicFunctions = {
+	"BTN"   : null,
+	"TICK"  : null,
+	"INKEY" : null,
+	"ASC"   : null,
+	"SCR"   : null,
+	"VPEEK" : null,
+	"ABS"   : null,
+	"SOUND" : null,
+	"FREE"  : null,
+	"VER"   : null,
+	"FILE"  : null,
+	"PEEK"  : null,
+	"IN"    : null,
+	"ANA"   : null,
+	"I2CR"  : null,
+	"I2CW"  : null,
+	"USR"   : null,
+	"LANG"  : null,
+	"LINE"  : null,
+	"LEN"   : null,
+	"IoT.IN": null,
+	"RND"   : null,
+	"POINT" : null,
+	"COS"   : null,
+	"SIN"   : null
 };
 
 const variableIndice = {
@@ -623,6 +652,13 @@ var parser = (function() {
 	function command_name(tokens, index) {
 		if (checkTokenSet(tokens, index, basicCommands)) {
 			return buildParseResult("command_name", [tokens[index]], index + 1);
+		}
+		return null;
+	}
+
+	function function_name(tokens, index) {
+		if (checkTokenSet(tokens, index, basicFunctions)) {
+			return buildParseResult("function_name", [tokens[index]], index + 1);
 		}
 		return null;
 	}
