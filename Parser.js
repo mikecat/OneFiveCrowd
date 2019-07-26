@@ -251,6 +251,57 @@ const printModifiers = {
 	"STR$": null
 };
 
+const basicCommands = {
+	"LED"    : null,
+	"WAIT"   : null,
+	"RUN"    : null,
+	"LIST"   : null,
+	"GOTO"   : null,
+	"END"    : null,
+	"NEW"    : null,
+	"LOCATE" : null,
+	"LC"     : null,
+	"CLS"    : null,
+	"SAVE"   : null,
+	"LOAD"   : null,
+	"FILES"  : null,
+	"BEEP"   : null,
+	"PLAY"   : null,
+	"TEMPO"  : null,
+	"CLT"    : null,
+	"SCROLL" : null,
+	"NEXT"   : null,
+	"CLV"    : null,
+	"CLEAR"  : null,
+	"CLK"    : null,
+	"GOSUB"  : null,
+	"GSB"    : null,
+	"RETURN" : null,
+	"RTN"    : null,
+	"STOP"   : null,
+	"CONT"   : null,
+	"RENUM"  : null,
+	"LRUN"   : null,
+	"SLEEP"  : null,
+	"VIDEO"  : null,
+	"POKE"   : null,
+	"CLP"    : null,
+	"HELP"   : null,
+	"RESET"  : null,
+	"OUT"    : null,
+	"PWM"    : null,
+	"BPS"    : null,
+	"CLO"    : null,
+	"SRND"   : null,
+	"COPY"   : null,
+	"UART"   : null,
+	"OK"     : null,
+	"IoT.OUT": null,
+	"SWITCH" : null,
+	"DRAW"   : null,
+	"WS.LED" : null
+};
+
 const variableIndice = {
 	"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6,
 	"H": 7, "I": 8, "J": 9, "K":10, "L":11, "M":12, "N":13,
@@ -317,7 +368,8 @@ var parser = (function() {
 	}
 
 	function command(tokens, index) {
-		const candidates = [print_command, for_command, input_command, let_command, label_definition];
+		const candidates = [print_command, for_command, input_command, let_command,
+			label_definition, general_command];
 		for (let i = 0; i < candidates.length; i++) {
 			const ret = candidates[i](tokens, index);
 			if (ret !== null) {
@@ -514,6 +566,14 @@ var parser = (function() {
 		}
 	}
 
+	function general_command(tokens, index) {
+		const cret = command_name(tokens, index);
+		if (cret === null) return null;
+		const aret = function_arguments(tokens, cret.nextIndex);
+		if (aret === null) return null;
+		return buildParseResult("genaral_command", [cret.node, aret.node], aret.nextIndex);
+	}
+
 	function function_arguments(tokens, index) {
 		const aret = argument_list(tokens, index);
 		if (aret === null) {
@@ -556,6 +616,13 @@ var parser = (function() {
 	function modifier_name(tokens, index) {
 		if (checkTokenSet(tokens, index, printModifiers)) {
 			return buildParseResult("modifier_name", [tokens[index]], index + 1);
+		}
+		return null;
+	}
+
+	function command_name(tokens, index) {
+		if (checkTokenSet(tokens, index, basicCommands)) {
+			return buildParseResult("command_name", [tokens[index]], index + 1);
 		}
 		return null;
 	}
