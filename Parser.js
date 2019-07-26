@@ -309,7 +309,7 @@ var parser = (function() {
 	}
 
 	function command(tokens, index) {
-		const candidates = [input_command, label_definition];
+		const candidates = [for_command, input_command, label_definition];
 		for (let i = 0; i < candidates.length; i++) {
 			const ret = candidates[i](tokens, index);
 			if (ret !== null) {
@@ -328,6 +328,34 @@ var parser = (function() {
 					[tokens[index], eres.node, tokens[eres.nextIndex]], eres.nextIndex + 1);
 			} else {
 				return buildParseResult("if_command", [tokens[index], eres.node], eres.nextIndex);
+			}
+		} else {
+			return null;
+		}
+	}
+
+	function for_command(tokens, index) {
+		if (checkToken(tokens, index, "FOR")) {
+			const vres = variable(tokens, index + 1);
+			if (vres === null) return null;
+			if (!checkToken(tokens, vres.nextIndex, "=")) return null;
+			const eres = expr(tokens, vres.nextIndex + 1);
+			if (eres === null) return null;
+			if (!checkToken(tokens, eres.nextIndex, "TO")) return null;
+			const eres2 = expr(tokens, eres.nextIndex + 1);
+			if (eres2 === null) return null;
+			if (checkToken(tokens, eres2.nextIndex, "STEP")) {
+				const eres3 = expr(tokens, eres2.nextIndex + 1);
+				if (eres3 === null) return null;
+				return buildParseResult("for_command",
+					[tokens[index], vres.node, tokens[vres.nextIndex], eres.node,
+						tokens[eres.nextIndex], eres2.node, tokens[eres2.nextIndex], eres3.node],
+					eres3.nextIndex);
+			} else {
+				return buildParseResult("for_command",
+					[tokens[index], vres.node, tokens[vres.nextIndex], eres.node,
+						tokens[eres.nextIndex], eres2.node],
+					eres2.nextIndex);
 			}
 		} else {
 			return null;
