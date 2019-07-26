@@ -160,87 +160,87 @@ function lexer(str, firstAddr = 0) {
 }
 
 /*
-            line ::= command
-                   | command line_separator line
-                   | if_command line
-                   | comment
-  line_separator ::= ":" | "ELSE"
-         command ::= (空) 
-                   | print_command
-                   | for_command
-                   | input_command
-                   | let_command
-                   | label_definition
-                   | general_command
-   print_command ::= "PRINT" print_arguments
-                   | "?" print_arguments
- print_arguments ::= (空)
-                   | print_argument
-                   | print_argument print_separator print_arguments
-  print_argument ::= string
-                   | print_modifier
-                   | expr
- print_separator ::= "," | ";"
-  print_modifier ::= modifier_name "(" arguments ")"
-      if_command ::= "IF" expr "THEN"
-                   | "IF" expr
-     for_command ::= "FOR" variable "=" expr "TO" expr
-                   | "FOR" variable "=" expr "TO" expr "STEP" expr
-   input_command ::= "INPUT" variable
-                   | "INPUT" string "," variable
-     let_command ::= "LET" variable "," arguments
-                   | variable "=" expr
-label_definition ::= label label_junk
-      label_junk ::= (空)
-                   | (line_separatorを除く任意のトークン) label_junk
-         comment ::= "REM" comment_content
-                   | "'" comment_content
- comment_content ::= (空)
-                   | (任意のトークン)
- general_command ::= command_name arguments
-       arguments ::= (空)
-                   | argument_list
-   argument_list ::= expr
-                   | expr "," argument_list
-        variable ::= "A" | "B" | ... | "Y" | "Z"
-                   | "[" expr "]"
+              line ::= command
+                     | command line_separator line
+                     | if_command line
+                     | comment
+    line_separator ::= ":" | "ELSE"
+           command ::= (空) 
+                     | print_command
+                     | for_command
+                     | input_command
+                     | let_command
+                     | label_definition
+                     | general_command
+     print_command ::= "PRINT" print_arguments
+                     | "?" print_arguments
+   print_arguments ::= (空)
+                     | print_argument
+                     | print_argument print_separator print_arguments
+    print_argument ::= string
+                     | print_modifier
+                     | expr
+   print_separator ::= "," | ";"
+    print_modifier ::= modifier_name "(" function_arguments ")"
+        if_command ::= "IF" expr "THEN"
+                     | "IF" expr
+       for_command ::= "FOR" variable "=" expr "TO" expr
+                     | "FOR" variable "=" expr "TO" expr "STEP" expr
+     input_command ::= "INPUT" variable
+                     | "INPUT" string "," variable
+       let_command ::= "LET" variable "," argument_list
+                     | variable "=" expr
+  label_definition ::= label label_junk
+        label_junk ::= (空)
+                     | (line_separatorを除く任意のトークン) label_junk
+           comment ::= "REM" comment_content
+                     | "'" comment_content
+   comment_content ::= (空)
+                     | (任意のトークン)
+   general_command ::= command_name function_arguments
+function_arguments ::= (空)
+                     | argument_list
+     argument_list ::= expr
+                     | expr "," argument_list
+          variable ::= "A" | "B" | ... | "Y" | "Z"
+                     | "[" expr "]"
 
-   modifier_name ::= "CHR$" | "DEC$" | "HEX$" | "BIN$" | "STR$"
-    command_name ::= "LED" | "WAIT" | "RUN" | "LIST" | "GOTO" | "END" | "NEW"
-                   | "LOCATE" | "LC" | "CLS" | "SAVE" | "LOAD" | "FILES | "BEEP"
-                   | "PLAY" | "TEMPO" | "CLT" | "SCROLL" | "NEXT" | "CLV"
-                   | "CLEAR" | "CLK" | "GOSUB" | "GSB" | "RETURN" | "RTN"
-                   | "STOP" | "CONT" | "RENUM" | "LRUN" | "SLEEP" | "VIDEO"
-                   | "POKE" | "CLP" | "HELP" | "RESET" | "OUT" | "PWM" | "BPS"
-                   | "CLO" | "SRND" | "COPY" | "UART" | "OK" | "IoT.OUT" | "SWITCH"
-                   | "DRAW" | "WS.LED"
-   function_name ::= "BTN" | "TICK" | "INKEY" | "ASC" | "SCR" | "VPEEK" | "ABS"
-                   | "SOUND" | "FREE" | "VER" | "FILE" | "PEEK" | "IN" | "ANA"
-                   | "I2CR" | "I2CW" | "USR" | "LANG" | "LINE" | "LEN" | "IoT.IN"
-                   | "RND" | "POINT" | "COS" | "SIN"
+     modifier_name ::= "CHR$" | "DEC$" | "HEX$" | "BIN$" | "STR$"
+      command_name ::= "LED" | "WAIT" | "RUN" | "LIST" | "GOTO" | "END" | "NEW"
+                     | "LOCATE" | "LC" | "CLS" | "SAVE" | "LOAD" | "FILES | "BEEP"
+                     | "PLAY" | "TEMPO" | "CLT" | "SCROLL" | "NEXT" | "CLV"
+                     | "CLEAR" | "CLK" | "GOSUB" | "GSB" | "RETURN" | "RTN"
+                     | "STOP" | "CONT" | "RENUM" | "LRUN" | "SLEEP" | "VIDEO"
+                     | "POKE" | "CLP" | "HELP" | "RESET" | "OUT" | "PWM" | "BPS"
+                     | "CLO" | "SRND" | "COPY" | "UART" | "OK" | "IoT.OUT" | "SWITCH"
+                     | "DRAW" | "WS.LED"
+     function_name ::= "BTN" | "TICK" | "INKEY" | "ASC" | "SCR" | "VPEEK" | "ABS"
+                     | "SOUND" | "FREE" | "VER" | "FILE" | "PEEK" | "IN" | "ANA"
+                     | "I2CR" | "I2CW" | "USR" | "LANG" | "LINE" | "LEN" | "IoT.IN"
+                     | "RND" | "POINT" | "COS" | "SIN"
 
-            expr ::= expr7
-           expr7 ::= expr6
-                   | expr7 expr7_op expr6
-        expr7_op ::= "OR" | "||"
-           expr6 ::= expr5
-                   | expr6 expr6_op expr5
-        expr6_op ::= "AND" | "&&"
-           expr5 ::= expr4
-                   | expr5 expr5_op expr4
-        expr5_op ::= "=" | "==" | "<>" | "!=" | "<" | ">" | "<=" | ">="
-           expr4 ::= expr3
-                   | expr4 expr4_op expr3
-        expr4_op ::= "+" | "-" | "|"
-           expr3 ::= expr2
-                   | expr3 expr3_op expr2
-        expr3_op ::= "*" | "/" | "%" | "MOD" | "<<" | ">>" | "&" | "^"
-           expr2 ::= expr1
-                   | expr2_op expr2
-        expr2_op ::= "-" | "~" | "!" | "NOT"
-           expr1 ::= "(" expr7 ")"
-                   | "LEFT | "RIGHT" | "UP" | "DOWN" | "SPACE"
-                   | integer | variable | label | string
+              expr ::= expr7
+             expr7 ::= expr6
+                     | expr7 expr7_op expr6
+          expr7_op ::= "OR" | "||"
+             expr6 ::= expr5
+                     | expr6 expr6_op expr5
+          expr6_op ::= "AND" | "&&"
+             expr5 ::= expr4
+                     | expr5 expr5_op expr4
+          expr5_op ::= "=" | "==" | "<>" | "!=" | "<" | ">" | "<=" | ">="
+             expr4 ::= expr3
+                     | expr4 expr4_op expr3
+          expr4_op ::= "+" | "-" | "|"
+             expr3 ::= expr2
+                     | expr3 expr3_op expr2
+          expr3_op ::= "*" | "/" | "%" | "MOD" | "<<" | ">>" | "&" | "^"
+             expr2 ::= expr1
+                     | expr2_op expr2
+          expr2_op ::= "-" | "~" | "!" | "NOT"
+             expr1 ::= "(" expr7 ")"
+                     | "LEFT | "RIGHT" | "UP" | "DOWN" | "SPACE"
+                     | integer | variable | label | string
 */
 
 const variableIndice = {
@@ -309,7 +309,7 @@ var parser = (function() {
 	}
 
 	function command(tokens, index) {
-		const candidates = [for_command, input_command, label_definition];
+		const candidates = [for_command, input_command, let_command, label_definition];
 		for (let i = 0; i < candidates.length; i++) {
 			const ret = candidates[i](tokens, index);
 			if (ret !== null) {
@@ -386,6 +386,26 @@ var parser = (function() {
 		}
 	}
 
+	function let_command(tokens, index) {
+		if (checkToken(tokens, index, "LET")) {
+			const vret = variable(tokens, index + 1);
+			if (vret === null) return null;
+			if (!checkToken(tokens, vret.nextIndex, ",")) return null;
+			const aret = argument_list(tokens, vret.nextIndex + 1);
+			if (aret === null) return null;
+			return buildParseResult("let_command",
+				[tokens[index], vret.node, tokens[vret.nextIndex], aret.node], aret.nextIndex);
+		} else {
+			const vret = variable(tokens, index);
+			if (vret === null) return null;
+			if (!checkToken(tokens, vret.nextIndex, "=")) return null;
+			const eret = expr(tokens, vret.nextIndex + 1);
+			if (eret === null) return null;
+			return buildParseResult("let_command", [vret.node, tokens[vret.nextIndex], eret.node],
+				eret.nextIndex);
+		}
+	}
+
 	function label_definition(tokens, index) {
 		if (checkTokenKind(tokens, index, "label")) {
 			const junk = label_junk(tokens, index + 1);
@@ -426,6 +446,28 @@ var parser = (function() {
 			return buildParseResult("comment_content", [tokens[index]], index + 1);
 		} else {
 			return buildParseResult("comment_content", [], index);
+		}
+	}
+
+	function function_arguments(tokens, index) {
+		const aret = argument_list(tokens, index);
+		if (aret === null) {
+			return buildParseResult("function_arguments", [], index);
+		} else {
+			return buildParseResult("function_arguments", [aret.node], aret.nextIndex);
+		}
+	}
+
+	function argument_list(tokens, index) {
+		const eret = expr(tokens, index);
+		if (eret === null) return null;
+		if (checkToken(tokens, eret.nextIndex, ",")) {
+			const aret = argument_list(tokens, eret.nextIndex + 1);
+			if (aret === null) return null;
+			return buildParseResult("argument_list",
+				[eret.node, tokens[eret.nextIndex], aret.node], aret.nextIndex);
+		} else {
+			return buildParseResult("argument_list", [eret.node], eret.nextIndex);
 		}
 	}
 
