@@ -243,6 +243,14 @@ function_arguments ::= (空)
                      | integer | variable | label | string
 */
 
+const printModifiers = {
+	"CHR$": null,
+	"DEC$": null,
+	"HEX$": null,
+	"BIN$": null,
+	"STR$": null
+};
+
 const variableIndice = {
 	"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6,
 	"H": 7, "I": 8, "J": 9, "K":10, "L":11, "M":12, "N":13,
@@ -309,7 +317,7 @@ var parser = (function() {
 	}
 
 	function command(tokens, index) {
-		const candidates = [for_command, input_command, let_command, label_definition];
+		const candidates = [print_command, for_command, input_command, let_command, label_definition];
 		for (let i = 0; i < candidates.length; i++) {
 			const ret = candidates[i](tokens, index);
 			if (ret !== null) {
@@ -317,6 +325,63 @@ var parser = (function() {
 			}
 		}
 		return buildParseResult("command", [], index);
+	}
+
+	function print_command(tokens, index) {
+		if (checkToken(tokens, index, "PRINT") || checkToken(tokens, index, "?")) {
+			const aret = print_arguments(tokens, index + 1);
+			if (aret === null) return null;
+			return buildParseResult("print_command", [tokens[index], aret.node], aret.nextIndex);
+		} else {
+			return null;
+		}
+	}
+
+	function print_arguments(tokens, index) {
+		const aret = print_argument(tokens, index);
+		if (aret === null) {
+			return buildParseResult("print_arguments", [], index);
+		}
+		const sret = print_separator(tokens, aret.nextIndex);
+		if (sret === null) {
+			return buildParseResult("print_arguments", [aret.node], aret.nextIndex);
+		}
+		const aret2 = print_arguments(tokens, sret.nextIndex);
+		if (aret2 === null) return null;
+		return buildParseResult("print_arguments", [aret.node, sret.node, aret2.node], aret2.nextIndex);
+	}
+
+	function print_argument(tokens, index) {
+		if (checkTokenKind(tokens, index, "string")) {
+			return buildParseResult("print_argument", [tokens[index]], index + 1);
+		}
+		const pret = print_modifier(tokens, index);
+		if (pret !== null) {
+			return buildParseResult("print_argument", [pret.node], pret.nextIndex);
+		}
+		const eret = expr(tokens, index);
+		if (eret !== null) {
+			return buildParseResult("print_argument", [eret.node], eret.nextIndex);
+		}
+		return null;
+	}
+
+	function print_separator(tokens, index) {
+		if (checkToken(tokens, index, ",") || checkToken(tokens, index, ";")) {
+			return buildParseResult("print_separator", [tokens[index]], index + 1);
+		}
+		return null;
+	}
+
+	function print_modifier(tokens, index) {
+		const mret = modifier_name(tokens, index);
+		if (mret === null) return null;
+		if (!checkToken(tokens, mret.nextIndex, "(")) return null;
+		const aret = function_arguments(tokens, mret.nextIndex + 1);
+		if (aret === null) return null;
+		if (!checkToken(tokens, aret.nextIndex, ")")) return null;
+		return buildParseResult("print_modifier",
+			[mret.node, tokens[mret.nextIndex], aret.node, tokens[aret.nextIndex]], aret.nextIndex + 1);
 	}
 
 	function if_command(tokens, index) {
@@ -486,6 +551,13 @@ var parser = (function() {
 		} else {
 			return null;
 		}
+	}
+
+	function modifier_name(tokens, index) {
+		if (checkTokenSet(tokens, index, printModifiers)) {
+			return buildParseResult("modifier_name", [tokens[index]], index + 1);
+		}
+		return null;
 	}
 
 	function expr(tokens, index) {
