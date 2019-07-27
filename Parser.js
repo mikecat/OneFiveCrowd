@@ -218,6 +218,7 @@ function_arguments ::= (空)
                      | "SOUND" | "FREE" | "VER" | "FILE" | "PEEK" | "IN" | "ANA"
                      | "I2CR" | "I2CW" | "USR" | "LANG" | "LINE" | "LEN" | "IoT.IN"
                      | "RND" | "POINT" | "COS" | "SIN"
+          constant ::= "LEFT | "RIGHT" | "UP" | "DOWN" | "SPACE"
 
               expr ::= expr7
              expr7 ::= expr6
@@ -240,8 +241,7 @@ function_arguments ::= (空)
           expr2_op ::= "-" | "~" | "!" | "NOT"
              expr1 ::= "(" expr7 ")"
                      | function_name "(" function_arguments ")"
-                     | "LEFT | "RIGHT" | "UP" | "DOWN" | "SPACE"
-                     | number | variable | label | string
+                     | constant | variable| number | label | string
 */
 
 const variableIndice = {
@@ -336,6 +336,55 @@ const basicFunctions = {
 	"POINT" : null,
 	"COS"   : null,
 	"SIN"   : null
+};
+
+const expr7_ops = {
+	"OR" : null,
+	"||" : null
+};
+
+const expr6_ops = {
+	"AND": null,
+	"&&" : null
+};
+
+const expr5_ops = {
+	"="  : null,
+	"==" : null,
+	"<>" : null,
+	"!=" : null,
+	"<"  : null,
+	">"  : null,
+	"<=" : null,
+	">=" : null
+};
+
+const expr4_ops = {
+	"+"  : null,
+	"-"  : null,
+	"|"  : null,
+};
+
+const expr3_ops = {
+	"*"  : null,
+	"/"  : null,
+	"%"  : null,
+	"MOD": null,
+	"<<" : null,
+	">>" : null,
+	"&"  : null,
+	"^"  : null
+};
+
+const expr2_ops = {
+	"-"  : null,
+	"~"  : null,
+	"!"  : null,
+	"NOT": null
+};
+
+const basicConstants = {
+	"LEFT": 28, "RIGHT": 29, "UP": 30, "DOWN": 31, "SPACE": 32
 };
 
 var parser = (function() {
@@ -663,10 +712,80 @@ var parser = (function() {
 		return null;
 	}
 
+	function constant(tokens, index) {
+		if (checkTokenSet(tokens, index, basicConstants)) {
+			return buildParseResult("constant", [tokens[index]], index + 1);
+		}
+		return null;
+	}
+
 	function expr(tokens, index) {
-		// TODO
-		if (checkTokenKind(tokens, index, "number")) {
-			return buildParseResult("expr", [tokens[index]], index + 1);
+		const eres = expr7(tokens, index);
+		if (eres === null) return null;
+		return buildParseResult("expr", [eres.node], eres.nextIndex);
+	}
+
+	function buildExprParser(name, nextLevel, ops) {
+		return function(tokens, index) {
+			const nres = nextLevel(tokens, index);
+			if (nres === null) return null;
+			let result = buildParseResult(name, [nres.node], nres.nextIndex);
+			let nextIndex = nres.nextIndex;
+			for (;;) {
+				if (!checkTokenSet(tokens, nextIndex, ops)) return result;
+				const eres = nextLevel(tokens, nextIndex + 1);
+				if (eres === null) return null;
+				result = buildParseResult(name, [result.node, tokens[nextIndex], eres.node], eres.nextIndex);
+				nextIndex = eres.nextIndex;
+			}
+		};
+	}
+
+	function expr2(tokens, index) {
+		if (checkTokenSet(tokens, index, expr2_ops)) {
+			const eres = expr2(tokens, index + 1);
+			if (eres === null) return null;
+			return buildParseResult("expr2", [ores.node, eres.node], eres.nextIndex);
+		} else {
+			const eres = expr1(tokens, index);
+			if (eres === null) return null;
+			return buildParseResult("expr2", [eres.node], eres.nextIndex);
+		}
+	}
+	// BNFの順番通りにするとundefinedになるので、この順番にする
+	var expr3 = buildExprParser("expr3", expr2, expr3_ops);
+	var expr4 = buildExprParser("expr4", expr3, expr4_ops);
+	var expr5 = buildExprParser("expr5", expr4, expr5_ops);
+	var expr6 = buildExprParser("expr6", expr5, expr6_ops);
+	var expr7 = buildExprParser("expr7", expr6, expr7_ops);
+
+	function expr1(tokens, index) {
+		if (checkToken(tokens, index, "(")) {
+			const eres = expr7(tokens, index + 1);
+			if (eres === null) return null;
+			if (!checkToken(tokens, eres.nextIndex, ")")) return null;
+			return buildParseResult("expr1",
+				[tokens[index], eres.node, tokens[eres.nextIndex]], eres.nextIndex + 1);
+		}
+		if (checkTokenSet(tokens, index, basicFunctions)) {
+			if (!checkToken(tokens, index + 1, "(")) return null;
+			const ares = function_arguments(tokens, index + 2);
+			if (ares === null) return null;
+			if (!checkToken(tokens, ares.nextIndex, ")")) return null;
+			return buildParseResult("expr1",
+				[tokens[index], tokens[index + 1], ares.node, tokens[ares.nextIndex]], ares.nextIndex + 1);
+		}
+		const cres = constant(tokens, index);
+		if (cres !== null) {
+			return buildParseResult("expr1", [cres.node], cres.nextIndex);
+		}
+		const vres = variable(tokens, index);
+		if (vres !== null) {
+			return buildParseResult("expr1", [vres.node], vres.nextIndex);
+		}
+		if (checkTokenKind(tokens, index, "number") || checkTokenKind(tokens, index, "label") ||
+		checkTokenKind(tokens, index, "string")) {
+			return buildParseResult("expr1", [tokens[index]], index + 1);
 		}
 		return null;
 	}
