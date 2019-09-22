@@ -58,37 +58,37 @@ const writeArray = isLittleEndian ? function(id, value) {
 	arrayView[id] = value;
 } : function(id) {
 	// 非リトルエンディアン環境用
-	ramView.setInt16(ARRAY_ADDR + 2 * id, value,  true);
+	ramView.setInt16(ARRAY_ADDR + 2 * id, value, true);
 };
 
 // キー入力でブロックした時、ブロック解除での飛び先
-var keyCallback = null;
+let keyCallback = null;
 
 // カーソル位置
-var cursorX = 0;
-var cursorY = 0;
+let cursorX = 0;
+let cursorY = 0;
 
 // カーソルアニメーション用
-var cursorDispX = -1;
-var cursorDispY = -1;
-var cursorOn = false;
-var cursorTimerId = null;
+let cursorDispX = -1;
+let cursorDispY = -1;
+let cursorOn = false;
+let cursorTimerId = null;
 
-var mainScreenContext;
+let mainScreenContext;
 const fontImages = new Array(256);
 
 // 更新するべきか
-var fontDirty = false;
-var vramDirty = false;
+let fontDirty = false;
+let vramDirty = false;
 
 // フォントデータを描画用のImageDataに変換する
 function dataToFontImage(image, data, offset) {
-	var imageData = image.data;
-	for (var y = 0; y < 8; y++) {
-		var line = data[offset + y];
-		for (var x = 0; x < 8; x++) {
-			var imageOffset = y * (4 * 16 * 2) + x * (4 * 2);
-			var value = ((line >> (7 - x)) & 1) ? 255 : 0;
+	const imageData = image.data;
+	for (let y = 0; y < 8; y++) {
+		const line = data[offset + y];
+		for (let x = 0; x < 8; x++) {
+			const imageOffset = y * (4 * 16 * 2) + x * (4 * 2);
+			const value = ((line >> (7 - x)) & 1) ? 255 : 0;
 			imageData[imageOffset + 0] = imageData[imageOffset + 4] = value;
 			imageData[imageOffset + 1] = imageData[imageOffset + 5] = value;
 			imageData[imageOffset + 2] = imageData[imageOffset + 6] = value;
@@ -104,7 +104,7 @@ function dataToFontImage(image, data, offset) {
 function updateScreen() {
 	if (fontDirty) {
 		// RAM上のフォントデータを更新する
-		for (var i = 0; i < 0x20; i++) {
+		for (let i = 0; i < 0x20; i++) {
 			dataToFontImage(fontImages[0xE0 + i], cramView, i * 8);
 		}
 		fontDirty = false;
@@ -112,16 +112,16 @@ function updateScreen() {
 	}
 	if (vramDirty) {
 		// VRAMを画面に反映させる
-		for (var y = 0; y < SCREEN_HEIGHT; y++) {
-			for (var x = 0; x < SCREEN_WIDTH; x++) {
+		for (let y = 0; y < SCREEN_HEIGHT; y++) {
+			for (let x = 0; x < SCREEN_WIDTH; x++) {
 				mainScreenContext.putImageData(
 					fontImages[vramView[y * SCREEN_WIDTH + x]], x * 16, y * 16);
 			}
 		}
 		if (cursorOn) {
 			if (0 <= cursorX && cursorX < SCREEN_WIDTH && 0 <= cursorY && cursorY < SCREEN_HEIGHT) {
-				var imageData = mainScreenContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
-				for (var i = 0; i < imageData.data.length; i += 4) {
+				const imageData = mainScreenContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
+				for (let i = 0; i < imageData.data.length; i += 4) {
 					imageData.data[i + 0] = 255 - imageData.data[i + 0];
 					imageData.data[i + 1] = 255 - imageData.data[i + 1];
 					imageData.data[i + 2] = 255 - imageData.data[i + 2];
@@ -146,8 +146,8 @@ function updateScreen() {
 		}
 		// 新しい位置にカーソルを描く
 		if (0 <= cursorX && cursorX < SCREEN_WIDTH && 0 <= cursorY && cursorY < SCREEN_HEIGHT) {
-			var imageData = mainScreenContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
-			for (var i = 0; i < imageData.data.length; i += 4) {
+			const imageData = mainScreenContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
+			for (let i = 0; i < imageData.data.length; i += 4) {
 				imageData.data[i + 0] = 255 - imageData.data[i + 0];
 				imageData.data[i + 1] = 255 - imageData.data[i + 1];
 				imageData.data[i + 2] = 255 - imageData.data[i + 2];
@@ -169,22 +169,22 @@ function updateScreen() {
 
 function initSystem() {
 	// canvasの初期化
-	var canvas = document.getElementById("mainScreen");
+	const canvas = document.getElementById("mainScreen");
 	mainScreenContext = canvas.getContext("2d");
 
 	// ROMの内容の初期化
-	for (var i = 0; i < 0xE0; i++) {
-		for (var j = 0; j < 8; j++) {
+	for (let i = 0; i < 0xE0; i++) {
+		for (let j = 0; j < 8; j++) {
 			romBytes[CROM_ADDR + i * 8 + j] = ijfont_1_1[i * 8 + j];
 		}
 	}
 	// ROM部分のフォントの初期化
-	for (var i = 0; i < 0xE0; i++) {
+	for (let i = 0; i < 0xE0; i++) {
 		fontImages[i] = mainScreenContext.createImageData(16, 16);
 		dataToFontImage(fontImages[i], romBytes, CROM_ADDR + i * 8);
 	}
 	// RAM用のフォントの枠を作る
-	for (var i = 0; i < 0x20; i++) {
+	for (let i = 0; i < 0x20; i++) {
 		fontImages[0xE0 + i] = mainScreenContext.createImageData(16, 16);
 	}
 
@@ -217,10 +217,10 @@ function enqueueKey(key) {
 }
 
 function dequeueKey() {
-	var nKey = keyView[0];
+	const nKey = keyView[0];
 	if (nKey <= 0) return -1;
-	var key = keyView[1];
-	for (var i = 1; i < nKey; i++) {
+	const key = keyView[1];
+	for (let i = 1; i < nKey; i++) {
 		keyView[i] = keyView[i + 1];
 	}
 	keyView[0]--;
@@ -232,7 +232,7 @@ function keyInput(key, invokeCallback = true) {
 		enqueueKey(key);
 	} else {
 		if (key.length === 0) return;
-		for (var i = 0; i < key.length; i++) {
+		for (let i = 0; i < key.length; i++) {
 			keyInput(key.charCodeAt(i), false);
 		}
 	}
@@ -268,7 +268,7 @@ const specialKeyDict = {
 
 function keyDown() {
 	event.preventDefault();
-	var key = event.key;
+	const key = event.key;
 	if (event.ctrlKey) {
 		if (key === "a" || key === "A") keyInput(0x12); // 行頭へ
 		if (key === "c" || key === "C") keyInput(0x1b); // ESC
@@ -278,7 +278,7 @@ function keyDown() {
 		else if (key === "Shift") keyInput(0x0f); // アルファベット/カナ切り替え
 		else if (key === "Alt") keyInput(0x11); // 挿入/上書き切り替え
 	} else if (key.length === 1) {
-		var keyCode = key.charCodeAt(0);
+		let keyCode = key.charCodeAt(0);
 		// アルファベット大文字と小文字を入れ替える
 		if (0x61 <= keyCode && keyCode <= 0x7a) keyCode -= 0x20;
 		else if (0x41 <= keyCode && keyCode <= 0x5a) keyCode += 0x20;
@@ -315,7 +315,7 @@ function keyDown() {
 }
 
 // 画面に文字を書き込む
-var moveCursorMode = false, moveCursorX = null;
+let moveCursorMode = false, moveCursorX = null;
 function putChar(c, isInsert = false) {
 	if (moveCursorMode) {
 		if (moveCursorX === null) {
@@ -338,9 +338,9 @@ function putChar(c, isInsert = false) {
 		if (cursorX > 0 || (cursorY > 0 && vramView[cursorY * SCREEN_WIDTH - 1] != 0)) {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH - 1;
 			const start = cursorY * SCREEN_WIDTH + cursorX - 1;
-			var stop;
+			let stop;
 			for (stop = start; stop < limit && vramView[stop] !== 0; stop++);
-			for (var i = start; i < stop; i++) {
+			for (let i = start; i < stop; i++) {
 				vramView[i] = vramView[i + 1];
 			}
 			vramView[stop] = 0;
@@ -374,13 +374,13 @@ function putChar(c, isInsert = false) {
 		if (cursorY + 1 < SCREEN_HEIGHT) {
 			cursorY++;
 		} else {
-			for (var y = 1; y < SCREEN_HEIGHT; y++) {
-				for (var x = 0; x < SCREEN_WIDTH; x++) {
+			for (let y = 1; y < SCREEN_HEIGHT; y++) {
+				for (let x = 0; x < SCREEN_WIDTH; x++) {
 					vramView[(y - 1) * SCREEN_WIDTH + x] =
 						vramView[y * SCREEN_WIDTH + x];
 				}
 			}
-			for (var x = 0; x < SCREEN_WIDTH; x++) {
+			for (let x = 0; x < SCREEN_WIDTH; x++) {
 				vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
 			}
 			vramDirty = true;
@@ -389,7 +389,7 @@ function putChar(c, isInsert = false) {
 	case 0x0c: // カーソル位置以降を全削除
 		{
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
-			for (var i = cursorY * SCREEN_WIDTH + cursorX; i < limit; i++) {
+			for (let i = cursorY * SCREEN_WIDTH + cursorX; i < limit; i++) {
 				vramView[i] = 0;
 			}
 			vramDirty = true;
@@ -400,19 +400,19 @@ function putChar(c, isInsert = false) {
 	case 0x0e: // 空白挿入
 		{
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
-			var start = cursorY * SCREEN_WIDTH + cursorX;
-			var end;
+			let start = cursorY * SCREEN_WIDTH + cursorX;
+			let end;
 			for (end = start; end < limit && vramView[end] !== 0; end++);
 			if (end === limit) {
 				// 最後まで詰まっている
 				if (cursorY > 0) {
-					for (var y = 1; y < SCREEN_HEIGHT; y++) {
-						for (var x = 0; x < SCREEN_WIDTH; x++) {
+					for (let y = 1; y < SCREEN_HEIGHT; y++) {
+						for (let x = 0; x < SCREEN_WIDTH; x++) {
 							vramView[(y - 1) * SCREEN_WIDTH + x] =
 								vramView[y * SCREEN_WIDTH + x];
 						}
 					}
-					for (var x = 0; x < SCREEN_WIDTH; x++) {
+					for (let x = 0; x < SCREEN_WIDTH; x++) {
 						vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
 					}
 					cursorY--;
@@ -423,18 +423,18 @@ function putChar(c, isInsert = false) {
 			end + 1 < limit && vramView[end + 1] !== 0) {
 				// 空行を挿入してからやる
 				const endY = ~~(end / SCREEN_WIDTH) + 1;
-				for (var y = SCREEN_HEIGHT - 1; y > endY; y--) {
-					for (var x = 0; x < SCREEN_WIDTH; x++) {
+				for (let y = SCREEN_HEIGHT - 1; y > endY; y--) {
+					for (let x = 0; x < SCREEN_WIDTH; x++) {
 						vramView[y * SCREEN_WIDTH + x] =
 							vramView[(y - 1) * SCREEN_WIDTH + x];
 					}
 				}
-				for (var x = 0; x < SCREEN_WIDTH; x++) {
+				for (let x = 0; x < SCREEN_WIDTH; x++) {
  					vramView[endY * SCREEN_WIDTH + x] = 0;
 				}
 			}
 			if (end === limit) end--;
-			for (var i = end; i > start; i--) {
+			for (let i = end; i > start; i--) {
 				vramView[i] = vramView[i - 1];
 			}
 			vramView[start] = 0x20;
@@ -446,14 +446,14 @@ function putChar(c, isInsert = false) {
 	case 0x10: // 行分割
 		{
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
-			var start = cursorY * SCREEN_WIDTH + cursorX;
-			var end;
+			let start = cursorY * SCREEN_WIDTH + cursorX;
+			let end;
 			for (end = start; end < limit && vramView[end] !== 0; end++);
-			var endX = (end === limit ? SCREEN_WIDTH : end % SCREEN_WIDTH);
-			var endY = (end === limit ? SCREEN_HEIGHT - 1 : ~~(end / SCREEN_WIDTH));
+			const endX = (end === limit ? SCREEN_WIDTH : end % SCREEN_WIDTH);
+			const endY = (end === limit ? SCREEN_HEIGHT - 1 : ~~(end / SCREEN_WIDTH));
 			if (cursorX <= endX) {
 				// 新しい行を要求する
-				var shiftUp = false;
+				let shiftUp = false;
 				if (cursorY > 0) {
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
 						if (vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] !== 0) {
@@ -464,13 +464,13 @@ function putChar(c, isInsert = false) {
 				}
 				if (shiftUp) {
 					// 行末がある行までを上に上げる
-					for (var y = 0; y < endY; y++) {
-						for (var x = 0; x < SCREEN_WIDTH; x++) {
+					for (let y = 0; y < endY; y++) {
+						for (let x = 0; x < SCREEN_WIDTH; x++) {
 							vramView[y * SCREEN_WIDTH + x] =
 								vramView[(y + 1) * SCREEN_WIDTH + x];
 						}
 					}
-					for (var x = 0; x < SCREEN_WIDTH; x++) {
+					for (let x = 0; x < SCREEN_WIDTH; x++) {
 						vramView[endY * SCREEN_WIDTH + x] = 0;
 					}
 					cursorY--;
@@ -478,23 +478,23 @@ function putChar(c, isInsert = false) {
 					end -= SCREEN_WIDTH;
 				} else {
 					// 行末がある行の次からを下に下げる
-					for (var y = SCREEN_HEIGHT - 2; y > endY; y--) {
-						for (var x = 0; x < SCREEN_WIDTH; x++) {
+					for (let y = SCREEN_HEIGHT - 2; y > endY; y--) {
+						for (let x = 0; x < SCREEN_WIDTH; x++) {
 							vramView[(y + 1) * SCREEN_WIDTH + x] =
 								vramView[y * SCREEN_WIDTH + x];
 						}
 					}
-					for (var x = 0; x < SCREEN_WIDTH; x++) {
+					for (let x = 0; x < SCREEN_WIDTH; x++) {
 						vramView[(endY + 1) * SCREEN_WIDTH + x] = 0;
 					}
 				}
 			}
 			// 行分割の操作を行う
-			var dest = ~~((start + SCREEN_WIDTH) / SCREEN_WIDTH) * SCREEN_WIDTH;
-			for (var i = end - 1; i >= start; i--) {
+			const dest = ~~((start + SCREEN_WIDTH) / SCREEN_WIDTH) * SCREEN_WIDTH;
+			for (let i = end - 1; i >= start; i--) {
 				vramView[i - start + dest] = vramView[i];
 			}
-			for (var i = start; i < dest; i++) {
+			for (let i = start; i < dest; i++) {
 				vramView[i] = 0;
 			}
 			cursorX = 0;
@@ -544,15 +544,15 @@ function putChar(c, isInsert = false) {
 	case 0x18: // カーソルがある行を削除
 		{
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
-			var start = cursorY * SCREEN_WIDTH + cursorX;
+			let start = cursorY * SCREEN_WIDTH + cursorX;
 			if (start > 0 && vramView[start] === 0) start--;
-			var stop = start;
+			let stop = start;
 			if (vramView[start] !== 0) {
 				for (; start > 0 && vramView[start - 1] !== 0; start--);
 			}
 			for (; stop < limit && vramView[stop] !== 0; stop++);
 			if (start == stop) break;
-			for (var i = start; i < stop; i++) {
+			for (let i = start; i < stop; i++) {
 				vramView[i] = 0;
 			}
 			cursorX = start % SCREEN_WIDTH;
@@ -602,9 +602,9 @@ function putChar(c, isInsert = false) {
 		{
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH - 1;
 			const start = cursorY * SCREEN_WIDTH + cursorX;
-			var stop;
+			let stop;
 			for (stop = start; stop < limit && vramView[stop] !== 0; stop++);
-			for (var i = start; i < stop; i++) {
+			for (let i = start; i < stop; i++) {
 				vramView[i] = vramView[i + 1];
 			}
 			vramView[stop] = 0;
@@ -614,21 +614,21 @@ function putChar(c, isInsert = false) {
 	default:
 		if (isInsert) {
 			// 挿入のために、以降の文字列をずらす
-			var cursorPoint = cursorY * SCREEN_WIDTH + cursorX;
-			var zeroPoint = cursorPoint;
+			let cursorPoint = cursorY * SCREEN_WIDTH + cursorX;
+			let zeroPoint = cursorPoint;
 			while (zeroPoint < SCREEN_WIDTH * SCREEN_HEIGHT &&
 				vramView[zeroPoint] !== 0) zeroPoint++;
 			if (zeroPoint >= SCREEN_WIDTH * SCREEN_HEIGHT) {
 				// 画面の最後まで埋まっている場合
 				if (cursorY > 0) {
 					// カーソルが最初の行に無いなら、1行上げる
-					for (var y = 1; y < SCREEN_HEIGHT; y++) {
-						for (var x = 0; x < SCREEN_WIDTH; x++) {
+					for (let y = 1; y < SCREEN_HEIGHT; y++) {
+						for (let x = 0; x < SCREEN_WIDTH; x++) {
 							vramView[(y - 1) * SCREEN_WIDTH + x]
 								= vramView[y * SCREEN_WIDTH + x];
 						}
 					}
-					for (var x = 0; x < SCREEN_WIDTH; x++) {
+					for (let x = 0; x < SCREEN_WIDTH; x++) {
 						vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
 					}
 					cursorY--;
@@ -641,18 +641,18 @@ function putChar(c, isInsert = false) {
 			} else if (zeroPoint % SCREEN_WIDTH === SCREEN_WIDTH - 1 &&
 			zeroPoint + 1 < SCREEN_WIDTH * SCREEN_HEIGHT && vramView[zeroPoint + 1] !== 0) {
 				// 次の行に行きそうな場合、1行下げる
-				var zeroPointY = ~~(zeroPoint / SCREEN_WIDTH);
-				for (var y = SCREEN_HEIGHT - 2; y > zeroPointY; y--) {
-					for (var x = 0; x < SCREEN_WIDTH; x++) {
+				const zeroPointY = ~~(zeroPoint / SCREEN_WIDTH);
+				for (let y = SCREEN_HEIGHT - 2; y > zeroPointY; y--) {
+					for (let x = 0; x < SCREEN_WIDTH; x++) {
 						vramView[(y + 1) * SCREEN_WIDTH + x]
 							= vramView[y * SCREEN_WIDTH + x];
 					}
 				}
-				for (var x = 0; x < SCREEN_WIDTH; x++) {
+				for (let x = 0; x < SCREEN_WIDTH; x++) {
 					vramView[(zeroPointY + 1) * SCREEN_WIDTH + x] = 0;
 				}
 			}
-			for (var i = zeroPoint; i > cursorPoint; i--) {
+			for (let i = zeroPoint; i > cursorPoint; i--) {
 				vramView[i] = vramView[i - 1];
 			}
 		}
@@ -666,13 +666,13 @@ function putChar(c, isInsert = false) {
 				cursorY++;
 			} else {
 				// 最終行だったので、1行上げる
-				for (var y = 1; y < SCREEN_HEIGHT; y++) {
-					for (var x = 0; x < SCREEN_WIDTH; x++) {
+				for (let y = 1; y < SCREEN_HEIGHT; y++) {
+					for (let x = 0; x < SCREEN_WIDTH; x++) {
 						vramView[(y - 1) * SCREEN_WIDTH + x]
 							= vramView[y * SCREEN_WIDTH + x];
 					}
 				}
-				for (var x = 0; x < SCREEN_WIDTH; x++) {
+				for (let x = 0; x < SCREEN_WIDTH; x++) {
 					vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] = 0;
 				}
 			}
@@ -684,7 +684,7 @@ function putChar(c, isInsert = false) {
 
 function doInteractive() {
 	for (;;) {
-		var key = dequeueKey();
+		const key = dequeueKey();
 		if (key < 0) {
 			// キー入力がないので、処理を保留する
 			updateScreen();
@@ -694,13 +694,13 @@ function doInteractive() {
 		putChar(key, true);
 		if (key === 0x0a && cursorY > 0) {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
-			var start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
-			var end = start;
+			let start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
+			let end = start;
 			if (vramView[start] !== 0) {
 				while (start > 0 && vramView[start - 1] !== 0) start--;
 				while (end < limit && vramView[end] !== 0) end++;
 				if (end - start <= CMD_MAX) {
-					for (var i = start; i < end; i++) {
+					for (let i = start; i < end; i++) {
 						cmdView[i - start] = vramView[i];
 					}
 					cmdView[end - start] = 0;
@@ -710,14 +710,14 @@ function doInteractive() {
 					} catch (e) {
 						// TODO: PRINT文の機能を作ったら、それを使う
 						const es = "" + e + "\n";
-						for (var i = 0; i < es.length; i++) {
+						for (let i = 0; i < es.length; i++) {
 							putChar(es.charCodeAt(i), false);
 						}
 					}
 				} else {
 					// TODO: PRINT文の機能を作ったら、それを使う
 					const message = "Line too long\n";
-					for (var i = 0; i < message.length; i++) {
+					for (let i = 0; i < message.length; i++) {
 						putChar(message.charCodeAt(i), false);
 					}
 				}
@@ -727,8 +727,8 @@ function doInteractive() {
 }
 
 function compile(addr) {
-	var source = "";
-	for (var i = addr; addr < ramBytes.length && ramBytes[i] !== 0; i++) {
+	let source = "";
+	for (let i = addr; addr < ramBytes.length && ramBytes[i] !== 0; i++) {
 		source += String.fromCharCode(ramBytes[i]);
 	}
 	const tokens = lexer(source, addr);
@@ -745,14 +745,14 @@ function commandCLK() {
 
 function commandNEW() {
 	// RAMのプログラム領域を初期化する
-	for (var i = 0; i < 0x400; i++) {
+	for (let i = 0; i < 0x400; i++) {
 		prgView[i] = 0;
 	}
 }
 
 function commandCLS() {
 	// VRAMを初期化する
-	for (var i = 0; i < 0x300; i++) {
+	for (let i = 0; i < 0x300; i++) {
 		vramView[i] = 0;
 	}
 	// カーソルの位置を左上に戻す
@@ -765,15 +765,15 @@ function commandCLS() {
 
 function commandCLV() {
 	// 配列と変数を初期化する
-	for (var i = 0; i < ARRAY_SIZE + 26; i++) {
+	for (let i = 0; i < ARRAY_SIZE + 26; i++) {
 		arrayView[i] = 0;
 	}
 }
 
 function commandCLP() {
 	// RAMのフォント領域を初期化する
-	for (var i = 0; i < 0x20; i++) {
-		for (var j = 0; j < 8; j++) {
+	for (let i = 0; i < 0x20; i++) {
+		for (let j = 0; j < 8; j++) {
 			cramView[i * 8 + j] = ijfont_1_1[(0xE0 + i) * 8 + j];
 		}
 	}
