@@ -241,7 +241,7 @@ function_arguments ::= (空)
           expr2_op ::= "-" | "~" | "!" | "NOT"
              expr1 ::= "(" expr7 ")"
                      | function_name "(" function_arguments ")"
-                     | constant | variable| number | label | string
+                     | constant | variable | number | label | string
 */
 
 const variableIndice = {
