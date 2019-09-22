@@ -61,8 +61,14 @@ const writeArray = isLittleEndian ? function(id, value) {
 	ramView.setInt16(ARRAY_ADDR + 2 * id, value, true);
 };
 
-// キー入力でブロックした時、ブロック解除での飛び先
-let keyCallback = null;
+// コンパイル済みのプログラム (インタラクティブ(-1)・即実行(0)を含む)
+let programs;
+// 実行中の行番号
+let currentLine;
+// 実行中の行中の位置
+let currentPositionInLine;
+// キー入力待ち中か
+let keyBlocked = false;
 
 // カーソル位置
 let cursorX = 0;
@@ -200,8 +206,13 @@ function initSystem() {
 	if (cursorTimerId !== null) clearInterval(cursorTimerId);
 	cursorTimerId = setInterval(toggleCursor, 500);
 
-	// インタラクティブモードに入る
-	setTimeout(doInteractive, 0);
+	// 実行を開始する
+	programs = new Object();
+	programs[-1] = {code: [printOK, doInteractive], nextLine: -1};
+	programs[0] = {code: [function(){ putString("OneFiveCrowd\n"); return null; }], nextLine: -1};
+	currentLine = 0;
+	currentPositionInLine = 0;
+	setTimeout(execute, 0);
 }
 
 function toggleCursor() {
@@ -236,9 +247,9 @@ function keyInput(key, invokeCallback = true) {
 			keyInput(key.charCodeAt(i), false);
 		}
 	}
-	if (invokeCallback && keyCallback !== null) {
-		setTimeout(keyCallback, 0);
-		keyCallback = null;
+	if (invokeCallback && keyBlocked) {
+		setTimeout(execute, 0);
+		keyBlocked = false;
 	}
 }
 
@@ -687,41 +698,87 @@ function putString(str) {
 		putChar(str.charCodeAt(i), false);
 	}
 }
+/*
+実行の仕組み
+プログラムは、行番号をキーとし、
+codeプロパティとnextLineプロパティを持つオブジェクトをデータとする連想配列で表す。
+codeプロパティは、プログラムとして実行する関数の配列である。
+nextLineプロパティは、この行の実行が終わった次に実行する行番号である。
+
+ここでの行番号は、以下のようにする。
+-1 : インタラクティブ
+0 : 即実行
+1～65535 : 登録したプログラム
+
+行番号-1は、最初に「OK」を出力する関数、次にインタラクティブの関数とする。
+即実行やRUNの終了時には、ここの最初に戻ることで、
+「OK」を出力してインタラクティブに戻ることができる。
+
+それぞれの関数は、そのまま次を実行させる時はnullを返し、
+実行を飛ばす時は配列 [次の行番号, 次に実行する行中の位置] を返す。
+
+実行中は、高速化のため、適当なステップ数ごとにのみ画面を更新する。
+キー入力待ちをする時は、変数keyBlockedをtrueにしてから戻る。
+実行中に例外が発生した時は、例外の内容を出力し、インタラクティブに戻る。
+*/
+function execute() {
+	try {
+		for (let rep = 0; rep < 10000; rep++) {
+			const next = programs[currentLine].code[currentPositionInLine]();
+			if (next === null) {
+				currentPositionInLine++;
+				if (programs[currentLine].code.length <= currentPositionInLine) {
+					currentLine = programs[currentLine].nextLine;
+					currentPositionInLine = 0;
+				}
+			} else {
+				currentLine = next[0];
+				currentPositionInLine = next[1];
+			}
+			if (keyBlocked) break;
+		}
+	} catch (e) {
+		putString("" + e + "\n");
+		currentLine = -1;
+		currentPositionInLine = 1;
+	}
+	updateScreen();
+	if (!keyBlocked) setTimeout(execute, 0);
+}
+
+function printOK() {
+	putString("OK\n");
+	return null;
+}
 
 function doInteractive() {
-	for (;;) {
-		const key = dequeueKey();
-		if (key < 0) {
-			// キー入力がないので、処理を保留する
-			updateScreen();
-			keyCallback = doInteractive;
-			return;
-		}
-		putChar(key, true);
-		if (key === 0x0a && cursorY > 0) {
-			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
-			let start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
-			let end = start;
-			if (vramView[start] !== 0) {
-				while (start > 0 && vramView[start - 1] !== 0) start--;
-				while (end < limit && vramView[end] !== 0) end++;
-				if (end - start <= CMD_MAX) {
-					for (let i = start; i < end; i++) {
-						cmdView[i - start] = vramView[i];
-					}
-					cmdView[end - start] = 0;
-					try {
-						// TODO: 実行部分に渡す
-						compile(CMD_ADDR);
-					} catch (e) {
-						putString("" + e + "\n");
-					}
-				} else {
-					putString("Line too long\n");
+	const key = dequeueKey();
+	if (key < 0) {
+		// キー入力がないので、処理を保留する
+		keyBlocked = true;
+		return [currentLine, currentPositionInLine];
+	}
+	putChar(key, true);
+	if (key === 0x0a && cursorY > 0) {
+		const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
+		let start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
+		let end = start;
+		if (vramView[start] !== 0) {
+			while (start > 0 && vramView[start - 1] !== 0) start--;
+			while (end < limit && vramView[end] !== 0) end++;
+			if (end - start <= CMD_MAX) {
+				for (let i = start; i < end; i++) {
+					cmdView[i - start] = vramView[i];
 				}
+				cmdView[end - start] = 0;
+				// TODO: 実行部分に渡す
+				compile(CMD_ADDR);
+			} else {
+				throw "Line too long";
 			}
 		}
 	}
+	return [currentLine, currentPositionInLine];
 }
 
 function compile(addr) {
