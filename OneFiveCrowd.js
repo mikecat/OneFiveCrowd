@@ -682,6 +682,12 @@ function putChar(c, isInsert = false) {
 	}
 }
 
+function putString(str) {
+	for (let i = 0; i < str.length; i++) {
+		putChar(str.charCodeAt(i), false);
+	}
+}
+
 function doInteractive() {
 	for (;;) {
 		const key = dequeueKey();
@@ -708,18 +714,10 @@ function doInteractive() {
 						// TODO: 実行部分に渡す
 						compile(CMD_ADDR);
 					} catch (e) {
-						// TODO: PRINT文の機能を作ったら、それを使う
-						const es = "" + e + "\n";
-						for (let i = 0; i < es.length; i++) {
-							putChar(es.charCodeAt(i), false);
-						}
+						putString("" + e + "\n");
 					}
 				} else {
-					// TODO: PRINT文の機能を作ったら、それを使う
-					const message = "Line too long\n";
-					for (let i = 0; i < message.length; i++) {
-						putChar(message.charCodeAt(i), false);
-					}
+					putString("Line too long\n");
 				}
 			}
 		}
