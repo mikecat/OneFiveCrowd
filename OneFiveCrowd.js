@@ -16,6 +16,7 @@ const SCREEN_WIDTH = 32;
 const SCREEN_HEIGHT = 24;
 
 const ARRAY_SIZE = 102;
+const PRG_MAX = 0x400;
 const KEY_MAX = 126;
 const CMD_MAX = 200; // 本体の長さ。終端の0でさらに1バイト使う。
 
@@ -26,7 +27,7 @@ const CRAM_ADDR = 0x0;
 const ARRAY_ADDR = CRAM_ADDR + 0x100;
 const VRAM_ADDR = ARRAY_ADDR + 0x100;
 const PRG_ADDR = VRAM_ADDR + 0x300;
-const KEY_ADDR = PRG_ADDR + 0x400 + 3;
+const KEY_ADDR = PRG_ADDR + PRG_MAX + 3;
 const CMD_ADDR = KEY_ADDR + 1 + KEY_MAX;
 
 // ROMとRAMのバッファ
@@ -41,7 +42,7 @@ const ramBytes = new Uint8Array(ramData);
 const cramView = new Uint8Array(ramData, CRAM_ADDR, 0x100);
 const arrayView = new Int16Array(ramData, ARRAY_ADDR, ARRAY_SIZE + 26);
 const vramView = new Uint8Array(ramData, VRAM_ADDR, 0x300);
-const prgView = new Uint8Array(ramData, PRG_ADDR, 0x400);
+const prgView = new Uint8Array(ramData, PRG_ADDR, PRG_MAX);
 const keyView = new Uint8Array(ramData, KEY_ADDR, 1 + KEY_MAX);
 const cmdView = new Uint8Array(ramData, CMD_ADDR, CMD_MAX + 1);
 
@@ -84,8 +85,10 @@ let mainScreenContext;
 const fontImages = new Array(256);
 
 // 更新するべきか
-let fontDirty = false;
-let vramDirty = false;
+let fontDirty = false; // フォントRAMの更新がある
+let vramDirty = false; // VRAMの更新がある
+let prgDirty = false; // プログラムの更新がある
+let prgValidSize = 2; // 更新判定対象のプログラムのデータサイズ
 
 // フォントデータを描画用のImageDataに変換する
 function dataToFontImage(image, data, offset) {
@@ -698,6 +701,83 @@ function putString(str) {
 		putChar(str.charCodeAt(i), false);
 	}
 }
+
+/*
+プログラムの記録方式 (本家の観察結果)
+行番号(2バイト)+行のデータサイズ(1バイト)+行のデータ+#00(1バイト)
+行のデータの長さが奇数の場合は、最後に#00を加えて偶数にする。
+(常に入る#00と合わせて、#00が2個になる)
+この加える#00は「行のデータサイズ」に加える。
+行番号、行のデータサイズ、常に入る#00は、「行のデータサイズ」に加えない。
+終端は行番号0で表す。プログラムが領域いっぱいまである時は、終端の行番号0は省略する。
+*/
+function editProgram(lineno, str) {
+	// 挿入/上書きする長さを設定する (削除の場合は0)
+	if (str.length + (str.length % 2) >= 256) {
+		throw "Line too long";
+	}
+	const addSize = str.length > 0 ? 4 + str.length + (str.length % 2) : 0;
+	// 挿入/上書き/削除する位置とプログラムの最終位置を求める
+	let lastPos = 0;
+	let replacePos = -1;
+	let replaceSize = 0;
+	while (lastPos + 2 < PRG_MAX) {
+		const currentLineNo = prgView[lastPos] + (prgView[lastPos + 1] << 8);
+		if (currentLineNo === 0) break; // 終端
+		const lineSize = prgView[lastPos + 2];
+		// 最初に記録されている行番号が指定された行番号以上になった位置に入れる
+		if (currentLineNo >= lineno && replacePos < 0) {
+			replacePos = lastPos;
+			if (currentLineNo === lineno) replaceSize = lineSize + 4;
+		}
+		const nextPos = lastPos + 4 + lineSize;
+		if (nextPos > PRG_MAX) break; // 不正なデータを残さない
+		lastPos = nextPos;
+	}
+	if (replacePos < 0) replacePos = lastPos;
+	// 挿入/上書き/削除操作を行う
+	if (lastPos - replaceSize + addSize > PRG_MAX) {
+		throw "Out of memory";
+	}
+	// 必要に応じてデータを移動する
+	let newLastPos = lastPos;
+	if (replaceSize != addSize) {
+		const moveSrc = replacePos + replaceSize;
+		const moveDest = replacePos + addSize;
+		const moveSize = lastPos - moveSrc;
+		if (moveDest < moveSrc) {
+			for (let i = 0; i < moveSize; i++) {
+				prgView[moveDest + i] = prgView[moveSrc + i];
+			}
+		} else {
+			for (let i = moveSize - 1; i >= 0; i--) {
+				prgView[moveDest + i] = prgView[moveSrc + i];
+			}
+		}
+		newLastPos = moveDest + moveSize;
+	}
+	// データを挿入/上書きする
+	if (addSize > 0) {
+		prgView[replacePos] = lineno & 0xff;
+		prgView[replacePos + 1] = (lineno >> 8) & 0xff;
+		prgView[replacePos + 2] = str.length + (str.length % 2);
+		for (let i = 0; i < str.length; i++) {
+			prgView[replacePos + 3 + i] = str.charCodeAt(i);
+		}
+		if (str.length % 2 !== 0) {
+			prgView[replacePos + 3 + str.length] = 0;
+		}
+		prgView[replacePos + 3 + prgView[replacePos + 2]] = 0;
+	}
+	// 新しい終端を記録する
+	if (newLastPos + 2 <= PRG_MAX) {
+		prgView[newLastPos] = 0;
+		prgView[newLastPos + 1] = 0;
+	}
+	// プログラムに変更があったフラグを立てる
+	prgDirty = true;
+}
+
 /*
 実行の仕組み
 プログラムは、行番号をキーとし、
@@ -772,7 +852,7 @@ function doInteractive() {
 				}
 				cmdView[end - start] = 0;
 				// TODO: 実行部分に渡す
-				compile(CMD_ADDR);
+				compile(CMD_ADDR, true);
 			} else {
 				throw "Line too long";
 			}
@@ -781,16 +861,30 @@ function doInteractive() {
 	return [currentLine, currentPositionInLine];
 }
 
-function compile(addr) {
+function compile(addr, enableEdit = false) {
 	let source = "";
 	for (let i = addr; addr < ramBytes.length && ramBytes[i] !== 0; i++) {
 		source += String.fromCharCode(ramBytes[i]);
 	}
 	const tokens = lexer(source, addr);
 	console.log(tokens);
-	const ast = parser(tokens);
-	console.log(ast);
-	return [];
+	if (enableEdit && tokens.length > 0 && tokens[0].kind === "number") {
+		// プログラムの編集
+		const numberToken = tokens[0].token;
+		const left = source.substring(numberToken.length);
+		const line = /^\s/.test(left) ? left.substring(1) : left;
+		const lineno =
+			numberToken.charAt(0) === "#" ? parseInt(numberToken.substring(1), 16) :
+			numberToken.charAt(0) === "`" ? parseInt(numberToken.substring(1), 2) :
+			parseInt(numberToken, 10);
+		editProgram(lineno, line);
+		return null;
+	} else {
+		// プログラムのコンパイル
+		const ast = parser(tokens);
+		console.log(ast);
+		return [];
+	}
 }
 
 function commandCLK() {
