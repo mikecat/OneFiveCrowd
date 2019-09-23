@@ -160,6 +160,24 @@ function lexer(str, firstAddr = 0) {
 }
 
 /*
+トークンオブジェクト
+	kind : トークンの種類
+		number : 数値 (2進/10進/16進)
+		string : 文字列
+		label : ラベル
+		keyword : キーワード (コマンド、関数、演算子、変数など)
+		comment_token : コメント
+		invalid : その他 (不正)
+	token : トークンの文字列
+	address : トークンの最初の文字の論理アドレス
+
+ASTノードオブジェクト
+	kind : ノードの種類 (BNFより)
+	nodes : 子ノードの配列
+		子ノードはトークンオブジェクトのこともある (kindで判別)
+*/
+
+/*
               line ::= command
                      | command line_separator line
                      | if_command line
