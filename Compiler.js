@@ -284,10 +284,10 @@ const basicCommands = {
 	"LIST"   : null,
 	"GOTO"   : null,
 	"END"    : null,
-	"NEW"    : null,
+	"NEW"    : {func: commandNEW, minArg: 0, maxArg: 0},
 	"LOCATE" : null,
 	"LC"     : null,
-	"CLS"    : null,
+	"CLS"    : {func: commandCLS, minArg: 0, maxArg: 0},
 	"SAVE"   : null,
 	"LOAD"   : null,
 	"FILES"  : null,
@@ -297,9 +297,9 @@ const basicCommands = {
 	"CLT"    : null,
 	"SCROLL" : null,
 	"NEXT"   : null,
-	"CLV"    : null,
+	"CLV"    : {func: commandCLV, minArg: 0, maxArg: 0},
 	"CLEAR"  : null,
-	"CLK"    : null,
+	"CLK"    : {func: commandCLK, minArg: 0, maxArg: 0},
 	"GOSUB"  : null,
 	"GSB"    : null,
 	"RETURN" : null,
@@ -311,7 +311,7 @@ const basicCommands = {
 	"SLEEP"  : null,
 	"VIDEO"  : null,
 	"POKE"   : null,
-	"CLP"    : null,
+	"CLP"    : {func: commandCLP, minArg: 0, maxArg: 0},
 	"HELP"   : null,
 	"RESET"  : null,
 	"OUT"    : null,
@@ -667,7 +667,7 @@ var parser = (function() {
 		if (cret === null) return null;
 		const aret = function_arguments(tokens, cret.nextIndex);
 		if (aret === null) return null;
-		return buildParseResult("genaral_command", [cret.node, aret.node], aret.nextIndex);
+		return buildParseResult("general_command", [cret.node, aret.node], aret.nextIndex);
 	}
 
 	function function_arguments(tokens, index) {
@@ -763,7 +763,7 @@ var parser = (function() {
 		if (checkTokenSet(tokens, index, expr2_ops)) {
 			const eres = expr2(tokens, index + 1);
 			if (eres === null) return null;
-			return buildParseResult("expr2", [ores.node, eres.node], eres.nextIndex);
+			return buildParseResult("expr2", [tokens[index], eres.node], eres.nextIndex);
 		} else {
 			const eres = expr1(tokens, index);
 			if (eres === null) return null;
@@ -787,11 +787,12 @@ var parser = (function() {
 		}
 		if (checkTokenSet(tokens, index, basicFunctions)) {
 			if (!checkToken(tokens, index + 1, "(")) return null;
-			const ares = function_arguments(tokens, index + 2);
-			if (ares === null) return null;
-			if (!checkToken(tokens, ares.nextIndex, ")")) return null;
+			const args = function_arguments(tokens, index + 2);
+			if (args === null) return null;
+			if (!checkToken(tokens, args.nextIndex, ")")) return null;
+			const function_name = {kind: "function_name", nodes: [tokens[index]]};
 			return buildParseResult("expr1",
-				[tokens[index], tokens[index + 1], ares.node, tokens[ares.nextIndex]], ares.nextIndex + 1);
+				[function_name, tokens[index + 1], args.node, tokens[args.nextIndex]], args.nextIndex + 1);
 		}
 		const cres = constant(tokens, index);
 		if (cres !== null) {
@@ -814,5 +815,321 @@ var parser = (function() {
 			return null;
 		}
 		return res.node;
+	};
+})();
+
+var compiler = (function() {
+	function compileExpr(ast) {
+		function binaryOpFunction(nextFunc, opList) {
+			const func = function(ast) {
+				if (ast.nodes.length === 1) {
+					return nextFunc(ast.nodes[0]);
+				} else {
+					const expr_left = func(ast.nodes[0]);
+					const expr_right = nextFunc(ast.nodes[2]);
+					const op = opList[ast.nodes[1].token];
+					if (op === null) {
+						const token = ast.nodes[1].token;
+						return function() {
+							throw "Not implemented: " + token;
+						};
+					} else {
+						return function() {
+							const left = expr_left();
+							const right = expr_right();
+							return op(left, right);
+						};
+					}
+				}
+			};
+			return func;
+		}
+		function expr1(ast) {
+			if (ast.nodes.length === 3) {
+				return expr7(ast.nodes[1]);
+			} else if (ast.nodes.length === 4) {
+				const funcName = ast.nodes[0].nodes[0].token;
+				const funcInfo = basicFunctions[funcName];
+				const args = compileArguments(ast.nodes[2]);
+				if (funcInfo === null) {
+					return function() {
+						throw "Not implemented: " + funcName;
+					};
+				} else {
+					if (args.length < funcInfo.minArg || funcInfo.maxArg < args.length) {
+						throw null;
+					}
+					const func = funcInfo.func;
+					return function() {
+						const argValues = [];
+						for (let i = 0; i < args.length; i++) {
+							argValues.push(args[i]());
+						}
+						return func(argValues);
+					};
+				}
+			} else {
+				const node = ast.nodes[0];
+				if (node.kind === "constant") {
+					const value = basicConstants[node.nodes[0].token];
+					return function() { return value; }
+				} else if (node.kind === "variable") {
+					return function() {
+						throw "Variable not implemented";
+					};
+				} else if (node.kind === "number") {
+					let nstr = node.token;
+					let value = 0, delta = 10;
+					if (nstr.charAt(0) === "#") {
+						nstr = nstr.substr(1);
+						delta = 16;
+					} else if (nstr.charAt(0) == "`") {
+						nstr = nstr.substr(1);
+						delta = 2;
+					}
+					for (let i = 0; i < nstr.length; i++) {
+						value = (value * delta + parseInt(nstr.substr(i, 1))) & 0xffff;
+					}
+					if (value >= 32768) value -= 65536;
+					return function() { return value; };
+				} else if (node.kind === "label") {
+					return function() {
+						throw "Label not implemented";
+					};
+				} else if (node.kind === "string") {
+					const addr = node.address;
+					return function() { return addr; };
+				} else {
+					throw "Unknown expr1 kind: " + node.kind;
+				}
+			}
+		}
+		function expr2(ast) {
+			if (ast.nodes.length === 1) {
+				return expr1(ast.nodes[0]);
+			} else {
+				const expr_right = expr2(ast.nodes[1]);
+				const op = expr2_ops[ast.nodes[0].token];
+				if (op === null) {
+					const token = ast.nodes[0].token;
+					return function() {
+						throw "Not implemented: " + token;
+					};
+				} else {
+					return function() {
+						const right = expr_right();
+						return op(right);
+					};
+				}
+			}
+		}
+		var expr3 = binaryOpFunction(expr2, expr3_ops);
+		var expr4 = binaryOpFunction(expr3, expr4_ops);
+		var expr5 = binaryOpFunction(expr4, expr5_ops);
+		var expr6 = binaryOpFunction(expr5, expr6_ops);
+		var expr7 = binaryOpFunction(expr6, expr7_ops);
+
+		return expr7(ast.nodes[0]);
+	}
+
+	function compileArguments(ast) {
+		if (ast.kind === "function_arguments") {
+			if (ast.nodes.length === 0) {
+				return [];
+			} else {
+				return compileArguments(ast.nodes[0]);
+			}
+		}
+		let currentNode = ast;
+		const res = [];
+		for (;;) {
+			res.push(compileExpr(currentNode.nodes[0]));
+			if (currentNode.nodes.length >= 3) {
+				currentNode = currentNode.nodes[2];
+			} else {
+				break;
+			}
+		}
+		return res;
+	}
+
+	function compilePrintArguments(ast) {
+		if (ast.nodes.length === 0) {
+			return [{expr: function(){ return ""; }, suffix: "\n"}];
+		}
+		const args = [];
+		let currentNode = ast;
+		for (;;) {
+			const argNode = currentNode.nodes[0].nodes[0];
+			let arg = {expr: function(){ return ""; }, suffix: "\n"};
+			if (currentNode.nodes.length === 3) {
+				const token = currentNode.nodes[1].nodes[0].token;
+				if (token === ",") arg.suffix = " ";
+				else if (token === ";") arg.suffix = "";
+			}
+			if (argNode.kind === "string") {
+				const strToken = argNode.token;
+				arg.suffix = strToken.substr(1, strToken.length - 2) + arg.suffix;
+			} else if (argNode.kind === "print_modifier") {
+				const modifierName = argNode.nodes[0].nodes[0].token;
+				const modifierInfo = printModifiers[modifierName];
+				const args = compileArguments(argNode.nodes[2]);
+				if (modifierInfo === null) {
+					arg.expr = function() {
+						throw "Not implemented: " + modifierName;
+					};
+				} else {
+					if (args.length < modifierInfo.minArg || modifierInfo.maxArg < args.length) {
+						throw null;
+					} else {
+						const modifier = modifierInfo.func;
+						arg.expr = function() {
+							const argValues = [];
+							for (let i = 0; i < args.length; i++) {
+								argValues.push(args[i]());
+							}
+							return modifier(argValues);
+						};
+					}
+				}
+			} else {
+				arg.expr = compileExpr(argNode);
+			}
+			args.push(arg);
+			if (currentNode.nodes.length < 3) {
+				break;
+			} else {
+				currentNode = currentNode.nodes[2];
+				if (currentNode.nodes.length === 0) break;
+			}
+		}
+		return args;
+	}
+
+	function compileCommand(ast, lineno, nextPosInLine) {
+		if(ast.nodes.length === 0) {
+			return function() { return [lineno, nextPosInLine]; };
+		}
+		const command = ast.nodes[0];
+		const kind = command.kind;
+		if (kind === "print_command") {
+			const args = compilePrintArguments(command.nodes[1]);
+			return function() {
+				for (let i = 0; i < args.length; i++) {
+					putString(args[i].expr() + args[i].suffix);
+				}
+				return [lineno, nextPosInLine];
+			};
+		} else if (kind === "for_command") {
+			return function() {
+				throw "Not implemented: FOR";
+				return [lineno, nextPosInLine];
+			};
+		} else if (kind === "input_command") {
+			return function() {
+				throw "Not implemented: INPUT";
+				return [lineno, nextPosInLine];
+			};
+		} else if (kind === "let_command") {
+			return function() {
+				throw "Not implemented: LET";
+				return [lineno, nextPosInLine];
+			};
+		} else if (kind === "label_definition") {
+			return function() {
+				throw "Not implemented: label";
+				return [lineno, nextPosInLine];
+			};
+		} else if (kind === "general_command") {
+			const name = command.nodes[0].nodes[0].token;
+			const args = compileArguments(command.nodes[1]);
+			if (name in basicCommands) {
+				const commandFuncInfo = basicCommands[name];
+				if (commandFuncInfo === null) {
+					return function() {
+						throw "Not implemented: " + name;
+						return [lineno, nextPosInLine];
+					};
+				} else {
+					if (args.length < commandFuncInfo.minArg || commandFuncInfo.maxArg < args.length) {
+						throw null;
+					}
+					const commandFunc = commandFuncInfo.func;
+					return function() {
+						commandFunc();
+						return [lineno, nextPosInLine];
+					};
+				}
+			} else {
+				throw "Unknown command: " + name;
+			}
+		} else {
+			throw "Unknown command node: " + kind;
+		}
+	}
+
+	function compileIf(ast, lineno, nextPosInLineTrue, nextPosInLineFalse) {
+		const expr = compileExpr(ast.nodes[1]);
+		return function() {
+			return [lineno, expr() === 0 ? nextPosInLineFalse : nextPosInLineTrue];
+		};
+	}
+
+	function compileLine(ast, lineno, posInLine) {
+		if (ast.nodes[0].kind === "comment") {
+			return [];
+		}
+		let programIndex = posInLine;
+		const programNodes = [];
+		let currentNode = ast;
+		for (;;) {
+			if (currentNode.nodes[0].kind === "command") {
+				programNodes.push({idx: programIndex, node: currentNode.nodes[0]});
+				programIndex++;
+				if (currentNode.nodes.length >= 3) {
+					if (currentNode.nodes[1].nodes[0].token === "ELSE") {
+						programNodes.push({idx: programIndex, node: currentNode.nodes[1]});
+					}
+					currentNode = currentNode.nodes[2];
+				} else {
+					break;
+				}
+			} else if (currentNode.nodes[0].kind === "if_command") {
+				programNodes.push({idx: programIndex, node: currentNode.nodes[0]});
+				programIndex++;
+				currentNode = currentNode.nodes[1];
+			} else {
+				break;
+			}
+		}
+		const compilationResult = [];
+		let nextElseIndex = programIndex;
+		let nextIsElse = false;
+		for(let i = programNodes.length - 1; i >= 0; i--) {
+			const nextPos = nextIsElse ? programIndex : programNodes[i].idx + 1;
+			if (programNodes[i].node.kind === "command") {
+				compilationResult.unshift(compileCommand(programNodes[i].node, lineno, nextPos));
+				nextIsElse = false;
+			} else if (programNodes[i].node.kind === "if_command") {
+				compilationResult.unshift(compileIf(programNodes[i].node, lineno, nextPos, nextElseIndex));
+				nextIsElse = false;
+			} else {
+				nextElseIndex = programNodes[i].idx;
+				nextIsElse = true;
+			}
+		}
+		return compilationResult;
+	}
+
+	return function(ast, lineno = 0) {
+		if (ast.kind === "line") {
+			try {
+				return compileLine(ast, lineno, 0);
+			} catch (e) {
+				throw e === null ? "Syntax error" : e;
+			}
+		} else {
+			return null;
+		}
 	};
 })();

@@ -807,13 +807,13 @@ function execute() {
 			const next = programs[currentLine].code[currentPositionInLine]();
 			if (next === null) {
 				currentPositionInLine++;
-				if (programs[currentLine].code.length <= currentPositionInLine) {
-					currentLine = programs[currentLine].nextLine;
-					currentPositionInLine = 0;
-				}
 			} else {
 				currentLine = next[0];
 				currentPositionInLine = next[1];
+			}
+			if (programs[currentLine].code.length <= currentPositionInLine) {
+				currentLine = programs[currentLine].nextLine;
+				currentPositionInLine = 0;
 			}
 			if (keyBlocked) break;
 		}
@@ -851,8 +851,11 @@ function doInteractive() {
 					cmdView[i - start] = vramView[i];
 				}
 				cmdView[end - start] = 0;
-				// TODO: 実行部分に渡す
-				compile(CMD_ADDR, true);
+				const compilationResult = compileLine(CMD_ADDR, 0, true);
+				if (compilationResult !== null) {
+					programs[0] = {code: compilationResult, nextLine: -1};
+					return [0, 0];
+				}
 			} else {
 				throw "Line too long";
 			}
@@ -861,7 +864,7 @@ function doInteractive() {
 	return [currentLine, currentPositionInLine];
 }
 
-function compile(addr, enableEdit = false) {
+function compileLine(addr, lineno, enableEdit = false) {
 	let source = "";
 	for (let i = addr; addr < ramBytes.length && ramBytes[i] !== 0; i++) {
 		source += String.fromCharCode(ramBytes[i]);
@@ -883,7 +886,10 @@ function compile(addr, enableEdit = false) {
 		// プログラムのコンパイル
 		const ast = parser(tokens);
 		console.log(ast);
-		return [];
+		if (ast === null) throw "Syntax error";
+		const executable = compiler(ast, lineno);
+		console.log(executable);
+		return executable;
 	}
 }
 
