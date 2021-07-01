@@ -159,6 +159,11 @@ function lexer(str, firstAddr = 0) {
 	return result;
 }
 
+const arithWrap = function(value) {
+	const v1 = value & 0xffff;
+	return v1 >= 0x8000 ? v1 - 0x10000 : v1;
+}
+
 /*
 トークンオブジェクト
 	kind : トークンの種類
@@ -357,48 +362,57 @@ const basicFunctions = {
 };
 
 const expr7_ops = {
-	"OR" : null,
-	"||" : null
+	"OR" : function(a, b) { return a != 0 || b != 0 ? 1 : 0; },
+	"||" : function(a, b) { return a != 0 || b != 0 ? 1 : 0; }
 };
 
 const expr6_ops = {
-	"AND": null,
-	"&&" : null
+	"AND": function(a, b) { return a != 0 && b != 0 ? 1 : 0; },
+	"&&" : function(a, b) { return a != 0 && b != 0 ? 1 : 0; }
 };
 
 const expr5_ops = {
-	"="  : null,
-	"==" : null,
-	"<>" : null,
-	"!=" : null,
-	"<"  : null,
-	">"  : null,
-	"<=" : null,
-	">=" : null
+	"="  : function(a, b) { return a == b ? 1 : 0; },
+	"==" : function(a, b) { return a == b ? 1 : 0; },
+	"<>" : function(a, b) { return a != b ? 1 : 0; },
+	"!=" : function(a, b) { return a != b ? 1 : 0; },
+	"<"  : function(a, b) { return a < b ? 1 : 0; },
+	">"  : function(a, b) { return a > b ? 1 : 0; },
+	"<=" : function(a, b) { return a <= b ? 1 : 0; },
+	">=" : function(a, b) { return a >= b ? 1 : 0; }
 };
 
 const expr4_ops = {
-	"+"  : null,
-	"-"  : null,
-	"|"  : null,
+	"+"  : function(a, b) { return arithWrap(a + b); },
+	"-"  : function(a, b) { return arithWrap(a - b); },
+	"|"  : function(a, b) { return arithWrap(a | b); },
 };
 
 const expr3_ops = {
-	"*"  : null,
-	"/"  : null,
-	"%"  : null,
-	"MOD": null,
-	"<<" : null,
-	">>" : null,
-	"&"  : null,
-	"^"  : null
+	"*"  : function(a, b) { return arithWrap(a * b); },
+	"/"  : function(a, b) {
+		if (b == 0) throw "Divide by 0";
+		return arithWrap(a / b);
+	},
+	"%"  : function(a, b) {
+		if (b == 0) throw "Divide by 0";
+		return arithWrap(a % b);
+	},
+	"MOD": function(a, b) {
+		if (b == 0) throw "Divide by 0";
+		return arithWrap(a % b);
+	},
+	"<<" : function(a, b) { return arithWrap(a << (b & 31)); },
+	">>" : function(a, b) { return arithWrap((a & 0xffff) >> (b & 31)); },
+	"&"  : function(a, b) { return arithWrap(a & b); },
+	"^"  : function(a, b) { return arithWrap(a ^ b); }
 };
 
 const expr2_ops = {
-	"-"  : null,
-	"~"  : null,
-	"!"  : null,
-	"NOT": null
+	"-"  : function(a) { return arithWrap(-a); },
+	"~"  : function(a) { return arithWrap(~a); },
+	"!"  : function(a) { return a == 0 ? 1 : 0; },
+	"NOT": function(a) { return a == 0 ? 1 : 0; }
 };
 
 const basicConstants = {
