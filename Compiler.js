@@ -888,9 +888,19 @@ var compiler = (function() {
 					const value = basicConstants[node.nodes[0].token];
 					return function() { return value; }
 				} else if (node.kind === "variable") {
-					return function() {
-						throw "Variable not implemented";
-					};
+					if (node.nodes.length === 1) {
+						const varId = variableIndice[node.nodes[0].token];
+						return function() {
+							return readArray(ARRAY_SIZE + varId);
+						};
+					} else {
+						const expr = compileExpr(node.nodes[1]);
+						return function() {
+							const idx = expr();
+							if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
+							return readArray(idx);
+						};
+					}
 				} else if (node.kind === "number") {
 					let nstr = node.token;
 					let value = 0, delta = 10;
@@ -1045,6 +1055,46 @@ var compiler = (function() {
 				return [lineno, nextPosInLine];
 			};
 		} else if (kind === "let_command") {
+			if (command.nodes[0].kind === "keyword") {
+				const varNode = command.nodes[1];
+				const args = compileArguments(command.nodes[3]);
+				if (varNode.nodes.length === 1) {
+					if (args.length !== 1) throw null;
+					const varId = variableIndice[varNode.nodes[0].token];
+					return function() {
+						writeArray(ARRAY_SIZE + varId, args[0]());
+						return [lineno, nextPosInLine];
+					};
+				} else {
+					const idxExpr = compileExpr(varNode.nodes[1]);
+					return function() {
+						const idx = idxExpr();
+						if (idx < 0 || idx + args.length > ARRAY_SIZE) throw "Index out of range";
+						for (let i = 0; i < args.length; i++) {
+							writeArray(idx + i, args[i]());
+						}
+						return [lineno, nextPosInLine];
+					};
+				}
+			} else {
+				const varNode = command.nodes[0];
+				const expr = compileExpr(command.nodes[2]);
+				if (varNode.nodes.length === 1) {
+					const varId = variableIndice[varNode.nodes[0].token];
+					return function() {
+						writeArray(ARRAY_SIZE + varId, expr());
+						return [lineno, nextPosInLine];
+					};
+				} else {
+					const idxExpr = compileExpr(varNode.nodes[1]);
+					return function() {
+						const idx = idxExpr();
+						if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
+						writeArray(idx, expr());
+						return [lineno, nextPosInLine];
+					};
+				}
+			}
 			return function() {
 				throw "Not implemented: LET";
 				return [lineno, nextPosInLine];
