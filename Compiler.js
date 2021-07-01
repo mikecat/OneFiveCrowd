@@ -402,8 +402,8 @@ const expr3_ops = {
 		if (b == 0) throw "Divide by 0";
 		return arithWrap(a % b);
 	},
-	"<<" : function(a, b) { return arithWrap(a << (b & 31)); },
-	">>" : function(a, b) { return arithWrap((a & 0xffff) >> (b & 31)); },
+	"<<" : function(a, b) { return (b & 0xff) >= 16 ? 0 : arithWrap(a << (b & 15)); },
+	">>" : function(a, b) { return (b & 0xff) >= 16 ? 0 : arithWrap((a & 0xffff) >> (b & 15)); },
 	"&"  : function(a, b) { return arithWrap(a & b); },
 	"^"  : function(a, b) { return arithWrap(a ^ b); }
 };
