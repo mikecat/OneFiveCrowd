@@ -912,7 +912,7 @@ var compiler = (function() {
 						delta = 2;
 					}
 					for (let i = 0; i < nstr.length; i++) {
-						value = (value * delta + parseInt(nstr.substr(i, 1))) & 0xffff;
+						value = (value * delta + parseInt(nstr.substr(i, 1), delta)) & 0xffff;
 					}
 					if (value >= 32768) value -= 65536;
 					return function() { return value; };
