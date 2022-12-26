@@ -93,6 +93,34 @@ let vramDirty = false; // VRAMの更新がある
 let prgDirty = false; // プログラムの更新がある
 let prgValidSize = 2; // 更新判定対象のプログラムのデータサイズ
 
+// 仮想メモリのサイズ
+const VIRTUAL_MEM_MAX = 0x700 + CMD_ADDR + CMD_MAX + 1;
+
+// 仮想メモリを1バイト読む
+function readVirtualMem(addr) {
+	if (addr < 0) return 0;
+	if (addr < 0x700) return romBytes[CROM_ADDR + addr];
+	if (addr < VIRTUAL_MEM_MAX) return ramBytes[CRAM_ADDR + addr - 0x700];
+	return 0;
+}
+
+// 仮想メモリに1バイト書き込む
+function writeVirtualMem(addr, value) {
+	if (0x700 <= addr && addr < VIRTUAL_MEM_MAX) {
+		const physicalAddress = addr - 0x700 + CRAM_ADDR;
+		ramBytes[physicalAddress] = value;
+		if(CRAM_ADDR <= physicalAddress && physicalAddress < CRAM_ADDR + 0x100) {
+			fontDirty = true;
+		}
+		if (VRAM_ADDR <= physicalAddress && physicalAddress < VRAM_ADDR + 0x300) {
+			vramDirty = true;
+		}
+		if (PRG_ADDR <= physicalAddress && physicalAddress < PRG_ADDR + prgValidSize) {
+			prgDirty = true;
+		}
+	}
+}
+
 // フォントデータを描画用のImageDataに変換する
 function dataToFontImage(image, data, offset) {
 	const imageData = image.data;
