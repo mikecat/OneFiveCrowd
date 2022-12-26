@@ -303,7 +303,7 @@ const basicCommands = {
 	"SCROLL" : null,
 	"NEXT"   : null,
 	"CLV"    : {func: commandCLV, minArg: 0, maxArg: 0},
-	"CLEAR"  : null,
+	"CLEAR"  : {func: commandCLV, minArg: 0, maxArg: 0},
 	"CLK"    : {func: commandCLK, minArg: 0, maxArg: 0},
 	"GOSUB"  : null,
 	"GSB"    : null,
