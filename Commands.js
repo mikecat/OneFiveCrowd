@@ -28,3 +28,10 @@ function commandEND(){
 	// プログラムの実行を終了する
 	return [-1, 0];
 }
+
+function commandPOKE(args) {
+	// 仮想メモリにデータを書き込む
+	for (let i = 1; i < args.length; i++) {
+		writeVirtualMem(args[0] + i - 1, args[i]);
+	}
+}
