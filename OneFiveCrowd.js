@@ -62,6 +62,9 @@ const writeArray = isLittleEndian ? function(id, value) {
 	ramView.setInt16(ARRAY_ADDR + 2 * id, value, true);
 };
 
+// プログラムのコンパイル結果をログに出力するか (テスト用)
+let logCompiledProgram = false;
+
 // コンパイル済みのプログラム (インタラクティブ(-1)・即実行(0)を含む)
 let programs;
 // 実行中の行番号
@@ -870,7 +873,7 @@ function compileLine(addr, lineno, enableEdit = false) {
 		source += String.fromCharCode(ramBytes[i]);
 	}
 	const tokens = lexer(source, addr);
-	console.log(tokens);
+	if (logCompiledProgram) console.log(tokens);
 	if (enableEdit && tokens.length > 0 && tokens[0].kind === "number") {
 		// プログラムの編集
 		const numberToken = tokens[0].token;
@@ -885,10 +888,10 @@ function compileLine(addr, lineno, enableEdit = false) {
 	} else {
 		// プログラムのコンパイル
 		const ast = parser(tokens);
-		console.log(ast);
+		if (logCompiledProgram) console.log(ast);
 		if (ast === null) return [function() { throw "Syntax error"; }];
 		const executable = compiler(ast, lineno);
-		console.log(executable);
+		if (logCompiledProgram) console.log(executable);
 		return executable;
 	}
 }
