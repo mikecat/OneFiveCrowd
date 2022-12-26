@@ -921,7 +921,7 @@ var compiler = (function() {
 						throw "Label not implemented";
 					};
 				} else if (node.kind === "string") {
-					const addr = node.address;
+					const addr = node.address + 1;
 					return function() { return addr; };
 				} else {
 					throw "Unknown expr1 kind: " + node.kind;
