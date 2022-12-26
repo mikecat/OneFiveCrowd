@@ -1120,7 +1120,12 @@ var compiler = (function() {
 					}
 					const commandFunc = commandFuncInfo.func;
 					return function() {
-						commandFunc();
+						const argValues = [];
+						for (let i = 0; i < args.length; i++) {
+							argValues.push(args[i]());
+						}
+						const nextPos = commandFunc(argValues);
+						if (nextPos) return nextPos;
 						return [lineno, nextPosInLine];
 					};
 				}
