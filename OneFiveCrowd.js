@@ -886,7 +886,7 @@ function compileLine(addr, lineno, enableEdit = false) {
 		// プログラムのコンパイル
 		const ast = parser(tokens);
 		console.log(ast);
-		if (ast === null) throw "Syntax error";
+		if (ast === null) return [function() { throw "Syntax error"; }];
 		const executable = compiler(ast, lineno);
 		console.log(executable);
 		return executable;
