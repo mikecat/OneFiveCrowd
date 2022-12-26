@@ -888,7 +888,7 @@ function compileLine(addr, lineno, enableEdit = false) {
 	for (let i = addr; addr < ramBytes.length && ramBytes[i] !== 0; i++) {
 		source += String.fromCharCode(ramBytes[i]);
 	}
-	const tokens = lexer(source, addr);
+	const tokens = lexer(source, 0x700 + addr);
 	if (logCompiledProgram) console.log(tokens);
 	if (enableEdit && tokens.length > 0 && tokens[0].kind === "number") {
 		// プログラムの編集
