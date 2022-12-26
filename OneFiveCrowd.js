@@ -807,6 +807,15 @@ nextLineプロパティは、この行の実行が終わった次に実行する
 function execute() {
 	try {
 		for (let rep = 0; rep < 10000; rep++) {
+			if (currentLine > 0 && prgDirty) {
+				compileProgram();
+				if (!(currentLine in programs)) {
+					throw "Line error";
+				}
+				if (currentPositionInLine >= programs[currentLine].code.length) {
+					throw "Invalid execution position";
+				}
+			}
 			const next = programs[currentLine].code[currentPositionInLine]();
 			if (next === null) {
 				currentPositionInLine++;
@@ -821,7 +830,14 @@ function execute() {
 			if (keyBlocked) break;
 		}
 	} catch (e) {
-		putString("" + e + "\n");
+		if (currentLine > 0) {
+			putString("" + e + " in " + currentLine + "\n");
+			if (currentLine in programs) {
+				putString("" + currentLine + " " + programs[currentLine].source + "\n");
+			}
+		} else {
+			putString("" + e + "\n");
+		}
 		currentLine = -1;
 		currentPositionInLine = 1;
 	}
@@ -856,7 +872,7 @@ function doInteractive() {
 				cmdView[end - start] = 0;
 				const compilationResult = compileLine(CMD_ADDR, 0, true);
 				if (compilationResult !== null) {
-					programs[0] = {code: compilationResult, nextLine: -1};
+					programs[0] = compilationResult;
 					return [0, 0];
 				}
 			} else {
@@ -889,11 +905,45 @@ function compileLine(addr, lineno, enableEdit = false) {
 		// プログラムのコンパイル
 		const ast = parser(tokens);
 		if (logCompiledProgram) console.log(ast);
-		if (ast === null) return [function() { throw "Syntax error"; }];
+		if (ast === null) return {
+			code: [function() { throw "Syntax error"; }],
+			source: source,
+			nextLine: -1
+		};
 		const executable = compiler(ast, lineno);
 		if (logCompiledProgram) console.log(executable);
-		return executable;
+		return {
+			code: executable,
+			source: source,
+			nextLine: -1
+		};
 	}
+}
+
+// プログラム領域に格納されているプログラムをコンパイルする
+function compileProgram() {
+	const newPrograms = new Object();
+	if (programs) {
+		newPrograms[-1] = programs[-1];
+		newPrograms[0] = programs[0];
+	}
+	let ptr = 0;
+	let lastLine = -1;
+	while (ptr <= prgView.length - 4) {
+		const lineNo = prgView[ptr] | (prgView[ptr + 1] << 8);
+		const lineSize = prgView[ptr + 2];
+		if (lineNo === 0 || ptr > prgView.length - (lineSize + 4)) break;
+		if (!(lineNo in newPrograms)) {
+			newPrograms[lineNo] = compileLine(PRG_ADDR + ptr + 3, lineNo);
+			if (lastLine > 0) newPrograms[lastLine].nextLine = lineNo;
+			lastLine = lineNo;
+		}
+		ptr += lineSize + 4;
+	}
+	programs = newPrograms;
+	prgValidSize = ptr + 2;
+	if (prgValidSize > prgView.length) prgValidSize = prgView.length;
+	prgDirty = false;
 }
 
 function commandCLK() {
@@ -906,6 +956,7 @@ function commandNEW() {
 	for (let i = 0; i < 0x400; i++) {
 		prgView[i] = 0;
 	}
+	prgDirty = true;
 }
 
 function commandCLS() {
@@ -936,4 +987,18 @@ function commandCLP() {
 		}
 	}
 	fontDirty = true;
+}
+
+function commandRUN() {
+	// プログラムを最初の行から実行する
+	if (prgDirty) compileProgram();
+	let lineToExecute = -1;
+	const keys = Object.keys(programs);
+	for (let i = 0; i < keys.length; i++) {
+		const lineNo = parseInt(keys[i]);
+		if (!isNaN(lineNo) && lineNo > 0 && (lineToExecute <= 0 || lineNo < lineToExecute)) {
+			lineToExecute = lineNo;
+		}
+	}
+	return [lineToExecute, 0];
 }
