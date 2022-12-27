@@ -242,7 +242,7 @@ function initSystem() {
 
 	// 実行を開始する
 	programs = new Object();
-	programs[-1] = {code: [printOK, doInteractive], nextLine: -1};
+	programs[-1] = {code: [finalizeExecution, doInteractive], nextLine: -1};
 	programs[0] = {code: [function(){ putString("OneFiveCrowd\n"); return null; }], nextLine: -1};
 	currentLine = 0;
 	currentPositionInLine = 0;
@@ -873,7 +873,8 @@ function execute() {
 	if (!keyBlocked) setTimeout(execute, 0);
 }
 
-function printOK() {
+function finalizeExecution() {
+	if (cursorY < 0) cursorY = 0;
 	putString("OK\n");
 	return null;
 }

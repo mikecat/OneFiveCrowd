@@ -35,3 +35,14 @@ function commandPOKE(args) {
 		writeVirtualMem(args[0] + i - 1, args[i]);
 	}
 }
+
+function commandLOCATE(args) {
+	// カーソルを移動する
+	let x = args[0], y = args.length > 1 ? args[1] : 0;
+	if (x < 0) x = 0;
+	if (x >= SCREEN_WIDTH) x = SCREEN_WIDTH - 1;
+	if (y < -1) y = -1;
+	if (y >= SCREEN_HEIGHT) y = SCREEN_HEIGHT - 1;
+	cursorX = x;
+	cursorY = y;
+}
