@@ -355,7 +355,7 @@ const basicFunctions = {
 	"LINE"  : null,
 	"LEN"   : null,
 	"IoT.IN": null,
-	"RND"   : null,
+	"RND"   : {func: functionRND, minArg: 1, maxArg: 1},
 	"POINT" : null,
 	"COS"   : null,
 	"SIN"   : null
