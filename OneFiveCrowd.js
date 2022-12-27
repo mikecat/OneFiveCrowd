@@ -832,7 +832,7 @@ nextLineプロパティは、この行の実行が終わった次に実行する
 キー入力待ちをする時は、変数keyBlockedをtrueにしてから戻る。
 実行中に例外が発生した時は、例外の内容を出力し、インタラクティブに戻る。
 */
-function execute() {
+async function execute() {
 	try {
 		for (let rep = 0; rep < 10000; rep++) {
 			if (currentLine > 0 && prgDirty) {
@@ -844,7 +844,7 @@ function execute() {
 					throw "Invalid execution position";
 				}
 			}
-			const next = programs[currentLine].code[currentPositionInLine]();
+			const next = await programs[currentLine].code[currentPositionInLine]();
 			if (next === null) {
 				currentPositionInLine++;
 			} else {

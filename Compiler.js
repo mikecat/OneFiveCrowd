@@ -848,9 +848,9 @@ var compiler = (function() {
 							throw "Not implemented: " + token;
 						};
 					} else {
-						return function() {
-							const left = expr_left();
-							const right = expr_right();
+						return async function() {
+							const left = await expr_left();
+							const right = await expr_right();
 							return op(left, right);
 						};
 					}
@@ -874,10 +874,10 @@ var compiler = (function() {
 						throw null;
 					}
 					const func = funcInfo.func;
-					return function() {
+					return async function() {
 						const argValues = [];
 						for (let i = 0; i < args.length; i++) {
-							argValues.push(args[i]());
+							argValues.push(await args[i]());
 						}
 						return func(argValues);
 					};
@@ -895,8 +895,8 @@ var compiler = (function() {
 						};
 					} else {
 						const expr = compileExpr(node.nodes[1]);
-						return function() {
-							const idx = expr();
+						return async function() {
+							const idx = await expr();
 							if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
 							return readArray(idx);
 						};
@@ -940,8 +940,8 @@ var compiler = (function() {
 						throw "Not implemented: " + token;
 					};
 				} else {
-					return function() {
-						const right = expr_right();
+					return async function() {
+						const right = await expr_right();
 						return op(right);
 					};
 				}
@@ -1007,10 +1007,10 @@ var compiler = (function() {
 						throw null;
 					} else {
 						const modifier = modifierInfo.func;
-						arg.expr = function() {
+						arg.expr = async function() {
 							const argValues = [];
 							for (let i = 0; i < args.length; i++) {
-								argValues.push(args[i]());
+								argValues.push(await args[i]());
 							}
 							return modifier(argValues);
 						};
@@ -1038,9 +1038,9 @@ var compiler = (function() {
 		const kind = command.kind;
 		if (kind === "print_command") {
 			const args = compilePrintArguments(command.nodes[1]);
-			return function() {
+			return async function() {
 				for (let i = 0; i < args.length; i++) {
-					putString(args[i].expr() + args[i].suffix);
+					putString((await args[i].expr()) + args[i].suffix);
 				}
 				return [lineno, nextPosInLine];
 			};
@@ -1061,17 +1061,17 @@ var compiler = (function() {
 				if (varNode.nodes.length === 1) {
 					if (args.length !== 1) throw null;
 					const varId = variableIndice[varNode.nodes[0].token];
-					return function() {
-						writeArray(ARRAY_SIZE + varId, args[0]());
+					return async function() {
+						writeArray(ARRAY_SIZE + varId, await args[0]());
 						return [lineno, nextPosInLine];
 					};
 				} else {
 					const idxExpr = compileExpr(varNode.nodes[1]);
-					return function() {
-						const idx = idxExpr();
+					return async function() {
+						const idx = await idxExpr();
 						if (idx < 0 || idx + args.length > ARRAY_SIZE) throw "Index out of range";
 						for (let i = 0; i < args.length; i++) {
-							writeArray(idx + i, args[i]());
+							writeArray(idx + i, await args[i]());
 						}
 						return [lineno, nextPosInLine];
 					};
@@ -1081,16 +1081,16 @@ var compiler = (function() {
 				const expr = compileExpr(command.nodes[2]);
 				if (varNode.nodes.length === 1) {
 					const varId = variableIndice[varNode.nodes[0].token];
-					return function() {
-						writeArray(ARRAY_SIZE + varId, expr());
+					return async function() {
+						writeArray(ARRAY_SIZE + varId, await expr());
 						return [lineno, nextPosInLine];
 					};
 				} else {
 					const idxExpr = compileExpr(varNode.nodes[1]);
-					return function() {
-						const idx = idxExpr();
+					return async function() {
+						const idx = await idxExpr();
 						if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
-						writeArray(idx, expr());
+						writeArray(idx, await expr());
 						return [lineno, nextPosInLine];
 					};
 				}
@@ -1119,12 +1119,12 @@ var compiler = (function() {
 						throw null;
 					}
 					const commandFunc = commandFuncInfo.func;
-					return function() {
+					return async function() {
 						const argValues = [];
 						for (let i = 0; i < args.length; i++) {
-							argValues.push(args[i]());
+							argValues.push(await args[i]());
 						}
-						const nextPos = commandFunc(argValues);
+						const nextPos = await commandFunc(argValues);
 						if (nextPos) return nextPos;
 						return [lineno, nextPosInLine];
 					};
@@ -1139,8 +1139,8 @@ var compiler = (function() {
 
 	function compileIf(ast, lineno, nextPosInLineTrue, nextPosInLineFalse) {
 		const expr = compileExpr(ast.nodes[1]);
-		return function() {
-			return [lineno, expr() === 0 ? nextPosInLineFalse : nextPosInLineTrue];
+		return async function() {
+			return [lineno, (await expr()) === 0 ? nextPosInLineFalse : nextPosInLineTrue];
 		};
 	}
 
