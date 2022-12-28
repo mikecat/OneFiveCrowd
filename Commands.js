@@ -39,6 +39,79 @@ function commandRUN() {
 	return [lineToExecute, 0];
 }
 
+async function commandLIST(args) {
+	// メモリ上のプログラムを出力する
+	let showMin, showMax;
+	if (args.length === 0) {
+		showMin = LINE_NUMBER_MIN;
+		showMax = LIST_DEFAULT_SHOW_MAX;
+	} else if (args.length === 1) {
+		if (args[0] < 0) {
+			showMin = LINE_NUMBER_MIN;
+			showMax = -args[0];
+		} else if (args[0] === 0) {
+			showMin = LINE_NUMBER_MIN;
+			showMax = LIST_DEFAULT_SHOW_MAX;
+		} else {
+			showMin = args[0];
+			showMax = args[0];
+		}
+	} else {
+		if (args[0] > 0 && args[1] > 0) {
+			showMin = args[0];
+			showMax = args[1];
+		} else if (args[0] < 0 && args[1] < 0) {
+			showMin = LINE_NUMBER_MIN;
+			showMax = LINE_NUMBER_MAX;
+		} else if (args[0] < 0 && args[1] > 0) {
+			showMin = LINE_NUMBER_MIN;
+			showMax = args[1];
+		} else if (args[0] > 0 && args[1] < 0) {
+			showMin = args[0];
+			showMax = LINE_NUMBER_MAX;
+		} else if (args[0] === 0) {
+			if (args[1] > 0) {
+				showMin = LINE_NUMBER_MIN;
+				showMax = args[1];
+			} else if (args[1] < 0) {
+				showMin = LINE_NUMBER_MIN;
+				showMax = LINE_NUMBER_MAX;
+			} else { // args[1] === 0
+				showMin = LINE_NUMBER_MIN;
+				showMax = LIST_DEFAULT_SHOW_MAX;
+			}
+		} else { // args[1] === 0
+			if (args[0] > 0) {
+				showMin = args[0];
+				showMax = args[0] <= LIST_DEFAULT_SHOW_MAX ? LIST_DEFAULT_SHOW_MAX : LINE_NUMBER_MAX;
+			} else { // args[0] < 0
+				showMin = LINE_NUMBER_MIN;
+				showMax = LINE_NUMBER_MAX;
+			}
+		}
+	}
+	let ptr = 0;
+	let shownCount = 0;
+	while (ptr + 3 <= prgView.length) {
+		const lineNo = prgView[ptr] | (prgView[ptr + 1] << 8);
+		const lineLength = prgView[ptr + 2];
+		if (showMin <= lineNo && lineNo <= showMax && ptr + 3 + lineLength <= prgView.length) {
+			let line = "" + lineNo + " ";
+			for (let i = 0; i < lineLength && ptr + 3 + i < prgView.length && prgView[ptr + 3 + i] !== 0; i++) {
+				line += String.fromCharCode(prgView[ptr + 3 + i]);
+			}
+			const shownCountDelta = 1 + Math.floor(line.length / SCREEN_WIDTH);
+			if (shownCount + shownCountDelta > LIST_WAIT_LINES) {
+				await commandWAIT([LIST_WAIT_TIME]);
+				shownCount = 0;
+			}
+			shownCount += shownCountDelta;
+			putString(line + "\n");
+		}
+		ptr += lineLength + 4;
+	}
+}
+
 function commandGOTO(args) {
 	// プログラムを指定の行から実行する
 	if (prgDirty) compileProgram();

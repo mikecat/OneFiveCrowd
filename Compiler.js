@@ -286,7 +286,7 @@ const basicCommands = {
 	"LED"    : null,
 	"WAIT"   : {func: commandWAIT, minArg: 1, maxArg: 2},
 	"RUN"    : {func: commandRUN, minArg: 0, maxArg: 0},
-	"LIST"   : null,
+	"LIST"   : {func: commandLIST, minArg: 0, maxArg: 2},
 	"GOTO"   : {func: commandGOTO, minArg: 1, maxArg: 1},
 	"END"    : {func: commandEND, minArg: 0, maxArg: 0},
 	"NEW"    : {func: commandNEW, minArg: 0, maxArg: 0},

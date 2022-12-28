@@ -104,6 +104,17 @@ let vramDirty = false; // VRAMの更新がある
 let prgDirty = false; // プログラムの更新がある
 let prgValidSize = 2; // 更新判定対象のプログラムのデータサイズ
 
+// 有効な行番号の最小値
+const LINE_NUMBER_MIN = 1;
+// 有効な行番号の最大値
+const LINE_NUMBER_MAX = 0x7fff;
+// 引数なしでLISTを実行した時に表示する最大の行番号 (含む)
+const LIST_DEFAULT_SHOW_MAX = 16384;
+// LISTで何行出力するごとにウェイトを入れるか
+const LIST_WAIT_LINES = 22;
+// LISTで入れるウェイトの時間 (WAITで用いる単位)
+const LIST_WAIT_TIME = TICK_PER_SECOND >> 1;
+
 // 仮想メモリのサイズ
 const VIRTUAL_MEM_MAX = 0x700 + CMD_ADDR + CMD_MAX + 1;
 
