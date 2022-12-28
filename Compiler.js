@@ -299,7 +299,7 @@ const basicCommands = {
 	"BEEP"   : null,
 	"PLAY"   : null,
 	"TEMPO"  : null,
-	"CLT"    : null,
+	"CLT"    : {func: commandCLT, minArg: 0, maxArg: 0},
 	"SCROLL" : null,
 	"NEXT"   : null,
 	"CLV"    : {func: commandCLV, minArg: 0, maxArg: 0},
@@ -335,7 +335,7 @@ const basicCommands = {
 
 const basicFunctions = {
 	"BTN"   : null,
-	"TICK"  : null,
+	"TICK"  : {func: functionTICK, minArg: 0, maxArg: 1},
 	"INKEY" : null,
 	"ASC"   : null,
 	"SCR"   : null,

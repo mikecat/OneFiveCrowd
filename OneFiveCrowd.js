@@ -74,6 +74,11 @@ let currentPositionInLine;
 // キー入力待ち中か
 let keyBlocked = false;
 
+// TICK用
+let tickOrigin;
+const TICK_PER_SECOND = 60;
+const TICK_HIRES_MULT = 261;
+
 // カーソル位置
 let cursorX = 0;
 let cursorY = 0;
@@ -233,6 +238,7 @@ function initSystem() {
 	commandCLV();
 	commandCLK();
 	commandCLS();
+	commandCLT();
 	commandNEW();
 	updateScreen();
 
@@ -1016,4 +1022,9 @@ function commandCLP() {
 		}
 	}
 	fontDirty = true;
+}
+
+function commandCLT() {
+	// TICK() の時刻を0にする
+	tickOrigin = performance.now();
 }
