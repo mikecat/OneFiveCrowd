@@ -82,6 +82,9 @@ let tickOrigin;
 const TICK_PER_SECOND = 60;
 const TICK_HIRES_MULT = 261;
 
+// BTN用
+let btnStatus = 0;
+
 // カーソル位置
 let cursorX = 0;
 let cursorY = 0;
@@ -371,6 +374,25 @@ function keyDown() {
 			keyInput(specialKeyDict[key]);
 		}
 	}
+	if (!event.ctrlKey && !event.altKey) {
+		if (key === "ArrowLeft") btnStatus |= 1;
+		else if (key === "ArrowRight") btnStatus |= 2;
+		else if (key === "ArrowUp") btnStatus |= 4;
+		else if (key === "ArrowDown") btnStatus |= 8;
+		else if (key === " ") btnStatus |= 0x10;
+		else if (key === "x") btnStatus |= 0x20;
+	}
+	return false;
+}
+
+function keyUp() {
+	const key = event.key;
+	if (key === "ArrowLeft") btnStatus &= ~1;
+	else if (key === "ArrowRight") btnStatus &= ~2;
+	else if (key === "ArrowUp") btnStatus &= ~4;
+	else if (key === "ArrowDown") btnStatus &= ~8;
+	else if (key === " ") btnStatus &= ~0x10;
+	else if (key === "x" || key == "X") btnStatus &= ~0x20;
 	return false;
 }
 

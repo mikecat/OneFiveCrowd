@@ -334,7 +334,7 @@ const basicCommands = {
 };
 
 const basicFunctions = {
-	"BTN"   : null,
+	"BTN"   : {func: functionBTN, minArg: 0, maxArg: 1},
 	"TICK"  : {func: functionTICK, minArg: 0, maxArg: 1},
 	"INKEY" : null,
 	"ASC"   : null,
