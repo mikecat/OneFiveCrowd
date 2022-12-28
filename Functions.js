@@ -34,6 +34,14 @@ function functionTICK(args) {
 	return Math.floor(tick) % 32768;
 }
 
+function functionINKEY() {
+	// キー入力を1文字取得する
+	const key = dequeueKey();
+	if (key < 0) return 0;
+	if (key === 0) return 0x100;
+	return key;
+}
+
 function functionSCR(args) {
 	// 指定した位置のVRAMを読む
 	if (args.length !== 0 && args.length !== 2) throw "Syntax error";
@@ -41,6 +49,13 @@ function functionSCR(args) {
 	const y = args.length === 0 ? cursorY : args[1];
 	if (x < 0 || SCREEN_WIDTH <= x || y < 0 || SCREEN_HEIGHT <= y) return 0;
 	return vramView[SCREEN_WIDTH * y + x];
+}
+
+function functionABS(args) {
+	// 絶対値を得る
+	const value = args[0];
+	if (value === -32768 || value >= 0) return value;
+	return -value;
 }
 
 function functionFREE() {
@@ -60,9 +75,35 @@ function functionPEEK(args) {
 	return readVirtualMem(args[0]);
 }
 
+function functionLINE() {
+	// 実行中の行番号を得る
+	return currentLine;
+}
+
+function functionLEN(args) {
+	// 文字列の長さを得る
+	let count = 0;
+	let ptr = args[0];
+	for (;;) {
+		const c = readVirtualMem(ptr + count);
+		if (c == 0 || c == 0x22) return count;
+		count++;
+	}
+}
+
 function functionRND(args) {
 	// 0以上第一引数未満の乱数を返す
 	const max = args[0];
 	if (max <= 0) return 0;
 	return (Math.random() * max) >>> 0;
+}
+
+function functionCOS(args){
+	// 余弦の256倍を返す
+	return Math.round(Math.cos(args[0] * Math.PI / 180) * 256);
+}
+
+function functionSIN(args){
+	// 正弦の256倍を返す
+	return Math.round(Math.sin(args[0] * Math.PI / 180) * 256);
 }

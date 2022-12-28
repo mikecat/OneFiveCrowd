@@ -336,11 +336,11 @@ const basicCommands = {
 const basicFunctions = {
 	"BTN"   : {func: functionBTN, minArg: 0, maxArg: 1},
 	"TICK"  : {func: functionTICK, minArg: 0, maxArg: 1},
-	"INKEY" : null,
-	"ASC"   : null,
+	"INKEY" : {func: functionINKEY, minArg: 0, maxArg: 0},
+	"ASC"   : {func: functionPEEK, minArg: 1, maxArg: 1},
 	"SCR"   : {func: functionSCR, minArg: 0, maxArg: 2},
 	"VPEEK" : {func: functionSCR, minArg: 0, maxArg: 2},
-	"ABS"   : null,
+	"ABS"   : {func: functionABS, minArg: 1, maxArg: 1},
 	"SOUND" : null,
 	"FREE"  : {func: functionFREE, minArg: 0, maxArg: 0},
 	"VER"   : null,
@@ -352,13 +352,13 @@ const basicFunctions = {
 	"I2CW"  : null,
 	"USR"   : null,
 	"LANG"  : null,
-	"LINE"  : null,
-	"LEN"   : null,
+	"LINE"  : {func: functionLINE, minArg: 0, maxArg: 0},
+	"LEN"   : {func: functionLEN, minArg: 1, maxArg: 1},
 	"IoT.IN": null,
 	"RND"   : {func: functionRND, minArg: 1, maxArg: 1},
 	"POINT" : null,
-	"COS"   : null,
-	"SIN"   : null
+	"COS"   : {func: functionCOS, minArg: 1, maxArg: 1},
+	"SIN"   : {func: functionSIN, minArg: 1, maxArg: 1}
 };
 
 const expr7_ops = {
