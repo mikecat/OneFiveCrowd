@@ -43,6 +43,18 @@ function functionSCR(args) {
 	return vramView[SCREEN_WIDTH * y + x];
 }
 
+function functionFREE() {
+	// プログラムの残り容量を得る
+	let ptr = 0;
+	while (ptr + 3 <= prgView.length) {
+		const lineNo = prgView[ptr] | (prgView[ptr + 1] << 8);
+		const lineSize = prgView[ptr + 2];
+		if (lineNo === 0) break;
+		ptr += lineSize + 4;
+	}
+	return ptr > prgView.length ? 0 : prgView.length - ptr;
+}
+
 function functionPEEK(args) {
 	// 仮想メモリからデータを読み込む
 	return readVirtualMem(args[0]);

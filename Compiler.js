@@ -342,7 +342,7 @@ const basicFunctions = {
 	"VPEEK" : {func: functionSCR, minArg: 0, maxArg: 2},
 	"ABS"   : null,
 	"SOUND" : null,
-	"FREE"  : null,
+	"FREE"  : {func: functionFREE, minArg: 0, maxArg: 0},
 	"VER"   : null,
 	"FILE"  : null,
 	"PEEK"  : {func: functionPEEK, minArg: 1, maxArg: 1},
