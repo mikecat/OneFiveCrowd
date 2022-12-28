@@ -947,6 +947,9 @@ function doInteractive() {
 	if (key === 0x0a && cursorY > 0) {
 		const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
 		let start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
+		if (cursorX === 0 && start > 0 && vramView[start] === 0 && vramView[start - 1] !== 0) {
+			start--;
+		}
 		let end = start;
 		if (vramView[start] !== 0) {
 			while (start > 0 && vramView[start - 1] !== 0) start--;
