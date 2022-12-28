@@ -144,3 +144,12 @@ function commandPOKE(args) {
 		writeVirtualMem(args[0] + i - 1, args[i]);
 	}
 }
+
+function commandHELP() {
+	// メモリマップを出力する
+	putString("#000 CHAR\n");
+	putString("#" + (VIRTUAL_RAM_OFFSET + CRAM_ADDR).toString(16).toUpperCase() + " PCG\n");
+	putString("#" + (VIRTUAL_RAM_OFFSET + ARRAY_ADDR).toString(16).toUpperCase() + " VAR\n");
+	putString("#" + (VIRTUAL_RAM_OFFSET + VRAM_ADDR).toString(16).toUpperCase() + " VRAM\n");
+	putString("#" + (VIRTUAL_RAM_OFFSET + PRG_ADDR).toString(16).toUpperCase() + " LIST\n");
+}

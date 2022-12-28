@@ -317,7 +317,7 @@ const basicCommands = {
 	"VIDEO"  : null,
 	"POKE"   : {func: commandPOKE, minArg: 2, maxArg: 999},
 	"CLP"    : {func: commandCLP, minArg: 0, maxArg: 0},
-	"HELP"   : null,
+	"HELP"   : {func: commandHELP, minArg: 0, maxArg: 0},
 	"RESET"  : null,
 	"OUT"    : null,
 	"PWM"    : null,
