@@ -158,6 +158,7 @@ function updateScreen() {
 		fontDirty = false;
 		vramDirty = true;
 	}
+	const drawCursor = cursorOn && keyBlocked;
 	if (vramDirty) {
 		// VRAMを画面に反映させる
 		for (let y = 0; y < SCREEN_HEIGHT; y++) {
@@ -166,7 +167,7 @@ function updateScreen() {
 					fontImages[vramView[y * SCREEN_WIDTH + x]], x * 16, y * 16);
 			}
 		}
-		if (cursorOn) {
+		if (drawCursor) {
 			if (0 <= cursorX && cursorX < SCREEN_WIDTH && 0 <= cursorY && cursorY < SCREEN_HEIGHT) {
 				const imageData = mainScreenContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
 				for (let i = 0; i < imageData.data.length; i += 4) {
@@ -184,7 +185,7 @@ function updateScreen() {
 			cursorDispX = cursorDispY = -1;
 		}
 		vramDirty = false;
-	} else if (cursorOn && (cursorX != cursorDispX || cursorY != cursorDispY)) {
+	} else if (drawCursor && (cursorX != cursorDispX || cursorY != cursorDispY)) {
 		// カーソルの位置がずれている
 		// 古い位置のカーソルを消す
 		if (cursorDispX >= 0 && cursorDispY >= 0) {
@@ -206,7 +207,7 @@ function updateScreen() {
 		} else {
 			cursorDispX = cursorDispY = -1;
 		}
-	} else if (!cursorOn && cursorDispX >= 0 && cursorDispY >= 0) {
+	} else if (!drawCursor && cursorDispX >= 0 && cursorDispY >= 0) {
 		// カーソルが消えたので、消す
 		mainScreenContext.putImageData(
 			fontImages[vramView[cursorDispY * SCREEN_WIDTH + cursorDispX]],
