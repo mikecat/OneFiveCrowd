@@ -74,6 +74,9 @@ let currentPositionInLine;
 // キー入力待ち中か
 let keyBlocked = false;
 
+// 停止要求
+let breakRequest = false;
+
 // TICK用
 let tickOrigin;
 const TICK_PER_SECOND = 60;
@@ -248,7 +251,7 @@ function initSystem() {
 
 	// 実行を開始する
 	programs = new Object();
-	programs[-1] = {code: [finalizeExecution, doInteractive], nextLine: -1};
+	programs[-1] = {code: [finalizeExecution, printOK, doInteractive], nextLine: -1};
 	programs[0] = {code: [function(){ putString("OneFiveCrowd\n"); return null; }], nextLine: -1};
 	currentLine = 0;
 	currentPositionInLine = 0;
@@ -280,7 +283,12 @@ function dequeueKey() {
 
 function keyInput(key, invokeCallback = true) {
 	if (typeof(key) === "number") {
-		enqueueKey(key);
+		if (key === 0x1b){
+			// Esc
+			if (currentLine >= 0) breakRequest = true;
+		} else {
+			enqueueKey(key);
+		}
 	} else {
 		if (key.length === 0) return;
 		for (let i = 0; i < key.length; i++) {
@@ -840,6 +848,7 @@ nextLineプロパティは、この行の実行が終わった次に実行する
 */
 async function execute() {
 	try {
+		pollBreak();
 		for (let rep = 0; rep < 10000; rep++) {
 			if (currentLine > 0 && prgDirty) {
 				compileProgram();
@@ -851,11 +860,11 @@ async function execute() {
 				}
 			}
 			const next = await programs[currentLine].code[currentPositionInLine]();
-			if (next === null) {
-				currentPositionInLine++;
-			} else {
+			if (next) {
 				currentLine = next[0];
 				currentPositionInLine = next[1];
+			} else {
+				currentPositionInLine++;
 			}
 			if (programs[currentLine].code.length <= currentPositionInLine) {
 				currentLine = programs[currentLine].nextLine;
@@ -864,6 +873,7 @@ async function execute() {
 			if (keyBlocked) break;
 		}
 	} catch (e) {
+		finalizeExecution();
 		if (currentLine > 0) {
 			putString("" + e + " in " + currentLine + "\n");
 			if (currentLine in programs) {
@@ -873,16 +883,23 @@ async function execute() {
 			putString("" + e + "\n");
 		}
 		currentLine = -1;
-		currentPositionInLine = 1;
+		currentPositionInLine = 2;
 	}
 	updateScreen();
 	if (!keyBlocked) setTimeout(execute, 0);
 }
 
+function pollBreak() {
+	if (breakRequest) throw "Break";
+}
+
+function printOK() {
+	putString("OK\n");
+}
+
 function finalizeExecution() {
 	if (cursorY < 0) cursorY = 0;
-	putString("OK\n");
-	return null;
+	breakRequest = false;
 }
 
 function doInteractive() {
