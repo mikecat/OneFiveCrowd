@@ -981,29 +981,30 @@ function compileLine(addr, lineno, enableEdit = false) {
 		const numberToken = tokens[0].token;
 		const left = source.substring(numberToken.length);
 		const line = /^\s/.test(left) ? left.substring(1) : left;
-		const lineno =
+		const lineNo =
 			numberToken.charAt(0) === "#" ? parseInt(numberToken.substring(1), 16) :
 			numberToken.charAt(0) === "`" ? parseInt(numberToken.substring(1), 2) :
 			parseInt(numberToken, 10);
-		editProgram(lineno, line);
-		return null;
-	} else {
-		// プログラムのコンパイル
-		const ast = parser(tokens);
-		if (logCompiledProgram) console.log(ast);
-		if (ast === null) return {
-			code: [function() { throw "Syntax error"; }],
-			source: source,
-			nextLine: -1
-		};
-		const executable = compiler(ast, lineno);
-		if (logCompiledProgram) console.log(executable);
-		return {
-			code: executable,
-			source: source,
-			nextLine: -1
-		};
+		if (LINE_NUMBER_MIN <= lineNo && lineNo <= LINE_NUMBER_MAX) {
+			editProgram(lineNo, line);
+			return null;
+		}
 	}
+	// プログラムのコンパイル
+	const ast = parser(tokens);
+	if (logCompiledProgram) console.log(ast);
+	if (ast === null) return {
+		code: [function() { throw "Syntax error"; }],
+		source: source,
+		nextLine: -1
+	};
+	const executable = compiler(ast, lineno);
+	if (logCompiledProgram) console.log(executable);
+	return {
+		code: executable,
+		source: source,
+		nextLine: -1
+	};
 }
 
 // プログラム領域に格納されているプログラムをコンパイルする
