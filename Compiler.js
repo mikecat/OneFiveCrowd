@@ -63,7 +63,7 @@ const getTokenInfo = (function(tokens) {
 	"RESET", "IN", "ANA", "OUT", "PWM", "DEC$", "HEX$", "BIN$", ">>", "<<",
 	"BPS", "I2CR", "I2CW", "USR", "&&", "||", "CLO", "LANG", "LINE", "SRND",
 	"COPY", "STR$", "LEN", "UART", "OK", "IoT.IN", "IoT.OUT", "SWITCH",
-	"LEFT", "RIGHT", "UP", "DOWN", "SPACE", "MOD", "DRAW", "POINT",
+	"LEFT", "RIGHT", "UP", "DOWN", "SPACE", "MOD", "DRAW", "POS", "POINT",
 	"COS", "SIN", "WS.LED",
 	":", "+", "-", "*", "/", "%", "(", ")", "=", "<", ">", ",", "[", "]", ";",
 	"&", "|", "^", "~", "?", "'",
@@ -240,7 +240,7 @@ function_arguments ::= (空)
      function_name ::= "BTN" | "TICK" | "INKEY" | "ASC" | "SCR" | "VPEEK" | "ABS"
                      | "SOUND" | "FREE" | "VER" | "FILE" | "PEEK" | "IN" | "ANA"
                      | "I2CR" | "I2CW" | "USR" | "LANG" | "LINE" | "LEN" | "IoT.IN"
-                     | "RND" | "POINT" | "COS" | "SIN"
+                     | "RND" | "POS" | "POINT" | "COS" | "SIN"
           constant ::= "LEFT | "RIGHT" | "UP" | "DOWN" | "SPACE"
 
               expr ::= expr7
@@ -356,6 +356,7 @@ const basicFunctions = {
 	"LEN"   : {func: functionLEN, minArg: 1, maxArg: 1},
 	"IoT.IN": null,
 	"RND"   : {func: functionRND, minArg: 1, maxArg: 1},
+	"POS"   : {func: functionPOS, minArg: 0, maxArg: 1},
 	"POINT" : null,
 	"COS"   : {func: functionCOS, minArg: 1, maxArg: 1},
 	"SIN"   : {func: functionSIN, minArg: 1, maxArg: 1}

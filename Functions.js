@@ -98,6 +98,18 @@ function functionRND(args) {
 	return (Math.random() * max) >>> 0;
 }
 
+function functionPOS(args) {
+	// カーソル位置や画面サイズを得る
+	const select = args.length > 0 ? args[0] : 0;
+	switch (select) {
+		case 1: return cursorX;
+		case 2: return cursorY;
+		case 3: return SCREEN_WIDTH;
+		case 4: return SCREEN_HEIGHT;
+		default: return SCREEN_WIDTH * cursorY + cursorX;
+	}
+}
+
 function functionCOS(args){
 	// 余弦の256倍を返す
 	return Math.round(Math.cos(args[0] * Math.PI / 180) * 256);
