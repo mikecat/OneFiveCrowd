@@ -1098,10 +1098,6 @@ var compiler = (function() {
 					};
 				}
 			}
-			return function() {
-				throw "Not implemented: LET";
-				return [lineno, nextPosInLine];
-			};
 		} else if (kind === "label_definition") {
 			return function() {
 				throw "Not implemented: label";
