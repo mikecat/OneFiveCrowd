@@ -34,6 +34,15 @@ function functionTICK(args) {
 	return Math.floor(tick) % 32768;
 }
 
+function functionSCR(args) {
+	// 指定した位置のVRAMを読む
+	if (args.length !== 0 && args.length !== 2) throw "Syntax error";
+	const x = args.length === 0 ? cursorX : args[0];
+	const y = args.length === 0 ? cursorY : args[1];
+	if (x < 0 || SCREEN_WIDTH <= x || y < 0 || SCREEN_HEIGHT <= y) return 0;
+	return vramView[SCREEN_WIDTH * y + x];
+}
+
 function functionPEEK(args) {
 	// 仮想メモリからデータを読み込む
 	return readVirtualMem(args[0]);
