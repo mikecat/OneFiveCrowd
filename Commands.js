@@ -1,5 +1,30 @@
 "use strict";
 
+async function commandWAIT(args) {
+	// 指定した時間待機する
+	let timeToWait = Math.abs(args[0]) * 1000 / (TICK_PER_SECOND * (args[0] < 0 ? TICK_HIRES_MULT : 1));
+	let startTime = performance.now();
+	if (timeToWait >= 15) updateScreen();
+	for (;;) {
+		pollBreak();
+		if (timeToWait < 10){
+			while (performance.now() - startTime < timeToWait);
+			return null;
+		} else if (timeToWait <= 200) {
+			return new Promise(function(resolve, reject) {
+				setTimeout(function() { resolve(null); }, timeToWait);
+			});
+		} else {
+			await new Promise(function(resolve, reject) {
+				setTimeout(function() { resolve(null); }, 200);
+			});
+			const currentTime = performance.now();
+			timeToWait -= currentTime - startTime;
+			startTime = currentTime;
+		}
+	}
+}
+
 function commandRUN() {
 	// プログラムを最初の行から実行する
 	if (prgDirty) compileProgram();

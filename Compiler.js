@@ -284,7 +284,7 @@ const printModifiers = {
 
 const basicCommands = {
 	"LED"    : null,
-	"WAIT"   : null,
+	"WAIT"   : {func: commandWAIT, minArg: 1, maxArg: 2},
 	"RUN"    : {func: commandRUN, minArg: 0, maxArg: 0},
 	"LIST"   : null,
 	"GOTO"   : {func: commandGOTO, minArg: 1, maxArg: 1},
