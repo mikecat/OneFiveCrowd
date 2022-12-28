@@ -127,13 +127,6 @@ function commandEND(){
 	return [-1, 0];
 }
 
-function commandPOKE(args) {
-	// 仮想メモリにデータを書き込む
-	for (let i = 1; i < args.length; i++) {
-		writeVirtualMem(args[0] + i - 1, args[i]);
-	}
-}
-
 function commandLOCATE(args) {
 	// カーソルを移動する
 	let x = args[0], y = args.length > 1 ? args[1] : 0;
@@ -143,4 +136,11 @@ function commandLOCATE(args) {
 	if (y >= SCREEN_HEIGHT) y = SCREEN_HEIGHT - 1;
 	cursorX = x;
 	cursorY = y;
+}
+
+function commandPOKE(args) {
+	// 仮想メモリにデータを書き込む
+	for (let i = 1; i < args.length; i++) {
+		writeVirtualMem(args[0] + i - 1, args[i]);
+	}
 }
