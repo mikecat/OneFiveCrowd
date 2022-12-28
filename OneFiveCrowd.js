@@ -115,21 +115,23 @@ const LIST_WAIT_LINES = 22;
 // LISTで入れるウェイトの時間 (WAITで用いる単位)
 const LIST_WAIT_TIME = TICK_PER_SECOND >> 1;
 
+// 仮想メモリ上のRAMの開始アドレス
+const VIRTUAL_RAM_OFFSET = 0x700;
 // 仮想メモリのサイズ
-const VIRTUAL_MEM_MAX = 0x700 + CMD_ADDR + CMD_MAX + 1;
+const VIRTUAL_MEM_MAX = VIRTUAL_RAM_OFFSET + CMD_ADDR + CMD_MAX + 1;
 
 // 仮想メモリを1バイト読む
 function readVirtualMem(addr) {
 	if (addr < 0) return 0;
-	if (addr < 0x700) return romBytes[CROM_ADDR + addr];
-	if (addr < VIRTUAL_MEM_MAX) return ramBytes[CRAM_ADDR + addr - 0x700];
+	if (addr < VIRTUAL_RAM_OFFSET) return romBytes[CROM_ADDR + addr];
+	if (addr < VIRTUAL_MEM_MAX) return ramBytes[CRAM_ADDR + addr - VIRTUAL_RAM_OFFSET];
 	return 0;
 }
 
 // 仮想メモリに1バイト書き込む
 function writeVirtualMem(addr, value) {
-	if (0x700 <= addr && addr < VIRTUAL_MEM_MAX) {
-		const physicalAddress = addr - 0x700 + CRAM_ADDR;
+	if (VIRTUAL_RAM_OFFSET <= addr && addr < VIRTUAL_MEM_MAX) {
+		const physicalAddress = addr - VIRTUAL_RAM_OFFSET + CRAM_ADDR;
 		ramBytes[physicalAddress] = value;
 		if(CRAM_ADDR <= physicalAddress && physicalAddress < CRAM_ADDR + 0x100) {
 			fontDirty = true;
@@ -977,7 +979,7 @@ function compileLine(addr, lineno, enableEdit = false) {
 	for (let i = addr; addr < ramBytes.length && ramBytes[i] !== 0; i++) {
 		source += String.fromCharCode(ramBytes[i]);
 	}
-	const tokens = lexer(source, 0x700 + addr);
+	const tokens = lexer(source, VIRTUAL_RAM_OFFSET + addr);
 	if (logCompiledProgram) console.log(tokens);
 	if (enableEdit && tokens.length > 0 && tokens[0].kind === "number") {
 		// プログラムの編集
