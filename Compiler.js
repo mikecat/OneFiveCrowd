@@ -64,7 +64,7 @@ const getTokenInfo = (function(tokens) {
 	"BPS", "I2CR", "I2CW", "USR", "&&", "||", "CLO", "LANG", "LINE", "SRND",
 	"COPY", "STR$", "LEN", "UART", "OK", "IoT.IN", "IoT.OUT", "SWITCH",
 	"LEFT", "RIGHT", "UP", "DOWN", "SPACE", "MOD", "DRAW", "POS", "POINT",
-	"COS", "SIN", "WS.LED",
+	"COS", "SIN", "WS.LED", "KBD", "DAC",
 	":", "+", "-", "*", "/", "%", "(", ")", "=", "<", ">", ",", "[", "]", ";",
 	"&", "|", "^", "~", "?", "'",
 	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
@@ -236,7 +236,7 @@ function_arguments ::= (空)
                      | "STOP" | "CONT" | "RENUM" | "LRUN" | "SLEEP" | "VIDEO"
                      | "POKE" | "CLP" | "HELP" | "RESET" | "OUT" | "PWM" | "BPS"
                      | "CLO" | "SRND" | "COPY" | "UART" | "OK" | "IoT.OUT" | "SWITCH"
-                     | "DRAW" | "WS.LED"
+                     | "DRAW" | "WS.LED" | "KBD" | "DAC"
      function_name ::= "BTN" | "TICK" | "INKEY" | "ASC" | "SCR" | "VPEEK" | "ABS"
                      | "SOUND" | "FREE" | "VER" | "FILE" | "PEEK" | "IN" | "ANA"
                      | "I2CR" | "I2CW" | "USR" | "LANG" | "LINE" | "LEN" | "IoT.IN"
@@ -285,6 +285,7 @@ const printModifiers = {
 const basicCommands = {
 	"LED"    : null,
 	"WAIT"   : {func: commandWAIT, minArg: 1, maxArg: 2},
+	"KBD"    : null,
 	"RUN"    : {func: commandRUN, minArg: 0, maxArg: 0},
 	"LIST"   : {func: commandLIST, minArg: 0, maxArg: 2},
 	"GOTO"   : {func: commandGOTO, minArg: 1, maxArg: 1},
@@ -321,6 +322,7 @@ const basicCommands = {
 	"RESET"  : null,
 	"OUT"    : null,
 	"PWM"    : null,
+	"DAC"    : null,
 	"BPS"    : null,
 	"CLO"    : null,
 	"SRND"   : null,
