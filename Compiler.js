@@ -326,7 +326,7 @@ const basicCommands = {
 	"BPS"    : null,
 	"CLO"    : null,
 	"SRND"   : null,
-	"COPY"   : null,
+	"COPY"   : {func: commandCOPY, minArg: 3, maxArg: 3},
 	"UART"   : null,
 	"OK"     : null,
 	"IoT.OUT": null,

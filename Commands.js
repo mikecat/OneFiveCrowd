@@ -178,3 +178,17 @@ function commandHELP() {
 	putString("#" + (VIRTUAL_RAM_OFFSET + VRAM_ADDR).toString(16).toUpperCase() + " VRAM\n");
 	putString("#" + (VIRTUAL_RAM_OFFSET + PRG_ADDR).toString(16).toUpperCase() + " LIST\n");
 }
+
+function commandCOPY(args) {
+	// 仮想メモリ中のデータのコピーを行う
+	const dest = args[0], src = args[1], amount = args[2];
+	if (amount >= 0) {
+		for (let i = 0; i < amount; i++) {
+			writeVirtualMem(dest + i, readVirtualMem(src + i));
+		}
+	} else {
+		for (let i = 0; i > amount; i--) {
+			writeVirtualMem(dest + i, readVirtualMem(src + i));
+		}
+	}
+}
