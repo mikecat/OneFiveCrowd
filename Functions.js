@@ -110,6 +110,22 @@ function functionPOS(args) {
 	}
 }
 
+function functionPOINT(args) {
+	// 指定の座標に点があるかを返す、またはカーソル位置の文字コードを得る
+	if (args.length !== 2) return functionSCR(args);
+	const x = args[0], y = args[1];
+	if (x < 0 || SCREEN_WIDTH * 2 <= x || y < 0 || SCREEN_HEIGHT * 2 <= y) return 0;
+	const c = functionSCR([x >> 1, y >> 1]);
+	if (c === 0) {
+		return 0;
+	} else if (0x80 <= c && c <= 0x8f) {
+		const offset = (x & 1) + 2 * (y & 1);
+		return (c >> offset) & 1;
+	} else {
+		return 1;
+	}
+}
+
 function functionCOS(args){
 	// 余弦の256倍を返す
 	return Math.round(Math.cos(args[0] * Math.PI / 180) * 256);

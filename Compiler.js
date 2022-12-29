@@ -359,7 +359,7 @@ const basicFunctions = {
 	"IoT.IN": null,
 	"RND"   : {func: functionRND, minArg: 1, maxArg: 1},
 	"POS"   : {func: functionPOS, minArg: 0, maxArg: 1},
-	"POINT" : null,
+	"POINT" : {func: functionPOINT, minArg: 0, maxArg: 2},
 	"COS"   : {func: functionCOS, minArg: 1, maxArg: 1},
 	"SIN"   : {func: functionSIN, minArg: 1, maxArg: 1}
 };
