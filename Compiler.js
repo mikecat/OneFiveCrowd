@@ -331,7 +331,7 @@ const basicCommands = {
 	"OK"     : null,
 	"IoT.OUT": null,
 	"SWITCH" : null,
-	"DRAW"   : null,
+	"DRAW"   : {func: commandDRAW, minArg: 2, maxArg: 5},
 	"WS.LED" : null
 };
 

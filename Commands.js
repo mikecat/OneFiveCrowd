@@ -234,3 +234,59 @@ function commandCOPY(args) {
 		}
 	}
 }
+
+function commandDRAW(args) {
+	// 点または線を描画する
+	// modeの仕様 (観察結果)
+	// 0: 描画する位置の点を消す
+	// 1: 描画する位置に点を出す
+	// 2: 描画する位置の点をトグルする (#80台以外は点が無い扱い)
+	// 3: 何もしない
+	// その他？: 描画する位置の点は変更せず、#80台以外なら#80にする
+	const mode = args.length % 2 === 0 ? 1 : args[args.length - 1];
+	const drawPoint = function(x, y) {
+		if(x < 0 || SCREEN_WIDTH * 2 <= x || y < 0 || SCREEN_HEIGHT * 2 <= y) return;
+		if(mode === 3) return;
+		const idx = SCREEN_WIDTH * (y >> 1) + (x >> 1);
+		const offset = 2 * (y & 1) + (x & 1);
+		if ((vramView[idx] & 0xf0) !== 0x80) vramView[idx] = 0x80;
+		switch (mode) {
+			case 0: vramView[idx] &= ~(1 << offset); break;
+			case 1: vramView[idx] |= 1 << offset; break;
+			case 2: vramView[idx] ^= 1 << offset; break;
+		}
+		vramDirty = true;
+	};
+	// プレゼンハムのアルゴリズム
+	const sx = args[0], sy = args[1];
+	const dx = args.length >= 4 ? args[2] : args[0];
+	const dy = args.length >= 4 ? args[3] : args[1];
+	const wx = sx >= dx ? sx - dx : dx - sx, wy = sy >= dy ? sy - dy : dy - sy;
+	const xmode = wx >= wy;
+	let x = sx, y = sy, gosa = 0;
+	while (x != dx || y != dy) {
+		drawPoint(x, y);
+		if (xmode) {
+			if (sx < dx) x++; else x--;
+			gosa += (dy - sy) << 1;
+			if (gosa > wx){
+				y++;
+				gosa -= wx << 1;
+			} else if (gosa < -wx) {
+				y--;
+				gosa += wx << 1;
+			}
+		} else {
+			if (sy < dy) y++; else y--;
+			gosa += (dx - sx) << 1;
+			if (gosa > wy) {
+				x++;
+				gosa -= wy << 1;
+			} else if (gosa < -wy) {
+				x--;
+				gosa += wy << 1;
+			}
+		}
+	}
+	drawPoint(x, y);
+}
