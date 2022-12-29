@@ -67,6 +67,8 @@ let logCompiledProgram = false;
 
 // コンパイル済みのプログラム (インタラクティブ(-1)・即実行(0)を含む)
 let programs;
+// コンパイル済みのプログラムのラベル情報
+let programLabels;
 // 実行中の行番号
 let currentLine;
 // 実行中の行中の位置
@@ -1019,20 +1021,33 @@ function compileLine(addr, lineno, enableEdit = false) {
 	if (ast === null) return {
 		code: [function() { throw "Syntax error"; }],
 		source: source,
-		nextLine: -1
+		nextLine: -1,
+		label: null
 	};
+	let definedLabel = null;
+	if (ast.kind === "line" && ast.nodes.length > 0 && ast.nodes[0].kind === "command") {
+		const command = ast.nodes[0];
+		if (command.nodes.length > 0 && command.nodes[0].kind === "label_definition") {
+			const labelNode = command.nodes[0];
+			if (labelNode.nodes.length > 0 && labelNode.nodes[0].kind === "label") {
+				definedLabel = labelNode.nodes[0].token;
+			}
+		}
+	}
 	const executable = compiler(ast, lineno);
 	if (logCompiledProgram) console.log(executable);
 	return {
 		code: executable,
 		source: source,
-		nextLine: -1
+		nextLine: -1,
+		label: definedLabel
 	};
 }
 
 // プログラム領域に格納されているプログラムをコンパイルする
 function compileProgram() {
 	const newPrograms = new Object();
+	const newLabels = new Object();
 	if (programs) {
 		newPrograms[-1] = programs[-1];
 		newPrograms[0] = programs[0];
@@ -1045,12 +1060,16 @@ function compileProgram() {
 		if (lineNo === 0 || ptr > prgView.length - (lineSize + 4)) break;
 		if (!(lineNo in newPrograms)) {
 			newPrograms[lineNo] = compileLine(PRG_ADDR + ptr + 3, lineNo);
+			if (newPrograms[lineNo].label !== null && !(newPrograms[lineNo].label in newLabels)) {
+				newLabels[newPrograms[lineNo].label] = lineNo;
+			}
 			if (lastLine > 0) newPrograms[lastLine].nextLine = lineNo;
 			lastLine = lineNo;
 		}
 		ptr += lineSize + 4;
 	}
 	programs = newPrograms;
+	programLabels = newLabels;
 	prgValidSize = ptr + 2;
 	if (prgValidSize > prgView.length) prgValidSize = prgView.length;
 	prgDirty = false;

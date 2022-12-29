@@ -921,7 +921,11 @@ var compiler = (function() {
 					return function() { return value; };
 				} else if (node.kind === "label") {
 					return function() {
-						throw "Label not implemented";
+						if (node.token in programLabels) {
+							return programLabels[node.token];
+						} else {
+							throw "Line error";
+						}
 					};
 				} else if (node.kind === "string") {
 					const addr = node.address + 1;
@@ -1095,7 +1099,6 @@ var compiler = (function() {
 			}
 		} else if (kind === "label_definition") {
 			return function() {
-				throw "Not implemented: label";
 				return [lineno, nextPosInLine];
 			};
 		} else if (kind === "general_command") {
