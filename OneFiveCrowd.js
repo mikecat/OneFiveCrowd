@@ -77,6 +77,9 @@ let keyBlocked = false;
 // FORコマンド用の戻り位置
 const forStack = [];
 
+// GOSUBコマンド用の戻り位置
+const gosubStack = [];
+
 // 停止要求
 let breakRequest = false;
 
@@ -940,6 +943,7 @@ function finalizeExecution() {
 	if (cursorY < 0) cursorY = 0;
 	breakRequest = false;
 	forStack.splice(0);
+	gosubStack.splice(0);
 }
 
 function doInteractive() {

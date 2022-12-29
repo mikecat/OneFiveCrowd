@@ -146,6 +146,23 @@ function commandNEXT() {
 	return destination;
 }
 
+function commandGOSUB(args) {
+	// 戻る場所を記録して指定の行に飛ぶ
+	if (prgDirty) compileProgram();
+	if (args[0] > 0 && (args[0] in programs)) {
+		gosubStack.push([currentLine, currentPositionInLine + 1]);
+		return [args[0], 0];
+	} else {
+		throw "Line error";
+	}
+}
+
+function commandRETURN() {
+	// 記録した場所に戻る
+	if (gosubStack.length === 0) throw "Not match";
+	return gosubStack.pop();
+}
+
 function commandPOKE(args) {
 	// 仮想メモリにデータを書き込む
 	for (let i = 1; i < args.length; i++) {
