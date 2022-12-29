@@ -301,7 +301,7 @@ const basicCommands = {
 	"PLAY"   : null,
 	"TEMPO"  : null,
 	"CLT"    : {func: commandCLT, minArg: 0, maxArg: 0},
-	"SCROLL" : null,
+	"SCROLL" : {func: commandSCROLL, minArg: 1, maxArg: 1},
 	"NEXT"   : {func: commandNEXT, minArg: 0, maxArg: 0},
 	"CLV"    : {func: commandCLV, minArg: 0, maxArg: 0},
 	"CLEAR"  : {func: commandCLV, minArg: 0, maxArg: 0},

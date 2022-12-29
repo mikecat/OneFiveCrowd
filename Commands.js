@@ -138,6 +138,48 @@ function commandLOCATE(args) {
 	cursorY = y;
 }
 
+function commandSCROLL(args) {
+	// 画面をスクロールする
+	switch (args[0]) {
+		case 0: case 30: // 上
+			for (let x = 0; x < SCREEN_WIDTH; x++) {
+				for (let y = 0; y < SCREEN_HEIGHT - 1; y++) {
+					vramView[SCREEN_WIDTH * y + x] = vramView[SCREEN_WIDTH * (y + 1) + x];
+				}
+				vramView[SCREEN_WIDTH * (SCREEN_HEIGHT - 1) + x] = 0;
+			}
+			vramDirty = true;
+			break;
+		case 1: case 29: // 右
+			for (let y = 0; y < SCREEN_HEIGHT; y++) {
+				for (let x = SCREEN_WIDTH - 1; x > 0; x--) {
+					vramView[SCREEN_WIDTH * y + x] = vramView[SCREEN_WIDTH * y + (x - 1)];
+				}
+				vramView[SCREEN_WIDTH * y] = 0;
+			}
+			vramDirty = true;
+			break;
+		case 2: case 31: // 下
+			for (let x = 0; x < SCREEN_WIDTH; x++) {
+				for (let y = SCREEN_HEIGHT - 1; y > 0; y--) {
+					vramView[SCREEN_WIDTH * y + x] = vramView[SCREEN_WIDTH * (y - 1) + x];
+				}
+				vramView[x] = 0;
+			}
+			vramDirty = true;
+			break;
+		case 3: case 28: // 左
+			for (let y = 0; y < SCREEN_HEIGHT; y++) {
+				for (let x = 0; x < SCREEN_WIDTH - 1; x++) {
+					vramView[SCREEN_WIDTH * y + x] = vramView[SCREEN_WIDTH * y + (x + 1)];
+				}
+				vramView[SCREEN_WIDTH * y + (SCREEN_WIDTH - 1)] = 0;
+			}
+			vramDirty = true;
+			break;
+	}
+}
+
 function commandNEXT() {
 	// 対応するFORの処理に飛ぶ
 	if (forStack.length === 0) throw "Not match";
