@@ -1169,16 +1169,17 @@ var compiler = (function() {
 			const loopStep = await loopStepExpr();
 			const variableValue = readArray(variableIndex);
 			let endLoop = false;
-			const newVariableValue = variableValue + loopStep;
+			const newVariableValue = arithWrap(variableValue + loopStep);
 			if (loopFrom <= loopTo && loopTo < newVariableValue) endLoop = true;
 			if (newVariableValue < loopTo && loopTo < loopFrom) endLoop = true;
+			if (variableValue === loopTo) endLoop = true;
 			if (endLoop) {
 				const nextPlace = forStack.pop();
 				forStack.pop(); // このFORの位置情報を消す
 				return nextPlace;
 			} else {
 				forStack.pop();
-				writeArray(variableIndex, arithWrap(newVariableValue));
+				writeArray(variableIndex, newVariableValue);
 				return [lineno, nextPosInLine];
 			}
 		}
