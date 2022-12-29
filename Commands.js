@@ -244,6 +244,11 @@ function commandCOPY(args) {
 	}
 }
 
+function commandOK(args) {
+	// メッセージの表示モードを設定する
+	okMode = args.length > 0 ? args[0] : 1;
+}
+
 function commandDRAW(args) {
 	// 点または線を描画する
 	// modeの仕様 (観察結果)

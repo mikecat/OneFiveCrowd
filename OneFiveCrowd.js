@@ -95,6 +95,9 @@ let btnStatus = 0;
 let randomSeeded = false;
 let seededX = 0, seededY = 0, seededZ = 0, seededW = 0;
 
+// OK用
+let okMode = 1;
+
 // カーソル位置
 let cursorX = 0;
 let cursorY = 0;
@@ -920,13 +923,15 @@ async function execute() {
 		}
 	} catch (e) {
 		finalizeExecution();
-		if (currentLine > 0) {
-			putString("" + e + " in " + currentLine + "\n");
-			if (currentLine in programs) {
-				putString("" + currentLine + " " + programs[currentLine].source + "\n");
+		if (okMode !== 2) {
+			if (currentLine > 0) {
+				putString("" + e + " in " + currentLine + "\n");
+				if (currentLine in programs) {
+					putString("" + currentLine + " " + programs[currentLine].source + "\n");
+				}
+			} else {
+				putString("" + e + "\n");
 			}
-		} else {
-			putString("" + e + "\n");
 		}
 		currentLine = -1;
 		currentPositionInLine = 2;
@@ -940,7 +945,7 @@ function pollBreak() {
 }
 
 function printOK() {
-	putString("OK\n");
+	if (okMode !== 2) putString("OK\n");
 }
 
 function finalizeExecution() {
