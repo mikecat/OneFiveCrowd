@@ -94,8 +94,16 @@ function functionLEN(args) {
 function functionRND(args) {
 	// 0以上第一引数未満の乱数を返す
 	const max = args[0];
-	if (max <= 0) return 0;
-	return (Math.random() * max) >>> 0;
+	if (randomSeeded) {
+		const t = seededX ^ (seededX << 11);
+		seededX = seededY;
+		seededY = seededZ;
+		seededZ = seededW;
+		seededW = ((seededW ^ (seededW >>> 19)) ^ (t ^ (t >>> 8))) >>> 0;
+		return max <= 0 ? 0 : (seededW >>> 1) % max;
+	} else {
+		return max <= 0 ? 0 : (Math.random() * max) >>> 0;
+	}
 }
 
 function functionPOS(args) {

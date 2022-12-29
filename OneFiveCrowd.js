@@ -91,6 +91,10 @@ const TICK_HIRES_MULT = 261;
 // BTN用
 let btnStatus = 0;
 
+// SRND用
+let randomSeeded = false;
+let seededX = 0, seededY = 0, seededZ = 0, seededW = 0;
+
 // カーソル位置
 let cursorX = 0;
 let cursorY = 0;
@@ -942,6 +946,7 @@ function printOK() {
 function finalizeExecution() {
 	if (cursorY < 0) cursorY = 0;
 	breakRequest = false;
+	randomSeeded = false;
 	forStack.splice(0);
 	gosubStack.splice(0);
 }

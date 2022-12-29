@@ -325,7 +325,7 @@ const basicCommands = {
 	"DAC"    : null,
 	"BPS"    : null,
 	"CLO"    : null,
-	"SRND"   : null,
+	"SRND"   : {func: commandSRND, minArg: 1, maxArg: 1},
 	"COPY"   : {func: commandCOPY, minArg: 3, maxArg: 3},
 	"UART"   : null,
 	"OK"     : null,

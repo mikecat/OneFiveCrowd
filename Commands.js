@@ -221,6 +221,15 @@ function commandHELP() {
 	putString("#" + (VIRTUAL_RAM_OFFSET + PRG_ADDR).toString(16).toUpperCase() + " LIST\n");
 }
 
+function commandSRND(args) {
+	// 乱数の種を設定する
+	randomSeeded = true;
+	seededX = args[0];
+	seededY = 362436069;
+	seededZ = 521288629;
+	seededW = 88675123;
+}
+
 function commandCOPY(args) {
 	// 仮想メモリ中のデータのコピーを行う
 	const dest = args[0], src = args[1], amount = args[2];
