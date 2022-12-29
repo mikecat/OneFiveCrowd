@@ -138,6 +138,14 @@ function commandLOCATE(args) {
 	cursorY = y;
 }
 
+function commandNEXT() {
+	// 対応するFORの処理に飛ぶ
+	if (forStack.length === 0) throw "Not match";
+	const destination = forStack[forStack.length - 1];
+	forStack.push([currentLine, currentPositionInLine + 1]);
+	return destination;
+}
+
 function commandPOKE(args) {
 	// 仮想メモリにデータを書き込む
 	for (let i = 1; i < args.length; i++) {

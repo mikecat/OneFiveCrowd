@@ -302,7 +302,7 @@ const basicCommands = {
 	"TEMPO"  : null,
 	"CLT"    : {func: commandCLT, minArg: 0, maxArg: 0},
 	"SCROLL" : null,
-	"NEXT"   : null,
+	"NEXT"   : {func: commandNEXT, minArg: 0, maxArg: 0},
 	"CLV"    : {func: commandCLV, minArg: 0, maxArg: 0},
 	"CLEAR"  : {func: commandCLV, minArg: 0, maxArg: 0},
 	"CLK"    : {func: commandCLK, minArg: 0, maxArg: 0},
@@ -1047,11 +1047,6 @@ var compiler = (function() {
 				}
 				return [lineno, nextPosInLine];
 			};
-		} else if (kind === "for_command") {
-			return function() {
-				throw "Not implemented: FOR";
-				return [lineno, nextPosInLine];
-			};
 		} else if (kind === "input_command") {
 			return function() {
 				throw "Not implemented: INPUT";
@@ -1136,6 +1131,60 @@ var compiler = (function() {
 		}
 	}
 
+	function compileFor(ast, lineno, nextPosInLine) {
+		const command = ast.nodes[0];
+		const loopVariableNode = command.nodes[1];
+		const loopFromExpr = compileExpr(command.nodes[3]);
+		const loopToExpr = compileExpr(command.nodes[5]);
+		const loopStepExpr = command.nodes.length > 7 ? compileExpr(command.nodes[7]) : function() { return 1; };
+		let getLoopVariableIdx;
+		if (loopVariableNode.nodes.length === 1) {
+			const varId = variableIndice[loopVariableNode.nodes[0].token];
+			getLoopVariableIdx = function() { return ARRAY_SIZE + varId; };
+		} else {
+			const idxExpr = compileExpr(loopVariableNode.nodes[1]);
+			getLoopVariableIdx = async function() {
+				const idx = await idxExpr();
+				if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
+				return idx;
+			};
+		}
+		const initialize = async function() {
+			const variableIndex = await getLoopVariableIdx();
+			const loopFrom = await loopFromExpr();
+			const loopTo = await loopToExpr();
+			const loopStep = await loopStepExpr();
+			if ((loopStep > 0 && loopFrom > loopTo) || (loopStep < 0 && loopFrom < loopTo)) {
+				throw "Illegal argument";
+			}
+			writeArray(variableIndex, loopFrom);
+			forStack.push([lineno, nextPosInLine - 1]);
+			return [lineno, nextPosInLine];
+		};
+		const step = async function() {
+			if (forStack.length === 0) throw "FOR step internal error";
+			const variableIndex = await getLoopVariableIdx();
+			const loopFrom = await loopFromExpr();
+			const loopTo = await loopToExpr();
+			const loopStep = await loopStepExpr();
+			const variableValue = readArray(variableIndex);
+			let endLoop = false;
+			const newVariableValue = variableValue + loopStep;
+			if (loopFrom <= loopTo && loopTo < newVariableValue) endLoop = true;
+			if (newVariableValue < loopTo && loopTo < loopFrom) endLoop = true;
+			if (endLoop) {
+				const nextPlace = forStack.pop();
+				forStack.pop(); // このFORの位置情報を消す
+				return nextPlace;
+			} else {
+				forStack.pop();
+				writeArray(variableIndex, arithWrap(newVariableValue));
+				return [lineno, nextPosInLine];
+			}
+		}
+		return [initialize, step];
+	}
+
 	function compileIf(ast, lineno, nextPosInLineTrue, nextPosInLineFalse) {
 		const expr = compileExpr(ast.nodes[1]);
 		return async function() {
@@ -1153,7 +1202,11 @@ var compiler = (function() {
 		for (;;) {
 			if (currentNode.nodes[0].kind === "command") {
 				programNodes.push({idx: programIndex, node: currentNode.nodes[0]});
-				programIndex++;
+				if (currentNode.nodes[0].nodes[0].kind === "for_command") {
+					programIndex += 2;
+				} else {
+					programIndex++;
+				}
 				if (currentNode.nodes.length >= 3) {
 					if (currentNode.nodes[1].nodes[0].token === "ELSE") {
 						programNodes.push({idx: programIndex, node: currentNode.nodes[1]});
@@ -1176,7 +1229,13 @@ var compiler = (function() {
 		for(let i = programNodes.length - 1; i >= 0; i--) {
 			const nextPos = nextIsElse ? programIndex : programNodes[i].idx + 1;
 			if (programNodes[i].node.kind === "command") {
-				compilationResult.unshift(compileCommand(programNodes[i].node, lineno, nextPos));
+				if (programNodes[i].node.nodes[0].kind === "for_command") {
+					const compiled = compileFor(programNodes[i].node, lineno, nextPos + 1);
+					compilationResult.unshift(compiled[1]);
+					compilationResult.unshift(compiled[0]);
+				} else {
+					compilationResult.unshift(compileCommand(programNodes[i].node, lineno, nextPos));
+				}
 				nextIsElse = false;
 			} else if (programNodes[i].node.kind === "if_command") {
 				compilationResult.unshift(compileIf(programNodes[i].node, lineno, nextPos, nextElseIndex));

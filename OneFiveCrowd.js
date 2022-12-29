@@ -74,6 +74,9 @@ let currentPositionInLine;
 // キー入力待ち中か
 let keyBlocked = false;
 
+// FORコマンド用の戻り位置
+const forStack = [];
+
 // 停止要求
 let breakRequest = false;
 
@@ -936,6 +939,7 @@ function printOK() {
 function finalizeExecution() {
 	if (cursorY < 0) cursorY = 0;
 	breakRequest = false;
+	forStack.splice(0);
 }
 
 function doInteractive() {
