@@ -1,5 +1,97 @@
 "use strict";
 
+function modifierCHR(args) {
+	// 文字として出力する
+	let ret = "";
+	for (let i = 0; i < args.length; i++) {
+		ret += String.fromCharCode(args[i]);
+	}
+	return ret;
+}
+
+function modifierDEC(args) {
+	// 10進数で出力する
+	// 桁数が指定より多かったら捨て、少なかったら空白で埋める
+	// 桁数0以下は指定なしとして扱う
+	const value = args[0], digits = args.length >= 2 ? args[1] : 0;
+	let ret = value.toString(10);
+	if (digits > 0) {
+		if (ret.length > digits) {
+			ret = ret.substring(ret.length - digits);
+		} else {
+			while (ret.length < digits) ret = " " + ret;
+		}
+	}
+	return ret;
+}
+
+function modifierHEX(args) {
+	// 大文字の16進数で出力する
+	// 桁数が指定より多かったら捨て、少なかったら数字で埋める
+	// 埋める数字は、8桁ごとに繰り返す
+	// 桁数0は指定なしとして扱う
+	// 桁数0未満のときは空文字列を出力する
+	const value = args[0], digits = args.length >= 2 ? args[1] : 0;
+	if (digits < 0) return "";
+	let ret = (value >>> 0).toString(16).toUpperCase();
+	if (ret.length > 4) ret = ret.substring(ret.length - 4);
+	if (digits > 0) {
+		if (ret.length > digits) {
+			ret = ret.substring(ret.length - digits);
+		} else {
+			const retUnit = "00000000".substring(0, 8 - ret.length) + ret;
+			if (digits <= 8) {
+				ret = retUnit.substring(retUnit.length - digits);
+			} else {
+				ret = retUnit.substring(retUnit.length - (digits % 8));
+				for (let i = digits % 8; i < digits; i += 8) ret += retUnit;
+			}
+		}
+	}
+	return ret;
+}
+
+function modifierBIN(args) {
+	// 2進数で出力する
+	// 桁数が指定より多かったら捨て、少なかったら数字で埋める
+	// 埋める数字は、32桁ごとに繰り返す
+	// 桁数0は指定なしとして扱う
+	// 桁数0未満のときは空文字列を出力する
+	const value = args[0], digits = args.length >= 2 ? args[1] : 0;
+	if (digits < 0) return "";
+	let ret = (value >>> 0).toString(2);
+	if (ret.length > 16) ret = ret.substring(ret.length - 16);
+	if (digits > 0) {
+		if (ret.length > digits) {
+			ret = ret.substring(ret.length - digits);
+		} else {
+			const retUnit = "00000000000000000000000000000000".substring(0, 32 - ret.length) + ret;
+			if (digits <= 32) {
+				ret = retUnit.substring(retUnit.length - digits);
+			} else {
+				ret = retUnit.substring(retUnit.length - (digits % 32));
+				for (let i = digits % 8; i < digits; i += 32) ret += retUnit;
+			}
+		}
+	}
+	return ret;
+}
+
+function modifierSTR(args) {
+	// 仮想メモリ内の文字列として出力する
+	// 桁数が多かったら捨て、少ない場合は無視してあるだけ出力する
+	// 桁数0は、空文字列を出力する
+	// 桁数0未満は、指定なしとして扱う
+	const addr = args[0], digits = args.length >= 2 ? args[1] : -1;
+	let ret = "";
+	for (let i = 0; digits < 0 || i < digits; i++) {
+		const c = readVirtualMem(addr + i);
+		if (c === 0 || c === 0x22) break;
+		ret += String.fromCharCode(c);
+	}
+	return ret;
+}
+
 function functionBTN(args) {
 	// ボタンの状態を取得する
 	const btnId = args.length > 0 ? args[0] : 0;

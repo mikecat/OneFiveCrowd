@@ -275,11 +275,11 @@ const variableIndice = {
 };
 
 const printModifiers = {
-	"CHR$": null,
-	"DEC$": null,
-	"HEX$": null,
-	"BIN$": null,
-	"STR$": null
+	"CHR$": {func: modifierCHR, minArg: 1, maxArg: 999},
+	"DEC$": {func: modifierDEC, minArg: 1, maxArg: 2},
+	"HEX$": {func: modifierHEX, minArg: 1, maxArg: 2},
+	"BIN$": {func: modifierBIN, minArg: 1, maxArg: 2},
+	"STR$": {func: modifierSTR, minArg: 1, maxArg: 2}
 };
 
 const basicCommands = {
