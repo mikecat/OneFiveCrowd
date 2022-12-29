@@ -221,6 +221,12 @@ function commandHELP() {
 	putString("#" + (VIRTUAL_RAM_OFFSET + PRG_ADDR).toString(16).toUpperCase() + " LIST\n");
 }
 
+function commandRESET() {
+	// システムをリセットする
+	resetSystem();
+	return [currentLine, currentPositionInLine];
+}
+
 function commandSRND(args) {
 	// 乱数の種を設定する
 	randomSeeded = true;

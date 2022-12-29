@@ -319,7 +319,7 @@ const basicCommands = {
 	"POKE"   : {func: commandPOKE, minArg: 2, maxArg: 999},
 	"CLP"    : {func: commandCLP, minArg: 0, maxArg: 0},
 	"HELP"   : {func: commandHELP, minArg: 0, maxArg: 0},
-	"RESET"  : null,
+	"RESET"  : {func: commandRESET, minArg: 0, maxArg: 999},
 	"OUT"    : null,
 	"PWM"    : null,
 	"DAC"    : null,

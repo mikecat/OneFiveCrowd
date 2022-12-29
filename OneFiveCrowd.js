@@ -247,6 +247,11 @@ function updateScreen() {
 	}
 }
 
+function toggleCursor() {
+	cursorOn = !cursorOn;
+	updateScreen();
+}
+
 function initSystem() {
 	// canvasの初期化
 	const canvas = document.getElementById("mainScreen");
@@ -268,6 +273,20 @@ function initSystem() {
 		fontImages[0xE0 + i] = mainScreenContext.createImageData(16, 16);
 	}
 
+	// カーソルを点滅させる
+	if (cursorTimerId !== null) clearInterval(cursorTimerId);
+	cursorTimerId = setInterval(toggleCursor, 500);
+
+	// 各種初期化を行う
+	resetSystem();
+
+	// 実行を開始する
+	setTimeout(execute, 0);
+}
+
+function resetSystem() {
+	// 設定データの初期化
+	okMode = 1;
 	// 各種状態の初期化
 	commandCLP();
 	commandCLV();
@@ -275,24 +294,12 @@ function initSystem() {
 	commandCLS();
 	commandCLT();
 	commandNEW();
-	updateScreen();
-
-	// カーソルを点滅させる
-	if (cursorTimerId !== null) clearInterval(cursorTimerId);
-	cursorTimerId = setInterval(toggleCursor, 500);
-
-	// 実行を開始する
+	// プログラムの初期化
 	programs = new Object();
 	programs[-1] = {code: [finalizeExecution, printOK, doInteractive], nextLine: -1};
 	programs[0] = {code: [function(){ putString("OneFiveCrowd\n"); return null; }], nextLine: -1};
 	currentLine = 0;
 	currentPositionInLine = 0;
-	setTimeout(execute, 0);
-}
-
-function toggleCursor() {
-	cursorOn = !cursorOn;
-	updateScreen();
 }
 
 function enqueueKey(key) {
