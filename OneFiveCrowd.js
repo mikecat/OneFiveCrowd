@@ -1,5 +1,24 @@
 "use strict";
 
+const doCallback = (function(){
+	const taskQueue = [];
+	const callbackMessage = "17efaafc-87d5-11ed-a03e-db112ce4573e";
+
+	window.addEventListener("message", function(event) {
+		if (event.source === window && event.data === callbackMessage) {
+			event.stopPropagation();
+			if (taskQueue.length > 0) taskQueue.shift()();
+		}
+	}, true);
+
+	const rawOrigin = new URL(location.href).origin;
+	const origin = rawOrigin === "null" ? "*" : rawOrigin;
+	return function(callbackFunction) {
+		taskQueue.push(callbackFunction);
+		window.postMessage(callbackMessage, origin);
+	};
+})();
+
 // リトルエンディアン環境かを判定
 const isLittleEndian = (function() {
 	const buffer = new ArrayBuffer(4);
@@ -281,7 +300,7 @@ function initSystem() {
 	resetSystem();
 
 	// 実行を開始する
-	setTimeout(execute, 0);
+	doCallback(execute);
 }
 
 function resetSystem() {
@@ -335,7 +354,7 @@ function keyInput(key, invokeCallback = true) {
 		}
 	}
 	if (invokeCallback && keyBlocked) {
-		setTimeout(execute, 0);
+		doCallback(execute);
 		keyBlocked = false;
 	}
 }
@@ -907,7 +926,8 @@ nextLineプロパティは、この行の実行が終わった次に実行する
 async function execute() {
 	try {
 		pollBreak();
-		for (let rep = 0; rep < 10000; rep++) {
+		const startTime = performance.now();
+		while (performance.now() - startTime < 20) {
 			if (currentLine > 0 && prgDirty) {
 				compileProgram();
 				if (!(currentLine in programs)) {
@@ -946,7 +966,7 @@ async function execute() {
 		currentPositionInLine = 2;
 	}
 	updateScreen();
-	if (!keyBlocked) setTimeout(execute, 0);
+	if (!keyBlocked) doCallback(execute);
 }
 
 function pollBreak() {
