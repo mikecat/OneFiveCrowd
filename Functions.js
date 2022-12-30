@@ -126,10 +126,13 @@ function functionTICK(args) {
 	return Math.floor(tick) % 32768;
 }
 
-function functionINKEY() {
+async function functionINKEY() {
 	// キー入力を1文字取得する
 	const key = dequeueKey();
-	if (key < 0) return 0;
+	if (key < 0) {
+		await new Promise(function(resolve, reject) { setTimeout(resolve, 10); });
+		return 0;
+	}
 	if (key === 0) return 0x100;
 	return key;
 }
