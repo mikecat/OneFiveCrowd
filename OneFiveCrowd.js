@@ -92,6 +92,8 @@ let programLabels;
 let currentLine;
 // 実行中の行中の位置
 let currentPositionInLine;
+// 前回エラーが発生した行番号 (CONT用)
+let lastErrorLine;
 // キー入力待ち中か
 let keyBlocked = false;
 
@@ -319,6 +321,7 @@ function resetSystem() {
 	programs[0] = {code: [function(){ putString("OneFiveCrowd\n"); return null; }], nextLine: -1};
 	currentLine = 0;
 	currentPositionInLine = 0;
+	lastErrorLine = -1;
 }
 
 function enqueueKey(key) {
@@ -962,6 +965,7 @@ async function execute() {
 				putString("" + e + "\n");
 			}
 		}
+		lastErrorLine = currentLine;
 		currentLine = -1;
 		currentPositionInLine = 2;
 	}

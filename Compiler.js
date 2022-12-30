@@ -311,7 +311,7 @@ const basicCommands = {
 	"RETURN" : {func: commandRETURN, minArg: 0, maxArg: 0},
 	"RTN"    : {func: commandRETURN, minArg: 0, maxArg: 0},
 	"STOP"   : {func: commandSTOP, minArg: 0, maxArg: 0},
-	"CONT"   : null,
+	"CONT"   : {func: commandCONT, minArg: 0, maxArg: 0},
 	"RENUM"  : null,
 	"LRUN"   : null,
 	"SLEEP"  : null,

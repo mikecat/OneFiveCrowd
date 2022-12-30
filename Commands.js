@@ -210,6 +210,21 @@ function commandSTOP() {
 	throw "Stopped";
 }
 
+function commandCONT() {
+	// 前回エラーが出た行からプログラムを実行する (インタラクティブ時)
+	// 現在の行の先頭から実行する (保存したプログラムの実行時)
+	if (currentLine <= 0) {
+		if (prgDirty) compileProgram();
+		if (lastErrorLine in programs) {
+			return [lastErrorLine, 0];
+		} else {
+			throw "Line error";
+		}
+	} else {
+		return [currentLine, 0];
+	}
+}
+
 function commandPOKE(args) {
 	// 仮想メモリにデータを書き込む
 	for (let i = 1; i < args.length; i++) {
