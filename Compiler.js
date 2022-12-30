@@ -345,7 +345,7 @@ const basicFunctions = {
 	"ABS"   : {func: functionABS, minArg: 1, maxArg: 1},
 	"SOUND" : null,
 	"FREE"  : {func: functionFREE, minArg: 0, maxArg: 0},
-	"VER"   : null,
+	"VER"   : {func: functionVER, minArg: 0, maxArg: 1},
 	"FILE"  : null,
 	"PEEK"  : {func: functionPEEK, minArg: 1, maxArg: 1},
 	"IN"    : null,

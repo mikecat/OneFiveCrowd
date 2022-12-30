@@ -165,6 +165,23 @@ function functionFREE() {
 	return ptr > prgView.length ? 0 : prgView.length - ptr;
 }
 
+function functionVER(args) {
+	// システムの情報を取得する
+	const kind = args.length > 0 ? args[0] : 0;
+	switch (kind) {
+		case 0: // バージョン
+			return 30000;
+		case 2: // キーボード種別
+			return 1;
+		case 3: // 言語
+			return 1;
+		case 4: // ビデオ規格 兼 1秒を表すTICK()の時間
+			return TICK_PER_SECOND;
+		default: // プラットフォーム種別
+			return 0;
+	}
+}
+
 function functionPEEK(args) {
 	// 仮想メモリからデータを読み込む
 	return readVirtualMem(args[0]);
