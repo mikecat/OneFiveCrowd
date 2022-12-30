@@ -205,6 +205,11 @@ function commandRETURN() {
 	return gosubStack.pop();
 }
 
+function commandSTOP() {
+	// プログラムの実行を止める
+	throw "Stopped";
+}
+
 function commandPOKE(args) {
 	// 仮想メモリにデータを書き込む
 	for (let i = 1; i < args.length; i++) {

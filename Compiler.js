@@ -310,7 +310,7 @@ const basicCommands = {
 	"GSB"    : {func: commandGOSUB, minArg: 1, maxArg: 1},
 	"RETURN" : {func: commandRETURN, minArg: 0, maxArg: 0},
 	"RTN"    : {func: commandRETURN, minArg: 0, maxArg: 0},
-	"STOP"   : null,
+	"STOP"   : {func: commandSTOP, minArg: 0, maxArg: 0},
 	"CONT"   : null,
 	"RENUM"  : null,
 	"LRUN"   : null,
