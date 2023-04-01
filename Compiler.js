@@ -65,6 +65,7 @@ const getTokenInfo = (function(tokens) {
 	"COPY", "STR$", "LEN", "UART", "OK", "IoT.IN", "IoT.OUT", "SWITCH",
 	"LEFT", "RIGHT", "UP", "DOWN", "SPACE", "MOD", "DRAW", "POS", "POINT",
 	"COS", "SIN", "WS.LED", "KBD", "DAC",
+	"SEC.PUBKEY", "SEC.SIGN", "SEC.VERIFY",
 	":", "+", "-", "*", "/", "%", "(", ")", "=", "<", ">", ",", "[", "]", ";",
 	"&", "|", "^", "~", "?", "'",
 	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
@@ -237,10 +238,12 @@ function_arguments ::= (空)
                      | "POKE" | "CLP" | "HELP" | "RESET" | "OUT" | "PWM" | "BPS"
                      | "CLO" | "SRND" | "COPY" | "UART" | "OK" | "IoT.OUT" | "SWITCH"
                      | "DRAW" | "WS.LED" | "KBD" | "DAC"
+                     | "SEC.PUBKEY" | "SEC.SIGN"
      function_name ::= "BTN" | "TICK" | "INKEY" | "ASC" | "SCR" | "VPEEK" | "ABS"
                      | "SOUND" | "FREE" | "VER" | "FILE" | "PEEK" | "IN" | "ANA"
                      | "I2CR" | "I2CW" | "USR" | "LANG" | "LINE" | "LEN" | "IoT.IN"
                      | "RND" | "POS" | "POINT" | "COS" | "SIN"
+                     | "SEC.VERIFY"
           constant ::= "LEFT | "RIGHT" | "UP" | "DOWN" | "SPACE"
 
               expr ::= expr7
@@ -332,7 +335,9 @@ const basicCommands = {
 	"IoT.OUT": null,
 	"SWITCH" : null,
 	"DRAW"   : {func: commandDRAW, minArg: 2, maxArg: 5},
-	"WS.LED" : null
+	"WS.LED" : null,
+	"SEC.PUBKEY" : {func: commandSEC_PUBKEY, minArg: 2, maxArg: 2},
+	"SEC.SIGN"   : {func: commandSEC_SIGN, minArg: 4, maxArg: 4},
 };
 
 const basicFunctions = {
@@ -361,7 +366,8 @@ const basicFunctions = {
 	"POS"   : {func: functionPOS, minArg: 0, maxArg: 1},
 	"POINT" : {func: functionPOINT, minArg: 0, maxArg: 2},
 	"COS"   : {func: functionCOS, minArg: 1, maxArg: 1},
-	"SIN"   : {func: functionSIN, minArg: 1, maxArg: 1}
+	"SIN"   : {func: functionSIN, minArg: 1, maxArg: 1},
+	"SEC.VERIFY" : {func: functionSEC_VERIFY, minArg: 4, maxArg: 4},
 };
 
 const expr7_ops = {

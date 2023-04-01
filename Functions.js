@@ -255,3 +255,19 @@ function functionSIN(args){
 	// 正弦の256倍を返す
 	return Math.round(Math.sin(args[0] * Math.PI / 180) * 256);
 }
+
+async function functionSEC_VERIFY(args) {
+	// Ed25519の署名を検証し、成功したら1、失敗したら0を返す
+	// args[0] : 署名の仮想アドレス
+	// args[1] : 公開鍵の仮想アドレス
+	// args[2] : メッセージの仮想アドレス
+	// args[3] : メッセージの長さ (0未満の場合0とみなす)
+	const sign = new Uint8Array(64);
+	for (let i = 0; i < 64; i++) sign[i] = readVirtualMem(args[0] + i);
+	const publicKey = new Uint8Array(32);
+	for (let i = 0; i < 32; i++) publicKey[i] = readVirtualMem(args[1] + i);
+	const message = new Uint8Array(args[3] < 0 ? 0 : args[3]);
+	for (let i = 0; i < args[3]; i++) message[i] = readVirtualMem(args[2] + i);
+	const result = await ed25519.verify(message, publicKey, sign);
+	return result ? 1 : 0;
+}

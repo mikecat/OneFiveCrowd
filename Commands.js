@@ -330,3 +330,27 @@ function commandDRAW(args) {
 	}
 	drawPoint(x, y);
 }
+
+async function commandSEC_PUBKEY(args) {
+	// Ed25519の秘密鍵から公開鍵を求める
+	// args[0] : 公開鍵(出力)の仮想アドレス
+	// args[1] : 秘密鍵(入力)の仮想アドレス
+	const privateKey = new Uint8Array(32);
+	for (let i = 0; i < 32; i++) privateKey[i] = readVirtualMem(args[1] + i);
+	const publicKey = new Uint8Array(await ed25519.getPublicKey(privateKey));
+	for (let i = 0; i < 32; i++) writeVirtualMem(args[0] + i, publicKey[i]);
+}
+
+async function commandSEC_SIGN(args) {
+	// Ed25519の署名を生成する
+	// args[0] : 署名(出力)の仮想アドレス
+	// args[1] : 秘密鍵(入力)の仮想アドレス
+	// args[2] : メッセージ(入力)の仮想アドレス
+	// args[3] : メッセージ(入力)の長さ (0未満の場合は0とみなす)
+	const privateKey = new Uint8Array(32);
+	for (let i = 0; i < 32; i++) privateKey[i] = readVirtualMem(args[1] + i);
+	const message = new Uint8Array(args[3] < 0 ? 0 : args[3]);
+	for (let i = 0; i < args[3]; i++) message[i] = readVirtualMem(args[2] + i);
+	const sign = new Uint8Array(await ed25519.sign(message, privateKey));
+	for (let i = 0; i < 64; i++) writeVirtualMem(args[0] + i, sign[i]);
+}
