@@ -1210,15 +1210,17 @@ var compiler = (function() {
 		const programNodes = [];
 		let currentNode = ast;
 		for (;;) {
-			if (currentNode.nodes[0].kind === "command") {
+			if (currentNode.nodes.length === 0) {
+				break;
+			} else if (currentNode.nodes[0].kind === "command") {
 				programNodes.push({idx: programIndex, node: currentNode.nodes[0]});
-				if (currentNode.nodes[0].nodes[0].kind === "for_command") {
+				if (currentNode.nodes[0].nodes.length > 0 && currentNode.nodes[0].nodes[0].kind === "for_command") {
 					programIndex += 2;
 				} else {
 					programIndex++;
 				}
 				if (currentNode.nodes.length >= 3) {
-					if (currentNode.nodes[1].nodes[0].token === "ELSE") {
+					if (currentNode.nodes[1].nodes.length > 0 && currentNode.nodes[1].nodes[0].token === "ELSE") {
 						programNodes.push({idx: programIndex, node: currentNode.nodes[1]});
 					}
 					currentNode = currentNode.nodes[2];
@@ -1239,7 +1241,7 @@ var compiler = (function() {
 		for(let i = programNodes.length - 1; i >= 0; i--) {
 			const nextPos = nextIsElse ? programIndex : programNodes[i].idx + 1;
 			if (programNodes[i].node.kind === "command") {
-				if (programNodes[i].node.nodes[0].kind === "for_command") {
+				if (programNodes[i].node.nodes.length > 0 && programNodes[i].node.nodes[0].kind === "for_command") {
 					const compiled = compileFor(programNodes[i].node, lineno, nextPos + 1);
 					compilationResult.unshift(compiled[1]);
 					compilationResult.unshift(compiled[0]);
