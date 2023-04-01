@@ -1198,7 +1198,7 @@ var compiler = (function() {
 
 	function compileLine(ast, lineno, posInLine) {
 		if (ast.nodes[0].kind === "comment") {
-			return [];
+			return [function() { return null; }];
 		}
 		let programIndex = posInLine;
 		const programNodes = [];
@@ -1248,6 +1248,9 @@ var compiler = (function() {
 				nextElseIndex = programNodes[i].idx;
 				nextIsElse = true;
 			}
+		}
+		if (compilationResult.length === 0) {
+			compilationResult.push(function() { return null; });
 		}
 		return compilationResult;
 	}
