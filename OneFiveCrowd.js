@@ -281,6 +281,19 @@ function initSystem() {
 	const canvas = document.getElementById("mainScreen");
 	mainScreenContext = canvas.getContext("2d");
 
+	// テキスト流し込みUIの初期化
+	const textInputArea = document.getElementById("textInputArea");
+	const textInputButton = document.getElementById("textInputButton");
+	textInputArea.addEventListener("keydown", function(e) {
+		e.stopPropagation();
+	});
+	textInputArea.addEventListener("keyup", function(e) {
+		e.stopPropagation();
+	});
+	textInputButton.addEventListener("click", function() {
+		keyInput(textInputArea.value);
+	});
+
 	// ROMの内容の初期化
 	for (let i = 0; i < 0xE0; i++) {
 		for (let j = 0; j < 8; j++) {
@@ -361,7 +374,8 @@ function keyInput(key, invokeCallback = true) {
 	} else {
 		if (key.length === 0) return;
 		for (let i = 0; i < key.length; i++) {
-			keyInput(key.charCodeAt(i), false);
+			const c = key.charCodeAt(i);
+			if (0 <= c && c < 0x100) keyInput(c, false);
 		}
 	}
 	if (invokeCallback && keyBlocked) {
