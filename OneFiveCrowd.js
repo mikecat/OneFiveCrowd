@@ -65,6 +65,9 @@ const prgView = new Uint8Array(ramData, PRG_ADDR, PRG_MAX);
 const keyView = new Uint8Array(ramData, KEY_ADDR, 1 + KEY_MAX);
 const cmdView = new Uint8Array(ramData, CMD_ADDR, CMD_MAX + 1);
 
+// キーバッファからあふれる分のキー入力データ
+const extraKeyQueue = [];
+
 // 環境に応じて変数と配列のアクセス方法を決定する
 const readArray = isLittleEndian ? function(id) {
 	// リトルエンディアン環境用
@@ -328,6 +331,8 @@ function enqueueKey(key) {
 	if (keyView[0] < KEY_MAX) {
 		keyView[1 + keyView[0]] = key;
 		keyView[0]++;
+	} else {
+		extraKeyQueue.push(key);
 	}
 }
 
@@ -339,6 +344,9 @@ function dequeueKey() {
 		keyView[i] = keyView[i + 1];
 	}
 	keyView[0]--;
+	while (keyView[0] < KEY_MAX && extraKeyQueue.length > 0) {
+		enqueueKey(extraKeyQueue.shift());
+	}
 	return key;
 }
 
@@ -1109,6 +1117,7 @@ function compileProgram() {
 function commandCLK() {
 	// キーバッファを初期化する
 	keyView[0] = 0;
+	extraKeyQueue.splice(0); // 要素を全削除する
 }
 
 function commandNEW() {
