@@ -615,7 +615,9 @@ function putChar(c, isInsert = false) {
 			if (cursorX <= endX) {
 				// 新しい行を要求する
 				let shiftUp = false;
-				if (cursorY > 0) {
+				if (cursorY === SCREEN_HEIGHT - 1) {
+					shiftUp = true;
+				} else if (cursorY > 0) {
 					for (var x = 0; x < SCREEN_WIDTH; x++) {
 						if (vramView[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + x] !== 0) {
 							shiftUp = true;
