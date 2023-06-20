@@ -1054,7 +1054,7 @@ function doInteractive() {
 
 function compileLine(addr, lineno, enableEdit = false) {
 	let source = "";
-	for (let i = addr; addr < ramBytes.length && ramBytes[i] !== 0; i++) {
+	for (let i = addr; i < ramBytes.length && ramBytes[i] !== 0; i++) {
 		source += String.fromCharCode(ramBytes[i]);
 	}
 	const tokens = lexer(source, VIRTUAL_RAM_OFFSET + addr);
