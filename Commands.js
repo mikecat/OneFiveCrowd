@@ -1,5 +1,97 @@
 "use strict";
 
+async function commandINPUT(prompt, varIdx) {
+	putString(prompt);
+	const startX = cursorX, startY = cursorY;
+	for (;;) {
+		pollBreak();
+		const key = dequeueKey();
+		switch (key) {
+			case -1:
+				// 入力されていない
+				updateScreen();
+				await new Promise(function(resolve, reject) {
+					inputKeyBlockCallback = function() {
+						inputKeyBlockCallback = null;
+						resolve();
+					};
+					keyBlocked = true;
+				});
+				break;
+			case 0x08:
+				// Backspace
+				if (cursorX !== startX) putChar(0x08);
+				break;
+			case 0x0a:
+				// Enter
+				{
+					const addr = VRAM_ADDR + SCREEN_WIDTH * startY + startX;
+					let exprStr = "";
+					for (let i = addr; i < ramBytes.length && ramBytes[i] !== 0; i++) {
+						exprStr += String.fromCharCode(ramBytes[i]);
+					}
+					const tokens = lexer(exprStr, VIRTUAL_RAM_OFFSET + addr);
+					// エラーが出たら最後のトークンを削ってリトライする
+					// たとえば、100/0 が入力されたとき 100 を格納するのに有効
+					while (tokens.length > 0) {
+						const ast = parser.parseExpr(tokens, true);
+						if (ast !== null) {
+							const executable = compiler.compileExpr(ast);
+							try {
+								const ret = await executable();
+								writeArray(varIdx, ret);
+								putChar(0x0a);
+								return;
+							} catch(e) {
+							}
+						}
+						tokens.pop();
+					}
+					// 何も有効な入力が無かった場合、0 を格納する
+					writeArray(varIdx, 0);
+					putChar(0x0a);
+					return;
+				}
+				break;
+			case 0x1c:
+				// カーソルを左に移動
+				if (cursorX !== startX) {
+					if (cursorX === 0) {
+						if (cursorY > 0) {
+							cursorY--;
+							cursorX = SCREEN_WIDTH - 1;
+						}
+					} else {
+						cursorX--;
+					}
+				}
+				break;
+			case 0x1d:
+				// カーソルを右に移動
+				if (cursorX === SCREEN_WIDTH - 1) {
+					if (cursorY < SCREEN_HEIGHT - 1) {
+						cursorY++;
+						cursorX = 0;
+					}
+				} else {
+					cursorX++;
+				}
+				break;
+			case 0x1e:
+				// カーソルを上に移動
+				// 無視
+				break;
+			case 0x1f:
+				// カーソルを下に移動
+				// 無視
+				break;
+			default:
+				putChar(key);
+				break;
+		}
+	}
+}
+
 async function commandWAIT(args) {
 	// 指定した時間待機する
 	let timeToWait = Math.abs(args[0]) * 1000 / (TICK_PER_SECOND * (args[0] < 0 ? TICK_HIRES_MULT : 1));

@@ -832,12 +832,21 @@ var parser = (function() {
 		return null;
 	}
 
-	return function (tokens) {
-		const res = line(tokens, 0);
-		if (res === null || res.nextIndex < tokens.length) {
-			return null;
-		}
-		return res.node;
+	return {
+		"parseExpr": function(tokens, allowExtraTokens = false) {
+			const res = expr(tokens, 0);
+			if (res === null || (res.nextIndex < tokens.length && !allowExtraTokens)) {
+				return null;
+			}
+			return res.node;
+		},
+		"parseLine": function(tokens) {
+			const res = line(tokens, 0);
+			if (res === null || res.nextIndex < tokens.length) {
+				return null;
+			}
+			return res.node;
+		},
 	};
 })();
 
@@ -1058,10 +1067,30 @@ var compiler = (function() {
 				return [lineno, nextPosInLine];
 			};
 		} else if (kind === "input_command") {
-			return function() {
-				throw "Not implemented: INPUT";
-				return [lineno, nextPosInLine];
-			};
+			let prompt, varNode;
+			if (command.nodes[1].kind === "string") {
+				const strToken = command.nodes[1].token;
+				prompt = strToken.substr(1, strToken.length - 2);
+				varNode = command.nodes[3];
+			} else {
+				prompt = "?";
+				varNode = command.nodes[1];
+			}
+			if (varNode.nodes.length === 1) {
+				const varId = variableIndice[varNode.nodes[0].token];
+				return async function() {
+					await commandINPUT(prompt, ARRAY_SIZE + varId);
+					return [lineno, nextPosInLine];
+				};
+			} else {
+				const idxExpr = compileExpr(varNode.nodes[1]);
+				return async function() {
+					const idx = await idxExpr();
+					if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
+					await commandINPUT(prompt, idx);
+					return [lineno, nextPosInLine];
+				};
+			}
 		} else if (kind === "let_command") {
 			if (command.nodes[0].kind === "keyword") {
 				const varNode = command.nodes[1];
@@ -1263,15 +1292,20 @@ var compiler = (function() {
 		return compilationResult;
 	}
 
-	return function(ast, lineno = 0) {
-		if (ast.kind === "line") {
-			try {
-				return compileLine(ast, lineno, 0);
-			} catch (e) {
-				throw e === null ? "Syntax error" : e;
+	return {
+		"compileExpr": function(ast) {
+			return compileExpr(ast);
+		},
+		"compileLine": function(ast, lineno = 0) {
+			if (ast.kind === "line") {
+				try {
+					return compileLine(ast, lineno, 0);
+				} catch (e) {
+					throw e === null ? "Syntax error" : e;
+				}
+			} else {
+				return null;
 			}
-		} else {
-			return null;
-		}
+		},
 	};
 })();

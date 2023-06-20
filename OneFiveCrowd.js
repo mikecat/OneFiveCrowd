@@ -99,6 +99,8 @@ let currentPositionInLine;
 let lastErrorLine;
 // キー入力待ち中か
 let keyBlocked = false;
+// INPUTコマンドでキー入力待ちをしている場合のコールバック
+let inputKeyBlockCallback = null;
 
 // FORコマンド用の戻り位置
 const forStack = [];
@@ -379,7 +381,7 @@ function keyInput(key, invokeCallback = true) {
 		}
 	}
 	if (invokeCallback && keyBlocked) {
-		doCallback(execute);
+		doCallback(inputKeyBlockCallback === null ? execute : inputKeyBlockCallback);
 		keyBlocked = false;
 	}
 }
@@ -1009,6 +1011,7 @@ function finalizeExecution() {
 	if (cursorY < 0) cursorY = 0;
 	breakRequest = false;
 	randomSeeded = false;
+	inputKeyBlockCallback = null;
 	forStack.splice(0);
 	gosubStack.splice(0);
 }
@@ -1071,7 +1074,7 @@ function compileLine(addr, lineno, enableEdit = false) {
 		}
 	}
 	// プログラムのコンパイル
-	const ast = parser(tokens);
+	const ast = parser.parseLine(tokens);
 	if (logCompiledProgram) console.log(ast);
 	if (ast === null) return {
 		code: [function() { throw "Syntax error"; }],
@@ -1089,7 +1092,7 @@ function compileLine(addr, lineno, enableEdit = false) {
 			}
 		}
 	}
-	const executable = compiler(ast, lineno);
+	const executable = compiler.compileLine(ast, lineno);
 	if (logCompiledProgram) console.log(executable);
 	return {
 		code: executable,
