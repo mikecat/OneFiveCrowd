@@ -1015,7 +1015,8 @@ var compiler = (function() {
 			}
 			if (argNode.kind === "string") {
 				const strToken = argNode.token;
-				arg.suffix = strToken.substr(1, strToken.length - 2) + arg.suffix;
+				const minusLength = strToken.charAt(strToken.length - 1) === "\"" ? 2 : 1;
+				arg.suffix = strToken.substr(1, strToken.length - minusLength) + arg.suffix;
 			} else if (argNode.kind === "print_modifier") {
 				const modifierName = argNode.nodes[0].nodes[0].token;
 				const modifierInfo = printModifiers[modifierName];
