@@ -318,7 +318,7 @@ const basicCommands = {
 	"RENUM"  : null,
 	"LRUN"   : null,
 	"SLEEP"  : null,
-	"VIDEO"  : null,
+	"VIDEO"  : {func: commandVIDEO, minArg: 1, maxArg: 2},
 	"POKE"   : {func: commandPOKE, minArg: 2, maxArg: 999},
 	"CLP"    : {func: commandCLP, minArg: 0, maxArg: 0},
 	"HELP"   : {func: commandHELP, minArg: 0, maxArg: 0},

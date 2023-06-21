@@ -320,6 +320,27 @@ function commandCONT() {
 	}
 }
 
+function commandVIDEO(args) {
+	// 画面の表示設定を変更する
+	const config = args[0];
+	if (config < 0) {
+		// 本家では動作異常を起こすが、無視する
+	} else if (config === 0) {
+		// 非表示
+		// TODO
+	} else {
+		const newVideoZoom = config <= 8 ? 1 << ((config - 1) >>> 1) : 8;
+		const newVideoInvert = (config & 1) === 0;
+		if (videoInvert !== newVideoInvert) videoConfigUpdated = true;
+		SCREEN_WIDTH = RAW_SCREEN_WIDTH / newVideoZoom;
+		SCREEN_HEIGHT = RAW_SCREEN_HEIGHT / newVideoZoom;
+		if (newVideoZoom !== videoZoom) commandCLS();
+		videoZoom = newVideoZoom;
+		videoInvert = newVideoInvert;
+	}
+	// TODO: クロックダウン設定の反映
+}
+
 function commandPOKE(args) {
 	// 仮想メモリにデータを書き込む
 	for (let i = 1; i < args.length; i++) {

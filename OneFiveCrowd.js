@@ -31,8 +31,8 @@ const isLittleEndian = (function() {
 	return bufferUint[0] === 0x44332211;
 })();
 
-const SCREEN_WIDTH = 32;
-const SCREEN_HEIGHT = 24;
+const RAW_SCREEN_WIDTH = 32;
+const RAW_SCREEN_HEIGHT = 24;
 
 const ARRAY_SIZE = 102;
 const PRG_MAX = 0x400;
@@ -164,12 +164,25 @@ let cursorDispY = -1;
 let cursorOn = false;
 let cursorTimerId = null;
 
-let mainScreenContext;
+// 画面拡大率
+let videoZoom = 1;
+// 画面反転
+let videoInvert = false;
+// 拡大を考慮した画面サイズ
+let SCREEN_WIDTH = RAW_SCREEN_WIDTH, SCREEN_HEIGHT = RAW_SCREEN_HEIGHT;
+
+const screenBuffer = document.createElement("canvas");
+screenBuffer.setAttribute("width", "512");
+screenBuffer.setAttribute("height", "384");
+const screenBufferContext = screenBuffer.getContext("2d");
+
+let mainScreen, mainScreenContext;
 const fontImages = new Array(256);
 
 // 更新するべきか
 let fontDirty = false; // フォントRAMの更新がある
 let vramDirty = false; // VRAMの更新がある
+let videoConfigUpdated = false; // VIDEO設定の更新がある
 let prgDirty = false; // プログラムの更新がある
 let prgValidSize = 2; // 更新判定対象のプログラムのデータサイズ
 
@@ -244,23 +257,25 @@ function updateScreen() {
 		vramDirty = true;
 	}
 	const drawCursor = cursorOn && keyBlocked;
+	let videoUpdated = videoConfigUpdated;
+	videoConfigUpdated = false;
 	if (vramDirty) {
 		// VRAMを画面に反映させる
 		for (let y = 0; y < SCREEN_HEIGHT; y++) {
 			for (let x = 0; x < SCREEN_WIDTH; x++) {
-				mainScreenContext.putImageData(
+				screenBufferContext.putImageData(
 					fontImages[vramView[y * SCREEN_WIDTH + x]], x * 16, y * 16);
 			}
 		}
 		if (drawCursor) {
 			if (0 <= cursorX && cursorX < SCREEN_WIDTH && 0 <= cursorY && cursorY < SCREEN_HEIGHT) {
-				const imageData = mainScreenContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
+				const imageData = screenBufferContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
 				for (let i = 0; i < imageData.data.length; i += 4) {
 					imageData.data[i + 0] = 255 - imageData.data[i + 0];
 					imageData.data[i + 1] = 255 - imageData.data[i + 1];
 					imageData.data[i + 2] = 255 - imageData.data[i + 2];
 				}
-				mainScreenContext.putImageData(imageData, cursorX * 16, cursorY * 16);
+				screenBufferContext.putImageData(imageData, cursorX * 16, cursorY * 16);
 				cursorDispX = cursorX;
 				cursorDispY = cursorY;
 			} else {
@@ -270,34 +285,49 @@ function updateScreen() {
 			cursorDispX = cursorDispY = -1;
 		}
 		vramDirty = false;
+		videoUpdated = true;
 	} else if (drawCursor && (cursorX != cursorDispX || cursorY != cursorDispY)) {
 		// カーソルの位置がずれている
 		// 古い位置のカーソルを消す
-		if (cursorDispX >= 0 && cursorDispY >= 0) {
-			mainScreenContext.putImageData(
+		if (0 <= cursorDispX && cursorDispX < SCREEN_WIDTH && 0 <= cursorDispY && cursorDispY < SCREEN_HEIGHT) {
+			screenBufferContext.putImageData(
 				fontImages[vramView[cursorDispY * SCREEN_WIDTH + cursorDispX]],
 				cursorDispX * 16, cursorDispY * 16);
 		}
 		// 新しい位置にカーソルを描く
 		if (0 <= cursorX && cursorX < SCREEN_WIDTH && 0 <= cursorY && cursorY < SCREEN_HEIGHT) {
-			const imageData = mainScreenContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
+			const imageData = screenBufferContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
 			for (let i = 0; i < imageData.data.length; i += 4) {
 				imageData.data[i + 0] = 255 - imageData.data[i + 0];
 				imageData.data[i + 1] = 255 - imageData.data[i + 1];
 				imageData.data[i + 2] = 255 - imageData.data[i + 2];
 			}
-			mainScreenContext.putImageData(imageData, cursorX * 16, cursorY * 16);
+			screenBufferContext.putImageData(imageData, cursorX * 16, cursorY * 16);
 			cursorDispX = cursorX;
 			cursorDispY = cursorY;
 		} else {
 			cursorDispX = cursorDispY = -1;
 		}
-	} else if (!drawCursor && cursorDispX >= 0 && cursorDispY >= 0) {
+		videoUpdated = true;
+	} else if (!drawCursor && 0 <= cursorDispX && cursorDispX < SCREEN_WIDTH && 0 <= cursorDispY && cursorDispY < SCREEN_HEIGHT) {
 		// カーソルが消えたので、消す
-		mainScreenContext.putImageData(
+		screenBufferContext.putImageData(
 			fontImages[vramView[cursorDispY * SCREEN_WIDTH + cursorDispX]],
 			cursorDispX * 16, cursorDispY * 16);
 		cursorDispX = cursorDispY = -1;
+		videoUpdated = true;
+	}
+	if (videoUpdated) {
+		if (videoInvert) {
+			mainScreenContext.filter = "invert(100%)";
+			mainScreen.style.borderColor = "white";
+		} else {
+			mainScreenContext.filter = "invert(0%)";
+			mainScreen.style.borderColor = "black";
+		}
+		mainScreenContext.drawImage(screenBuffer,
+			0, 0, screenBuffer.width / videoZoom, screenBuffer.height / videoZoom,
+			0, 0, screenBuffer.width, screenBuffer.height);
 	}
 }
 
@@ -308,8 +338,9 @@ function toggleCursor() {
 
 function initSystem() {
 	// canvasの初期化
-	const canvas = document.getElementById("mainScreen");
-	mainScreenContext = canvas.getContext("2d");
+	mainScreen = document.getElementById("mainScreen");
+	mainScreenContext = mainScreen.getContext("2d");
+	mainScreenContext.imageSmoothingEnabled = false;
 
 	// テキスト流し込みUIの初期化
 	const textInputArea = document.getElementById("textInputArea");
@@ -360,12 +391,12 @@ function initSystem() {
 	}
 	// ROM部分のフォントの初期化
 	for (let i = 0; i < 0xE0; i++) {
-		fontImages[i] = mainScreenContext.createImageData(16, 16);
+		fontImages[i] = screenBufferContext.createImageData(16, 16);
 		dataToFontImage(fontImages[i], romBytes, CROM_ADDR + i * 8);
 	}
 	// RAM用のフォントの枠を作る
 	for (let i = 0; i < 0x20; i++) {
-		fontImages[0xE0 + i] = mainScreenContext.createImageData(16, 16);
+		fontImages[0xE0 + i] = screenBufferContext.createImageData(16, 16);
 	}
 
 	// カーソルを点滅させる
@@ -382,6 +413,10 @@ function initSystem() {
 function resetSystem() {
 	// 設定データの初期化
 	okMode = 1;
+	videoZoom = 1;
+	videoInvert = false;
+	SCREEN_WIDTH = RAW_SCREEN_WIDTH;
+	SCREEN_HEIGHT = RAW_SCREEN_HEIGHT;
 	// 各種状態の初期化
 	commandCLP();
 	commandCLV();
@@ -1205,7 +1240,7 @@ function commandNEW() {
 
 function commandCLS() {
 	// VRAMを初期化する
-	for (let i = 0; i < 0x300; i++) {
+	for (let i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
 		vramView[i] = 0;
 	}
 	// カーソルの位置を左上に戻す
