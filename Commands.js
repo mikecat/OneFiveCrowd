@@ -1,6 +1,9 @@
 "use strict";
 
 async function commandINPUT(prompt, varIdx) {
+	if (cursorY < 0) {
+		throw "Not match";
+	}
 	putString(prompt);
 	const startX = cursorX, startY = cursorY;
 	for (;;) {
