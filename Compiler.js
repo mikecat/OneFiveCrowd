@@ -358,7 +358,7 @@ const basicFunctions = {
 	"I2CR"  : null,
 	"I2CW"  : null,
 	"USR"   : null,
-	"LANG"  : null,
+	"LANG"  : {func: functionLANG, minArg: 0, maxArg: 0},
 	"LINE"  : {func: functionLINE, minArg: 0, maxArg: 0},
 	"LEN"   : {func: functionLEN, minArg: 1, maxArg: 1},
 	"IoT.IN": null,

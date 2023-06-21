@@ -187,6 +187,11 @@ function functionPEEK(args) {
 	return readVirtualMem(args[0]);
 }
 
+function functionLANG() {
+	// 言語の種類を返す (VER(3))
+	return 1;
+}
+
 function functionLINE() {
 	// 実行中の行番号を得る
 	return currentLine;
