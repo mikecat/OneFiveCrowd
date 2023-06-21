@@ -84,6 +84,34 @@ const writeArray = isLittleEndian ? function(id, value) {
 	ramView.setInt16(ARRAY_ADDR + 2 * id, value, true);
 };
 
+// プログラムを文字列で表現するための文字
+const highChars =
+	"　▘▝▀▖▌▞▛▗▚▐▜▄▙▟█" +
+	"・━┃╋┫┣┻┳┏┓┗┛◤◥◣◢" +
+	"¥｡｢｣､･ｦｧｨｩｪｫｬｭｮｯ" +
+	"ｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿ" +
+	"ﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏ" +
+	"ﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝﾞﾟ" +
+	"←→↑↓♠♥♣♦⚫⚪🔟🍙🐱👾♪🌀" +
+	"🚀🛸⌇🚁💥💰🧰📶🚪🕴🕺💃🏌🏃🚶🍓";
+const highCharsTable = [], highCharsMap = {};
+for (let i = 0; i < highChars.length; i++) {
+	const c = highChars.charCodeAt(i);
+	if (0xd800 <= c && c <= 0xdbff) {
+		// サロゲートペア (2バイト目のチェックは省略)
+		highCharsTable.push(highChars.substring(i, i + 2));
+		i++;
+	} else {
+		highCharsTable.push(highChars.charAt(i));
+	}
+}
+for (let i = 0; i < highCharsTable.length; i++) {
+	highCharsMap[highCharsTable[i]] = String.fromCharCode(0x80 + i);
+}
+if (highCharsTable.length !== 0x80) {
+	console.warn("invalid highCharsTable length: " + highCharsTable.length);
+}
+
 // プログラムのコンパイル結果をログに出力するか (テスト用)
 let logCompiledProgram = false;
 
@@ -293,7 +321,35 @@ function initSystem() {
 		e.stopPropagation();
 	});
 	textInputButton.addEventListener("click", function() {
-		keyInput(textInputArea.value);
+		const input = textInputArea.value;
+		let toSend = "";
+		for (let i = 0; i < input.length; i++) {
+			const c = input.charCodeAt(i);
+			if (c < 0x80) {
+				toSend += input.charAt(i);
+				continue;
+			} else if (0xd800 <= c && c <= 0xdbff) {
+				// サロゲートペア候補
+				if (i + 1 < input.length) {
+					const c2 = input.charCodeAt(i + 1);
+					if (0xdc00 <= c2 && c2 <= 0xdfff) {
+						// サロゲートペア
+						const query = input.substring(i, i + 2);
+						if (query in highCharsMap) {
+							toSend += highCharsMap[query];
+						}
+						i++;
+						continue;
+					}
+				}
+			}
+			// その他の上位文字
+			const query = input.charAt(i);
+			if (query in highCharsMap) {
+				toSend += highCharsMap[query];
+			}
+		}
+		keyInput(toSend);
 	});
 
 	// ROMの内容の初期化
