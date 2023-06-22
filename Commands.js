@@ -288,19 +288,19 @@ function commandSCROLL(args) {
 	}
 }
 
-function commandNEXT() {
+function commandNEXT(args, nextPos) {
 	// 対応するFORの処理に飛ぶ
 	if (forStack.length === 0) throw "Not match";
 	const destination = forStack[forStack.length - 1];
-	forStack.push([currentLine, currentPositionInLine + 1]);
+	forStack.push(nextPos);
 	return destination;
 }
 
-function commandGOSUB(args) {
+function commandGOSUB(args, nextPos) {
 	// 戻る場所を記録して指定の行に飛ぶ
 	if (prgDirty) compileProgram();
 	if (args[0] > 0 && (args[0] in programs)) {
-		gosubStack.push([currentLine, currentPositionInLine + 1]);
+		gosubStack.push(nextPos);
 		return [args[0], 0];
 	} else {
 		throw "Line error";

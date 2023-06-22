@@ -1157,7 +1157,7 @@ var compiler = (function() {
 						for (let i = 0; i < args.length; i++) {
 							argValues.push(await args[i]());
 						}
-						const nextPos = await commandFunc(argValues);
+						const nextPos = await commandFunc(argValues, [lineno, nextPosInLine]);
 						if (nextPos) return nextPos;
 						return [lineno, nextPosInLine];
 					};
