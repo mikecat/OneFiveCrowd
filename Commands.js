@@ -246,6 +246,21 @@ async function commandBEEP(args) {
 	}
 }
 
+async function commandPLAY(args) {
+	// MMLを再生する
+	if (args.length > 0) {
+		let mml = "";
+		for (let addr = args[0]; ; addr++) {
+			const c = readVirtualMem(addr);
+			if (c === 0 || c === 0x22) break;
+			mml += String.fromCharCode(c);
+		}
+		await soundManager.play(mml);
+	} else {
+		await soundManager.stop();
+	}
+}
+
 function commandSCROLL(args) {
 	// 画面をスクロールする
 	switch (args[0]) {

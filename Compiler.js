@@ -301,7 +301,7 @@ const basicCommands = {
 	"LOAD"   : null,
 	"FILES"  : null,
 	"BEEP"   : {func: commandBEEP, minArg: 0, maxArg: 2},
-	"PLAY"   : null,
+	"PLAY"   : {func: commandPLAY, minArg: 0, maxArg: 1},
 	"TEMPO"  : null,
 	"CLT"    : {func: commandCLT, minArg: 0, maxArg: 0},
 	"SCROLL" : {func: commandSCROLL, minArg: 1, maxArg: 1},
