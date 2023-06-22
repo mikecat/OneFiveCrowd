@@ -153,6 +153,11 @@ function functionABS(args) {
 	return -value;
 }
 
+function functionSOUND() {
+	// 音声を再生中かを得る
+	return soundManager.isPlaying() ? 1 : 0;
+}
+
 function functionFREE() {
 	// プログラムの残り容量を得る
 	let ptr = 0;

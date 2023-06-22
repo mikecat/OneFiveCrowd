@@ -233,6 +233,19 @@ function commandLOCATE(args) {
 	cursorY = y;
 }
 
+async function commandBEEP(args) {
+	// ビープ音を出す
+	const kind = args.length > 0 ? args[0] : 10;
+	const length = args.length > 1 ? args[1] : 3;
+	const lengthMs = length <= 0 ? -1 : 1000 * length / 60;
+	if (kind === 0) {
+		await soundManager.stop();
+	} else {
+		const trueKind = kind < 0 ? kind + 65536 : kind;
+		await soundManager.beep(8000 / trueKind, lengthMs);
+	}
+}
+
 function commandSCROLL(args) {
 	// 画面をスクロールする
 	switch (args[0]) {
