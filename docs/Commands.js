@@ -95,6 +95,17 @@ async function commandINPUT(prompt, varIdx) {
 	}
 }
 
+function commandLED(args) {
+	// LEDの点灯/消灯を切り替える
+	const isOn = args[0] !== 0;
+	const ledElement = document.getElementById("ledPane");
+	if (isOn) {
+		ledElement.classList.add("lighting");
+	} else {
+		ledElement.classList.remove("lighting");
+	}
+}
+
 async function commandWAIT(args) {
 	// 指定した時間待機する
 	let timeToWait = Math.abs(args[0]) * 1000 / (TICK_PER_SECOND * (args[0] < 0 ? TICK_HIRES_MULT : 1));
