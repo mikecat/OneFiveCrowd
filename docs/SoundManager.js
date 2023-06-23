@@ -3,6 +3,7 @@
 var soundManager = (function() {
 	let audioContext = null;
 	let playerNode = null, playerError = false;
+	let gainNode = null, gainToSet = 1;
 	const playerWaiter = [];
 
 	let nextQueryGen = 0;
@@ -27,7 +28,10 @@ var soundManager = (function() {
 							if (data.gen === runningQueryGen) runningQueryGen = null;
 						}
 					};
-					playerNode.connect(audioContext.destination);
+					gainNode = audioContext.createGain();
+					gainNode.gain.value = gainToSet;
+					playerNode.connect(gainNode);
+					gainNode.connect(audioContext.destination);
 					playerWaiter.forEach(function(func) { func(); });
 				}).catch(function(error) {
 					playerError = true;
@@ -234,10 +238,22 @@ var soundManager = (function() {
 		return runningQueryGen !== null;
 	};
 
+	// volume: 0以上1以下の値
+	const setVolume = function(volume) {
+		const X = 32;
+		const gain = (Math.pow(X, volume < 0 ? 0 : (volume > 1 ? 1 : volume)) - 1) / (X - 1);
+		if (gainNode !== null) {
+			gainNode.gain.linearRampToValueAtTime(gain, audioContext.currentTime + 0.05);
+		} else {
+			gainToSet = gain;
+		}
+	};
+
 	return {
 		"beep": beep,
 		"play": play,
 		"stop": stop,
 		"isPlaying": isPlaying,
+		"setVolume": setVolume,
 	};
 })();

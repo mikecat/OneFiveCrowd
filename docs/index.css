@@ -49,19 +49,23 @@
 }
 
 #volumeSwitch {
-	cursor: pointer;
-	margin-right: 0.5em;
-}
-
-#volumeSwitch.muted #soundOnIcon {
 	display: none;
 }
 
-#volumeSwitch:not(.muted) #soundOffIcon {
+label[for="volumeSwitch"] {
+	cursor: pointer;
+}
+
+#volumeSwitch:checked + label #soundOnIcon {
+	display: none;
+}
+
+#volumeSwitch:not(:checked) + label #soundOffIcon {
 	display: none;
 }
 
 #volumeSlider {
+	margin-left: 0.5em;
 	width: 7em;
 }
 

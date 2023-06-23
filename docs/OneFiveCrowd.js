@@ -383,6 +383,19 @@ function initSystem() {
 		keyInput(toSend);
 	});
 
+	// 音量調節UIの初期化
+	const volumeSwitch = document.getElementById("volumeSwitch");
+	const volumeSlider = document.getElementById("volumeSlider");
+	volumeSwitch.addEventListener("input", function() {
+		volumeSlider.disabled = volumeSwitch.checked;
+		soundManager.setVolume(volumeSwitch.checked ? 0 : volumeSlider.value / 100);
+	});
+	volumeSlider.addEventListener("input", function() {
+		soundManager.setVolume(volumeSwitch.checked ? 0 : volumeSlider.value / 100);
+	});
+	volumeSlider.disabled = volumeSwitch.checked;
+	soundManager.setVolume(volumeSwitch.checked ? 0 : volumeSlider.value / 100);
+
 	// ROMの内容の初期化
 	for (let i = 0; i < 0xE0; i++) {
 		for (let j = 0; j < 8; j++) {
