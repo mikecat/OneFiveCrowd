@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>OneFiveCrowd</title>
+<link href="index.css" rel="stylesheet">
 <script src="ijfont.js"></script>
 <script src="ed25519.js"></script>
 <script src="SoundManager.js"></script>
@@ -12,14 +13,14 @@
 <script src="Compiler.js"></script>
 </head>
 <body onload="initSystem();" onkeydown="keyDown();" onkeyup="keyUp();">
-<h1 style="text-align: center;">OneFiveCrowd</h1>
-<p style="text-align: center;">
-<canvas id="mainScreen" width="512" height="384" style="border: 16px solid black;">
+<h1 id="mainTitle">OneFiveCrowd</h1>
+<p id="screenArea">
+<canvas id="mainScreen" width="512" height="384">
 非対応のブラウザです。
 </canvas>
 </p>
-<p style="text-align: center;">
-<textarea id="textInputArea" rows="5" style="width: 512px;"></textarea><br>
+<p id="controlArea">
+<textarea id="textInputArea" rows="5"></textarea><br>
 <button id="textInputButton" type="button">input text</button>
 </p>
 <p>

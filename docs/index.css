@@ -1,0 +1,19 @@
+#mainTitle {
+	text-align: center;
+}
+
+#screenArea {
+	text-align: center;
+}
+
+#mainScreen {
+	border: 16px solid black;
+}
+
+#controlArea {
+	text-align: center;
+}
+
+#textInputArea {
+	width: 512px;
+}
