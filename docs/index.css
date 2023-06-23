@@ -4,6 +4,7 @@
 
 #screenArea {
 	text-align: center;
+	margin-bottom: 0;
 }
 
 #mainScreen {
@@ -14,6 +15,69 @@
 	text-align: center;
 }
 
+#controlAreaInner {
+	display: inline-block;
+	min-width: 544px;
+	text-align: left;
+}
+
+#controlTabArea {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	grid-template-columns: auto 1fr auto;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+#ledPane {
+	color: #773333;
+	font-size: 200%;
+}
+
+#ledPane.lighting {
+	color: #ff5555;
+}
+
+#tabPane {
+	text-align: center;
+}
+
+#volumePane {
+	display: flex;
+	align-items: center;
+}
+
+#volumeSwitch {
+	cursor: pointer;
+	margin-right: 0.5em;
+}
+
+#volumeSwitch.muted #soundOnIcon {
+	display: none;
+}
+
+#volumeSwitch:not(.muted) #soundOffIcon {
+	display: none;
+}
+
+#volumeSlider {
+	width: 7em;
+}
+
+.controlTab {
+	color: inherit;
+	text-decoration: none;
+	border: 1px solid black;
+	padding: 0.5em;
+	margin-right: 0.3em;
+	cursor: pointer;
+}
+
 #textInputArea {
 	width: 512px;
+}
+
+#textInputForm {
+	text-align: center;
 }

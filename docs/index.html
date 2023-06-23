@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>OneFiveCrowd</title>
+<meta name="viewport" content="width=560">
 <link href="index.css" rel="stylesheet">
 <script src="ijfont.js"></script>
 <script src="ed25519.js"></script>
@@ -19,10 +20,38 @@
 非対応のブラウザです。
 </canvas>
 </p>
-<p id="controlArea">
+<div id="controlArea">
+<div id="controlAreaInner">
+<p id="controlTabArea">
+<span id="ledPane">●</span>
+<span id="tabPane">
+<span class="controlTab">KEYS</span>
+<span class="controlTab">DATA</span>
+<span class="controlTab">DEVICE</span>
+<span class="controlTab">SYSTEM</span>
+</span>
+<span id="volumePane">
+<span id="volumeSwitch">
+<svg id="soundOnIcon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="black">
+<polygon points="1,10 1,22 8,22 16,31 16,1 8,10" />
+<line x1="20" y1="8" x2="30" y2="4" />
+<line x1="20" y1="16" x2="30" y2="16" />
+<line x1="20" y1="24" x2="30" y2="28" />
+</svg>
+<svg id="soundOffIcon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="black">
+<polygon points="1,10 1,22 8,22 16,31 16,1 8,10" />
+<line x1="1" y1="31" x2="24" y2="1" stroke-width="2" />
+</svg>
+</span>
+<input id="volumeSlider" type="range" min="0" max="100" value="50">
+</span>
+</p>
+<p id="textInputForm">
 <textarea id="textInputArea" rows="5"></textarea><br>
 <button id="textInputButton" type="button">input text</button>
 </p>
+</div>
+</div>
 <p>
 OneFiveCrowd: <a href="https://creativecommons.org/licenses/by/4.0/deed.ja">CC BY 4.0</a> by みけCAT<br>
 IchigoJam FONT: CC BY IchigoJam(<a href="http://ichigojam.net/">http://ichigojam.net/</a>)<br>
