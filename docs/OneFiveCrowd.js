@@ -179,6 +179,13 @@ const screenBufferContext = screenBuffer.getContext("2d");
 let mainScreen, mainScreenContext;
 const fontImages = new Array(256);
 
+// フォントデータ
+const fonts = {
+	"1_1": ijfont_1_1,
+	"1_2": ijfont_1_2,
+	"1_4": ijfont_1_4,
+};
+
 // 更新するべきか
 let fontDirty = false; // フォントRAMの更新がある
 let vramDirty = false; // VRAMの更新がある
@@ -410,21 +417,47 @@ function initSystem() {
 	volumeSlider.disabled = volumeSwitch.checked;
 	soundManager.setVolume(volumeSwitch.checked ? 0 : volumeSlider.value / 100);
 
-	// ROMの内容の初期化
-	for (let i = 0; i < 0xE0; i++) {
-		for (let j = 0; j < 8; j++) {
-			romBytes[CROM_ADDR + i * 8 + j] = ijfont_1_1[i * 8 + j];
-		}
-	}
-	// ROM部分のフォントの初期化
-	for (let i = 0; i < 0xE0; i++) {
+	// フォントの枠を作る
+	for (let i = 0; i < 0x100; i++) {
 		fontImages[i] = screenBufferContext.createImageData(16, 16);
-		dataToFontImage(fontImages[i], romBytes, CROM_ADDR + i * 8);
 	}
-	// RAM用のフォントの枠を作る
-	for (let i = 0; i < 0x20; i++) {
-		fontImages[0xE0 + i] = screenBufferContext.createImageData(16, 16);
-	}
+
+	const systemFontSelect = document.getElementById("systemFontSelect");
+	const switchFont = function() {
+		const fontName = systemFontSelect.value;
+		const fontData = fonts[fontName];
+		if (!fontData) {
+			console.error("unknown font name: " + fontName);
+			return;
+		}
+		// RAM部分のフォントデータが変わっているかをチェックする
+		let fontChanged = false;
+		for (let i = 0; i < 0x20; i++) {
+			for (let j = 0; j < 8; j++) {
+				if (cramView[i * 8 * j] !== romBytes[CROM_ADDR + (0xE0 + i) * 8 + j]) {
+					fontChanged = true;
+					break;
+				}
+			}
+		}
+		// ROMにフォントデータを書き込む
+		for (let i = 0; i < 0x100; i++) {
+			for (let j = 0; j < 8; j++) {
+				romBytes[CROM_ADDR + i * 8 + j] = fontData[i * 8 + j];
+			}
+		}
+		// ROM部分のフォントの初期化
+		for (let i = 0; i < 0xE0; i++) {
+			dataToFontImage(fontImages[i], romBytes, CROM_ADDR + i * 8);
+		}
+		// 変わっていなければ、RAM部分も初期化する
+		if (!fontChanged) commandCLP();
+		// 画面を更新する
+		vramDirty = true;
+		updateScreen();
+	};
+	systemFontSelect.addEventListener("change", switchFont);
+	switchFont();
 
 	// カーソルを点滅させる
 	if (cursorTimerId !== null) clearInterval(cursorTimerId);
@@ -1289,7 +1322,7 @@ function commandCLP() {
 	// RAMのフォント領域を初期化する
 	for (let i = 0; i < 0x20; i++) {
 		for (let j = 0; j < 8; j++) {
-			cramView[i * 8 + j] = ijfont_1_1[(0xE0 + i) * 8 + j];
+			cramView[i * 8 + j] = romBytes[CROM_ADDR + (0xE0 + i) * 8 + j];
 		}
 	}
 	fontDirty = true;

@@ -121,3 +121,20 @@ label[for="volumeSwitch"] {
 #textInputForm {
 	text-align: center;
 }
+
+.configField {
+	display: table;
+}
+
+.configRow {
+	display: table-row;
+}
+
+.configName {
+	display: table-cell;
+	padding-right: 0.5em;
+}
+
+.configValue {
+	display: table-cell;
+}
