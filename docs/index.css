@@ -69,6 +69,42 @@ label[for="volumeSwitch"] {
 	width: 7em;
 }
 
+.controlRadio {
+	display: none;
+}
+
+#controlRadioKeys:checked ~ * label[for="controlRadioKeys"] {
+	background-color: lightgray;
+}
+
+#controlRadioData:checked ~ * label[for="controlRadioData"] {
+	background-color: lightgray;
+}
+
+#controlRadioDevice:checked ~ * label[for="controlRadioDevice"] {
+	background-color: lightgray;
+}
+
+#controlRadioSystem:checked ~ * label[for="controlRadioSystem"] {
+	background-color: lightgray;
+}
+
+#controlRadioKeys:not(:checked) ~ * #keyForm {
+	display: none;
+}
+
+#controlRadioData:not(:checked) ~ * #textInputForm {
+	display: none;
+}
+
+#controlRadioDevice:not(:checked) ~ * #deviceForm {
+	display: none;
+}
+
+#controlRadioSystem:not(:checked) ~ * #systemForm {
+	display: none;
+}
+
 .controlTab {
 	color: inherit;
 	text-decoration: none;

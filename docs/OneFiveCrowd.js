@@ -383,6 +383,20 @@ function initSystem() {
 		keyInput(toSend);
 	});
 
+	// 操作タブの初期化
+	document.querySelectorAll(".controlTab").forEach(function(elem) {
+		elem.addEventListener("click", function(event) {
+			const target = event.target;
+			const forElem = document.getElementById(target.getAttribute("for"));
+			if (forElem.checked) {
+				// 選択済みのところがクリックされたら、選択を解除する
+				setTimeout(function() {
+					forElem.checked = false;
+				}, 0);
+			}
+		});
+	});
+
 	// 音量調節UIの初期化
 	const volumeSwitch = document.getElementById("volumeSwitch");
 	const volumeSlider = document.getElementById("volumeSlider");

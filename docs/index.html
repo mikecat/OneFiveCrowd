@@ -21,14 +21,18 @@
 </canvas>
 </p>
 <div id="controlArea">
+<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioKeys" value="keys">
+<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioData" value="data">
+<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioDevice" value="device">
+<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioSystem" value="system">
 <div id="controlAreaInner">
 <p id="controlTabArea">
 <span id="ledPane">●</span>
 <span id="tabPane">
-<span class="controlTab">KEYS</span>
-<span class="controlTab">DATA</span>
-<span class="controlTab">DEVICE</span>
-<span class="controlTab">SYSTEM</span>
+<label class="controlTab" for="controlRadioKeys">KEYS</label>
+<label class="controlTab" for="controlRadioData">DATA</label>
+<label class="controlTab" for="controlRadioDevice">DEVICE</label>
+<label class="controlTab" for="controlRadioSystem">SYSTEM</label>
 </span>
 <span id="volumePane">
 <input id="volumeSwitch" type="checkbox">
@@ -47,9 +51,15 @@
 <input id="volumeSlider" type="range" min="0" max="100" value="50">
 </span>
 </p>
+<p id="keyForm">
+</p>
 <p id="textInputForm">
 <textarea id="textInputArea" rows="5"></textarea><br>
 <button id="textInputButton" type="button">input text</button>
+</p>
+<p id="deviceForm">
+</p>
+<p id="systemForm">
 </p>
 </div>
 </div>
