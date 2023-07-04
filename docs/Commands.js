@@ -266,7 +266,7 @@ async function commandPLAY(args) {
 			if (c === 0 || c === 0x22) break;
 			mml += String.fromCharCode(c);
 		}
-		await soundManager.play(mml);
+		await soundManager.play(mml, document.getElementById("systemMMLInterpretationSelect").value === "old");
 	} else {
 		await soundManager.stop();
 	}

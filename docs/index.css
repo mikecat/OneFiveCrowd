@@ -137,4 +137,5 @@ label[for="volumeSwitch"] {
 
 .configValue {
 	display: table-cell;
+	padding-bottom: 0.3em;
 }
