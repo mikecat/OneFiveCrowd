@@ -1351,6 +1351,8 @@ function commandNEW() {
 		prgView[i] = 0;
 	}
 	prgDirty = true;
+	// プログラムの実行を終了する
+	return [-1, 0];
 }
 
 function commandCLS() {
