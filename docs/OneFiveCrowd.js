@@ -19,6 +19,38 @@ const doCallback = (function(){
 	};
 })();
 
+const LOCAL_STORAGE_PREFIX = "OneFiveCrowd-04db9c2c-5eab-47d7-b316-a9496acdd2e2-";
+
+function readLocalStorage(key, defaultValue = null) {
+	try {
+		const ret = localStorage.getItem(LOCAL_STORAGE_PREFIX + key);
+		if (ret === null) return defaultValue;
+		return ret;
+	} catch (e) {
+		console.warn(e);
+		return defaultValue;
+	}
+}
+
+function writeLocalStorage(key, value) {
+	try {
+		localStorage.setItem(LOCAL_STORAGE_PREFIX + key, value);
+		return true;
+	} catch (e) {
+		console.warn(e);
+		return false;
+	}
+}
+
+function setSelectByValue(selectElement, value) {
+	for (let i = 0; i < selectElement.options.length; i++) {
+		if (selectElement.options[i].value === value) {
+			selectElement.selectedIndex = i;
+			break;
+		}
+	}
+}
+
 // リトルエンディアン環境かを判定
 const isLittleEndian = (function() {
 	const buffer = new ArrayBuffer(4);
@@ -407,13 +439,26 @@ function initSystem() {
 	// 音量調節UIの初期化
 	const volumeSwitch = document.getElementById("volumeSwitch");
 	const volumeSlider = document.getElementById("volumeSlider");
+	const volumeSaved = readLocalStorage("volume", "50");
+	if (volumeSaved.charAt(0) === "m") {
+		volumeSwitch.checked = true;
+		volumeSlider.value = parseInt(volumeSaved.substring(1));
+	} else {
+		volumeSwitch.checked = false;
+		volumeSlider.value = parseInt(volumeSaved);
+	}
+	const saveVolumeSetting = function() {
+		writeLocalStorage("volume", (volumeSwitch.checked ? "m" : "") + volumeSlider.value);
+	};
 	volumeSwitch.addEventListener("input", function() {
 		volumeSlider.disabled = volumeSwitch.checked;
 		soundManager.setVolume(volumeSwitch.checked ? 0 : volumeSlider.value / 100);
+		saveVolumeSetting();
 	});
 	volumeSlider.addEventListener("input", function() {
 		soundManager.setVolume(volumeSwitch.checked ? 0 : volumeSlider.value / 100);
 	});
+	volumeSlider.addEventListener("change", saveVolumeSetting);
 	volumeSlider.disabled = volumeSwitch.checked;
 	soundManager.setVolume(volumeSwitch.checked ? 0 : volumeSlider.value / 100);
 
@@ -423,6 +468,7 @@ function initSystem() {
 	}
 
 	const systemFontSelect = document.getElementById("systemFontSelect");
+	setSelectByValue(systemFontSelect, readLocalStorage("font", "1_4"));
 	const switchFont = function() {
 		const fontName = systemFontSelect.value;
 		const fontData = fonts[fontName];
@@ -456,8 +502,17 @@ function initSystem() {
 		vramDirty = true;
 		updateScreen();
 	};
-	systemFontSelect.addEventListener("change", switchFont);
+	systemFontSelect.addEventListener("change", function() {
+		switchFont();
+		writeLocalStorage("font", systemFontSelect.value);
+	});
 	switchFont();
+
+	const systemMMLInterpretationSelect = document.getElementById("systemMMLInterpretationSelect");
+	setSelectByValue(systemMMLInterpretationSelect, readLocalStorage("MMLmode", "new"));
+	systemMMLInterpretationSelect.addEventListener("change", function() {
+		writeLocalStorage("MMLmode", systemMMLInterpretationSelect.value);
+	});
 
 	// カーソルを点滅させる
 	if (cursorTimerId !== null) clearInterval(cursorTimerId);
