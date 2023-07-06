@@ -452,7 +452,7 @@ function commandDRAW(args) {
 		}
 		vramDirty = true;
 	};
-	// プレゼンハムのアルゴリズム
+	// ブレゼンハムのアルゴリズム
 	const sx = args[0], sy = args[1];
 	const dx = args.length >= 4 ? args[2] : args[0];
 	const dy = args.length >= 4 ? args[3] : args[1];
