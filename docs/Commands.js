@@ -452,38 +452,66 @@ function commandDRAW(args) {
 		}
 		vramDirty = true;
 	};
-	// ブレゼンハムのアルゴリズム
 	const sx = args[0], sy = args[1];
 	const dx = args.length >= 4 ? args[2] : args[0];
 	const dy = args.length >= 4 ? args[3] : args[1];
-	const wx = sx >= dx ? sx - dx : dx - sx, wy = sy >= dy ? sy - dy : dy - sy;
-	const xmode = wx >= wy;
-	let x = sx, y = sy, gosa = 0;
-	while (x != dx || y != dy) {
+	const alg = document.getElementById("systemDrawAlgorithmSelect").value;
+	if (alg === "bresenham") {
+		// ブレゼンハムのアルゴリズム
+		const wx = sx >= dx ? sx - dx : dx - sx, wy = sy >= dy ? sy - dy : dy - sy;
+		const xmode = wx >= wy;
+		let x = sx, y = sy, gosa = 0;
+		while (x != dx || y != dy) {
+			drawPoint(x, y);
+			if (xmode) {
+				if (sx < dx) x++; else x--;
+				gosa += (dy - sy) << 1;
+				if (gosa > wx){
+					y++;
+					gosa -= wx << 1;
+				} else if (gosa < -wx) {
+					y--;
+					gosa += wx << 1;
+				}
+			} else {
+				if (sy < dy) y++; else y--;
+				gosa += (dx - sx) << 1;
+				if (gosa > wy) {
+					x++;
+					gosa -= wy << 1;
+				} else if (gosa < -wy) {
+					x--;
+					gosa += wy << 1;
+				}
+			}
+		}
 		drawPoint(x, y);
-		if (xmode) {
-			if (sx < dx) x++; else x--;
-			gosa += (dy - sy) << 1;
-			if (gosa > wx){
-				y++;
-				gosa -= wx << 1;
-			} else if (gosa < -wx) {
-				y--;
-				gosa += wx << 1;
+	} else {
+		// 線形補間
+		if (sx === dx && sy === dy) {
+			drawPoint(sx, sy);
+		} else if (Math.abs(sx - dx) >= Math.abs(sy - dy)) {
+			if (sx <= dx) {
+				for (let x = sx; x <= dx; x++) {
+					drawPoint(x, sy + Math.trunc((dy - sy) * (x - sx) / (dx - sx)));
+				}
+			} else {
+				for (let x = dx; x <= sx; x++) {
+					drawPoint(x, dy + Math.trunc((sy - dy) * (x - dx) / (sx - dx)));
+				}
 			}
 		} else {
-			if (sy < dy) y++; else y--;
-			gosa += (dx - sx) << 1;
-			if (gosa > wy) {
-				x++;
-				gosa -= wy << 1;
-			} else if (gosa < -wy) {
-				x--;
-				gosa += wy << 1;
+			if (sy <= dy) {
+				for (let y = sy; y <= dy; y++) {
+					drawPoint(sx + Math.trunc((dx - sx) * (y - sy) / (dy - sy)), y);
+				}
+			} else {
+				for (let y = dy; y <= sy; y++) {
+					drawPoint(dx + Math.trunc((sx - dx) * (y - dy) / (sy - dy)), y);
+				}
 			}
 		}
 	}
-	drawPoint(x, y);
 }
 
 async function commandSEC_PUBKEY(args) {

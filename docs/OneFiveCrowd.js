@@ -514,6 +514,12 @@ function initSystem() {
 		writeLocalStorage("MMLmode", systemMMLInterpretationSelect.value);
 	});
 
+	const systemDrawAlgorithmSelect = document.getElementById("systemDrawAlgorithmSelect");
+	setSelectByValue(systemDrawAlgorithmSelect, readLocalStorage("drawAlgorithm", "bresenham"));
+	systemDrawAlgorithmSelect.addEventListener("change", function() {
+		writeLocalStorage("drawAlgorithm", systemDrawAlgorithmSelect.value);
+	});
+
 	// カーソルを点滅させる
 	if (cursorTimerId !== null) clearInterval(cursorTimerId);
 	cursorTimerId = setInterval(toggleCursor, 500);
