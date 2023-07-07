@@ -272,6 +272,7 @@ async function commandLOAD(args) {
 		prgDirty = true;
 		throw "File error";
 	}
+	return [-1, 0];
 }
 
 async function commandFILES(args) {
