@@ -159,6 +159,8 @@ let currentPositionInLine;
 let lastErrorLine;
 // 前回アクセスを要求したファイル番号 & #FF
 let lastFileNo = 0;
+// 常にカーソルを表示する
+let forceShowCursor = false;
 // キー入力待ち中か
 let keyBlocked = false;
 // INPUTコマンドでキー入力待ちをしている場合のコールバック
@@ -382,7 +384,7 @@ function updateScreen() {
 		fontDirty = false;
 		vramDirty = true;
 	}
-	const drawCursor = cursorOn && keyBlocked;
+	const drawCursor = cursorOn && (keyBlocked || forceShowCursor);
 	let videoUpdated = videoConfigUpdated;
 	videoConfigUpdated = false;
 	if (vramDirty) {
@@ -1312,6 +1314,7 @@ function finalizeExecution() {
 	if (cursorY < 0) cursorY = 0;
 	breakRequest = false;
 	randomSeeded = false;
+	forceShowCursor = false;
 	inputKeyBlockCallback = null;
 	forStack.splice(0);
 	gosubStack.splice(0);

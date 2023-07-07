@@ -235,7 +235,17 @@ function commandEND(){
 
 function commandLOCATE(args) {
 	// カーソルを移動する
-	let x = args[0], y = args.length > 1 ? args[1] : 0;
+	let x, y;
+	if (args.length < 2) {
+		x = args[0] % SCREEN_WIDTH;
+		y = ~~(args[0] / SCREEN_WIDTH);
+	} else {
+		x = args[0];
+		y = args[1];
+	}
+	if (args.length >= 3) {
+		forceShowCursor = args[2] !== 0;
+	}
 	if (x < 0) x = 0;
 	if (x >= SCREEN_WIDTH) x = SCREEN_WIDTH - 1;
 	if (y < -1) y = -1;
