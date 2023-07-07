@@ -1267,7 +1267,7 @@ var compiler = (function() {
 		}
 		const compilationResult = [];
 		let nextElseIndex = programIndex;
-		let nextIsElse = false;
+		let nextIsElse = false, ifBeforeElse = false;
 		for(let i = programNodes.length - 1; i >= 0; i--) {
 			const nextPos = nextIsElse ? programIndex : programNodes[i].idx + 1;
 			if (programNodes[i].node.kind === "command") {
@@ -1280,11 +1280,13 @@ var compiler = (function() {
 				}
 				nextIsElse = false;
 			} else if (programNodes[i].node.kind === "if_command") {
-				compilationResult.unshift(compileIf(programNodes[i].node, lineno, nextPos, nextElseIndex));
+				compilationResult.unshift(compileIf(programNodes[i].node, lineno, nextPos, ifBeforeElse ? programIndex : nextElseIndex));
 				nextIsElse = false;
+				ifBeforeElse = true;
 			} else {
 				nextElseIndex = programNodes[i].idx;
 				nextIsElse = true;
+				ifBeforeElse = false;
 			}
 		}
 		if (compilationResult.length === 0) {
