@@ -157,6 +157,8 @@ let currentLine;
 let currentPositionInLine;
 // 前回エラーが発生した行番号 (CONT用)
 let lastErrorLine;
+// 前回アクセスを要求したファイル番号 & #FF
+let lastFileNo = 0;
 // キー入力待ち中か
 let keyBlocked = false;
 // INPUTコマンドでキー入力待ちをしている場合のコールバック
@@ -263,6 +265,91 @@ function writeVirtualMem(addr, value) {
 		if (PRG_ADDR <= physicalAddress && physicalAddress < PRG_ADDR + prgValidSize) {
 			prgDirty = true;
 		}
+	}
+}
+
+// 指定したスロットからタイトル (1行目、最大26文字) を取得する
+async function getFileTitle(slot) {
+	if (slot < 0 || 228 <= slot) {
+		// 無効
+		return "";
+	} else if (slot < 100) {
+		// 本体 (localStorage)
+		try {
+			const data = readLocalStorage("save" + slot, "");
+			const dataDecoded = atob(data);
+			if (dataDecoded.length < 3) return "";
+			const lineNo = dataDecoded.charCodeAt(0) + (dataDecoded.charCodeAt(1) << 8);
+			const dataSize = dataDecoded.charCodeAt(2);
+			if (lineNo === 0 || lineNo >= 0x8000) return "";
+			let resultTitle = dataDecoded.substring(3, 3 + (dataSize < 26 ? dataSize : 26));
+			const zeroIdx = resultTitle.indexOf("\0");
+			if (zeroIdx >= 0) resultTitle = resultTitle.substring(0, zeroIdx);
+			return resultTitle;
+		} catch (e) {
+			console.warn(e);
+			return "";
+		}
+	} else {
+		// EEPROM
+		return "";
+	}
+}
+
+// 指定したスロットの保存データを読み込み、プログラム領域を上書きする
+// 成功したらtrue、失敗したらfalseを返す
+async function loadFile(slot) {
+	if (slot < 0 || 228 <= slot) {
+		// 無効
+		return false;
+	} else if (slot < 100) {
+		// 本体 (localStorage)
+		try {
+			const data = readLocalStorage("save" + slot);
+			if (data === null) return false;
+			const dataDecoded = atob(data);
+			for (let i = 0; i < prgView.length && i < dataDecoded.length; i++) {
+				prgView[i] = dataDecoded.charCodeAt(i);
+			}
+			for (let i = dataDecoded.length; i < prgView.length; i++) {
+				prgView[i] = 0;
+			}
+			prgDirty = true;
+			return true;
+		} catch (e) {
+			console.warn(e);
+			return false;
+		}
+	} else {
+		// EEPROM
+		return false;
+	}
+}
+
+// プログラム領域のデータを指定したスロットに保存する
+// 成功したらtrue、失敗したらfalseを返す
+async function saveFile(slot) {
+	if (slot < 0) {
+		// 無効
+		return false;
+	} else if (slot < 100) {
+		// 本体 (localStorage)
+		let lastNonZero = -1;
+		for (let i = prgView.length - 1; i >= 0; i--) {
+			if (prgView[i] !== 0) {
+				lastNonZero = i;
+				break;
+			}
+		}
+		let data = "";
+		for (let i = 0; i <= lastNonZero; i++) data += String.fromCharCode(prgView[i]);
+		return writeLocalStorage("save" + slot, btoa(data));
+	} else if (slot < 228) {
+		// EEPROM
+		return false;
+	} else {
+		// 無効
+		return false;
 	}
 }
 
@@ -1185,6 +1272,8 @@ async function execute() {
 			} else {
 				currentPositionInLine++;
 			}
+			if (currentLine > 0 && prgDirty) compileProgram();
+			if (!(currentLine in programs)) throw "Line error";
 			if (programs[currentLine].code.length <= currentPositionInLine) {
 				currentLine = programs[currentLine].nextLine;
 				currentPositionInLine = 0;

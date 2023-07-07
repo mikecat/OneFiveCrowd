@@ -244,6 +244,69 @@ function commandLOCATE(args) {
 	cursorY = y;
 }
 
+async function commandSAVE(args) {
+	// プログラム領域のデータを保存する
+	const slot = args.length > 0 ? args[0] : functionFILE();
+	lastFileNo = slot & 0xFF;
+	if (await saveFile(slot)) {
+		putString("Saved " + (1024 - functionFREE()) + "byte\n");
+	} else {
+		throw "File error";
+	}
+}
+
+async function commandLOAD(args) {
+	// プログラム領域にデータを読み込む
+	const slot = args.length > 0 ? args[0] : functionFILE();
+	lastFileNo = slot & 0xFF;
+	if (await loadFile(slot)) {
+		if (prgView[0] === 0xFF && prgView[1] === 0xFF) {
+			throw "File error";
+		} else if (prgView[1] < 0x80) {
+			putString("Loaded " + (1024 - functionFREE()) + "byte\n");
+		}
+	} else {
+		for (let i = 0; i < prgView.length; i++) {
+			prgView[i] = 0;
+		}
+		prgDirty = true;
+		throw "File error";
+	}
+}
+
+async function commandFILES(args) {
+	// ファイルのタイトルリストを出力する
+	const DEFAULT_LAST_NO = 14, EEPROM_START = 100, EEPROM_END = 227;
+	const BREAK_AFTER_COUNT = 22;
+	let startNo = 0, endNo = 0, skipAfterDefaultLast = false;
+	if (args.length < 2) {
+		// 終了番号のみを指定
+		endNo = args.length > 0 ? args[0] : DEFAULT_LAST_NO;
+		if (endNo === 0) endNo = EEPROM_END;
+		skipAfterDefaultLast = true;
+	} else {
+		// 開始番号と終了番号を指定
+		startNo = args[0];
+		endNo = args[1];
+	}
+	let count = 0;
+	for (let i = startNo; i <= endNo;) {
+		const title = await getFileTitle(i);
+		putString("" + i);
+		if (title !== "") putString(" " + title);
+		putString("\n");
+		if (++count >= BREAK_AFTER_COUNT) {
+			await commandWAIT([60]);
+			count = 0;
+		}
+		if (i === DEFAULT_LAST_NO && skipAfterDefaultLast) {
+			i = EEPROM_START;
+		} else {
+			i++;
+		}
+	}
+}
+
 async function commandBEEP(args) {
 	// ビープ音を出す
 	const kind = args.length > 0 ? args[0] : 10;
@@ -356,6 +419,28 @@ function commandCONT() {
 		}
 	} else {
 		return [currentLine, 0];
+	}
+}
+
+async function commandLRUN(args) {
+	// プログラム領域にデータを読み込み、実行する
+	const slot = args.length > 0 ? args[0] : functionFILE();
+	lastFileNo = slot & 0xFF;
+	if (await loadFile(slot)) {
+		if (prgView[0] === 0xFF && prgView[1] === 0xFF) {
+			throw "File error";
+		}
+		if (args.length < 2) {
+			return commandRUN();
+		} else {
+			return [args[1], 0];
+		}
+	} else {
+		for (let i = 0; i < prgView.length; i++) {
+			prgView[i] = 0;
+		}
+		prgDirty = true;
+		throw "File error";
 	}
 }
 

@@ -187,6 +187,11 @@ function functionVER(args) {
 	}
 }
 
+function functionFILE() {
+	// 前回アクセスを要求したファイル番号 & #FF を取得する
+	return lastFileNo & 0xFF;
+}
+
 function functionPEEK(args) {
 	// 仮想メモリからデータを読み込む
 	return readVirtualMem(args[0]);
