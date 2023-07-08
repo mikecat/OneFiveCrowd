@@ -284,8 +284,8 @@ function createScreenKeys(keyInfo, name) {
 							if (keyData.keyCode) {
 								keyToSend = keyData.keyCode;
 							} else {
-								if (touched in highCharsMap) {
-									keyToSend = highCharsMap[touched];
+								if (keyToSend in highCharsMap) {
+									keyToSend = highCharsMap[keyToSend];
 								} else if (keyToSend.length === 1) {
 									if (alphabets.indexOf(keyToSend) >= 0) {
 										keyToSend = keyToSend.toLowerCase();
@@ -303,6 +303,34 @@ function createScreenKeys(keyInfo, name) {
 					const released = function() {
 						if (!keyData.special || specialKeyChecks[keyData.special].checked) {
 							keyUp(touched);
+						}
+						if (!keyData.special) {
+							if (specialKeyChecks.shift.checked) {
+								specialKeyChecks.shift.checked = false;
+								keyUp("Shift");
+							}
+							if (specialKeyChecks.ctrl.checked) {
+								specialKeyChecks.ctrl.checked = false;
+								keyUp("Control");
+							}
+							if (specialKeyChecks.alt.checked) {
+								specialKeyChecks.alt.checked = false;
+								keyUp("Alt");
+							}
+						} else if (keyData.special === "shift" && !specialKeyChecks.shift.checked && specialKeyChecks.ctrl.checked) {
+							setTimeout(function() {
+								specialKeyChecks.shift.checked = false;
+								specialKeyChecks.ctrl.checked = false;
+								keyUp("Shift");
+								keyUp("Control");
+							}, 0);
+						} else if (keyData.special === "alt" && !specialKeyChecks.alt.checked && specialKeyChecks.ctrl.checked) {
+							setTimeout(function() {
+								specialKeyChecks.alt.checked = false;
+								specialKeyChecks.ctrl.checked = false;
+								keyUp("Alt");
+								keyUp("Control");
+							}, 0);
 						}
 						touched = null;
 					};
