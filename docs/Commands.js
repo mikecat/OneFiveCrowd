@@ -448,8 +448,10 @@ async function commandLRUN(args) {
 		if (prgView[0] === 0xFF && prgView[1] === 0xFF) {
 			throw "File error";
 		}
-		if (args.length < 2) {
+		if (args.length < 2 || args[1] === 0) {
 			return commandRUN();
+		} else if (args[1] < 0 || 0x8000 <= args[1]) {
+			throw "Line error";
 		} else {
 			return [args[1], 0];
 		}
