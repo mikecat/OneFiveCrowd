@@ -190,6 +190,9 @@ let seededX = 0, seededY = 0, seededZ = 0, seededW = 0;
 // OK用
 let okMode = 1;
 
+// キーボードレイアウト
+let keyLayout = 1;
+
 // カーソル位置
 let cursorX = 0;
 let cursorY = 0;
@@ -551,6 +554,12 @@ function initSystem() {
 	volumeSlider.disabled = volumeSwitch.checked;
 	soundManager.setVolume(volumeSwitch.checked ? 0 : volumeSlider.value / 100);
 
+	// スクリーンキーボードの初期化
+	initializeScreenKeys();
+	keyLayout = parseInt(readLocalStorage("keyLayout", "1"));
+	if (keyLayout !== 0) keyLayout = 1;
+	switchScreenKeys(keyLayout);
+
 	// フォントの枠を作る
 	for (let i = 0; i < 0x100; i++) {
 		fontImages[i] = screenBufferContext.createImageData(16, 16);
@@ -711,10 +720,8 @@ const specialKeyDict = {
 	"F9"  : "\x18\x0cFILES\x0a"
 };
 
-function keyDown() {
-	event.preventDefault();
-	const key = event.key;
-	if (event.ctrlKey) {
+function keyDown(key, shiftKey, ctrlKey, altKey) {
+	if (ctrlKey) {
 		if (key === "a" || key === "A") keyInput(0x12); // 行頭へ
 		if (key === "c" || key === "C") keyInput(0x1b); // ESC
 		else if (key === "e" || key === "E") keyInput(0x17); // 行末へ
@@ -727,7 +734,7 @@ function keyDown() {
 		// アルファベット大文字と小文字を入れ替える
 		if (0x61 <= keyCode && keyCode <= 0x7a) keyCode -= 0x20;
 		else if (0x41 <= keyCode && keyCode <= 0x5a) keyCode += 0x20;
-		if (event.altKey) {
+		if (altKey) {
 			if (0x21 <= keyCode && keyCode <= 0x29) keyCode += 0x81 - 0x21;
 			else if (keyCode === 0x2c) keyCode = 0x3c;
 			else if (keyCode === 0x2d) keyCode = 0xad;
@@ -742,21 +749,21 @@ function keyDown() {
 			else if (0x57 <= keyCode && keyCode <= 0x5a) keyCode += 0xe0 - 0x57;
 			else if (0x5b <= keyCode && keyCode <= 0x5d) keyCode += 0xdb - 0x5b;
 			else if (keyCode === 0x5e) keyCode = 0xa0;
-			else if (keyCOde === 0x5f) keyCode = 0x7c;
+			else if (keyCode === 0x5f) keyCode = 0x7c;
 			else if (0x61 <= keyCode && keyCode <= 0x76) keyCode += 0x8a - 0x61;
 			else if (0x77 <= keyCode && keyCode <= 0x7a) keyCode += 0x80 - 0x77;
 			else if (keyCode === 0x7e) keyCode = 0x40;
 		}
-		if (event.shiftKey && keyCode == 0x20) keyCode = 0x0e;
+		if (shiftKey && keyCode == 0x20) keyCode = 0x0e;
 		keyInput(keyCode);
-	} else if (!event.altKey) {
+	} else if (!altKey) {
 		if (key === "Enter") {
-			keyInput(event.shiftKey ? 0x10 : 0x0a);
+			keyInput(shiftKey ? 0x10 : 0x0a);
 		} else if (key in specialKeyDict) {
 			keyInput(specialKeyDict[key]);
 		}
 	}
-	if (!event.ctrlKey && !event.altKey) {
+	if (!ctrlKey && !altKey) {
 		if (key === "ArrowLeft") btnStatus |= 1;
 		else if (key === "ArrowRight") btnStatus |= 2;
 		else if (key === "ArrowUp") btnStatus |= 4;
@@ -767,8 +774,12 @@ function keyDown() {
 	return false;
 }
 
-function keyUp() {
-	const key = event.key;
+function keyDownEvent() {
+	event.preventDefault();
+	keyDown(event.key, event.shiftKey, event.ctrlKey, event.altKey);
+}
+
+function keyUp(key) {
 	if (key === "ArrowLeft") btnStatus &= ~1;
 	else if (key === "ArrowRight") btnStatus &= ~2;
 	else if (key === "ArrowUp") btnStatus &= ~4;
@@ -776,6 +787,10 @@ function keyUp() {
 	else if (key === " ") btnStatus &= ~0x10;
 	else if (key === "x" || key == "X") btnStatus &= ~0x20;
 	return false;
+}
+
+function keyUpEvent() {
+	keyUp(event.key);
 }
 
 // 画面に文字を書き込む

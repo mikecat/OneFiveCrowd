@@ -131,6 +131,13 @@ async function commandWAIT(args) {
 	}
 }
 
+function commandKBD(args) {
+	// キーボード配列を変更する
+	keyLayout = args[0] === 0 ? 0 : 1;
+	switchScreenKeys(keyLayout);
+	writeLocalStorage("keyLayout", keyLayout);
+}
+
 function commandRUN() {
 	// プログラムを最初の行から実行する
 	if (prgDirty) compileProgram();

@@ -177,7 +177,7 @@ function functionVER(args) {
 		case 0: // バージョン
 			return 30000;
 		case 2: // キーボード種別
-			return 1;
+			return keyLayout;
 		case 3: // 言語
 			return 1;
 		case 4: // ビデオ規格 兼 1秒を表すTICK()の時間

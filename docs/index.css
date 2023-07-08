@@ -139,3 +139,70 @@ label[for="volumeSwitch"] {
 	display: table-cell;
 	padding-bottom: 0.3em;
 }
+
+.screenKeyMain {
+	display: grid;
+	grid-template-rows: repeat(6, 2em);
+	grid-template-columns: repeat(14, 1fr);
+	width: 540px;
+}
+
+.screenKey {
+	border: 1px solid black;
+	border-collapse: collapse;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-top: -1px;
+	margin-left: -1px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.specialKeyCheck {
+	display: none;
+}
+
+.specialKey-caps:checked ~ .screenKey[data-special-key="caps"] {
+	background-color: lightgray;
+}
+
+.specialKey-shift:checked ~ .screenKey[data-special-key="shift"] {
+	background-color: lightgray;
+}
+
+.specialKey-ctrl:checked ~ .screenKey[data-special-key="ctrl"] {
+	background-color: lightgray;
+}
+
+.specialKey-alt:checked ~ .screenKey[data-special-key="alt"] {
+	background-color: lightgray;
+}
+
+.specialKey-caps:checked ~ .screenKey .nocapsed {
+	display: none;
+}
+
+.specialKey-caps:not(:checked) ~ .screenKey .capsed {
+	display: none;
+}
+
+.specialKey-shift:checked ~ .screenKey .noshifted {
+	display: none;
+}
+
+.specialKey-shift:not(:checked) ~ .screenKey .shifted {
+	display: none;
+}
+
+.specialKey-alt:checked ~ .screenKey .noalted {
+	display: none;
+}
+
+.specialKey-alt:not(:checked) ~ .screenKey .alted {
+	display: none;
+}
+
+.hidden {
+	display: none;
+}
