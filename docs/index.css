@@ -73,7 +73,11 @@ label[for="volumeSwitch"] {
 	display: none;
 }
 
-#controlRadioKeys:checked ~ * label[for="controlRadioKeys"] {
+#controlRadioKey:checked ~ * label[for="controlRadioKey"] {
+	background-color: lightgray;
+}
+
+#controlRadioPad:checked ~ * label[for="controlRadioPad"] {
 	background-color: lightgray;
 }
 
@@ -81,7 +85,7 @@ label[for="volumeSwitch"] {
 	background-color: lightgray;
 }
 
-#controlRadioDevice:checked ~ * label[for="controlRadioDevice"] {
+#controlRadioIo:checked ~ * label[for="controlRadioIo"] {
 	background-color: lightgray;
 }
 
@@ -89,7 +93,15 @@ label[for="volumeSwitch"] {
 	background-color: lightgray;
 }
 
-#controlRadioKeys:not(:checked) ~ * #keyForm {
+#controlRadioKey:not(:checked) ~ * #keyForm {
+	display: none;
+}
+
+#controlRadioPad:not(:checked) ~ * #padForm {
+	display: none;
+}
+
+#controlRadioPad:not(:checked) ~ * #padForm {
 	display: none;
 }
 
@@ -97,7 +109,7 @@ label[for="volumeSwitch"] {
 	display: none;
 }
 
-#controlRadioDevice:not(:checked) ~ * #deviceForm {
+#controlRadioIo:not(:checked) ~ * #ioForm {
 	display: none;
 }
 
@@ -112,6 +124,118 @@ label[for="volumeSwitch"] {
 	padding: 0.5em;
 	margin-right: 0.3em;
 	cursor: pointer;
+}
+
+#padForm {
+	position: relative;
+	width: 540px;
+	height: 210px;
+}
+
+#padForm .padButton {
+	position: absolute;
+	width: 80px;
+	height: 80px;
+	border: 1px solid black;
+	border-radius: 50%;
+	cursor: pointer;
+	font-size: 50px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#padForm .padButton.padRow1 {
+	top: 00px;
+}
+
+#padForm .padButton.padRow2 {
+	top: 70px;
+}
+
+#padForm .padButton.padRow3 {
+	top: 140px;
+}
+
+#padForm .padButton.padCol1 {
+	left: 20px;
+}
+
+#padForm .padButton.padCol2 {
+	left: 90px;
+}
+
+#padForm .padButton.padCol3 {
+	left: 160px;
+}
+
+#padForm .padButton.padCol4 {
+	right: 160px;
+}
+
+#padForm .padButton.padCol5 {
+	right: 90px;
+}
+
+#padForm .padButton.padCol6 {
+	right: 20px;
+}
+
+#padButtonLeft:before {
+	content: "◀";
+}
+
+#padButtonRight:before {
+	content: "▶";
+}
+
+#padButtonUp:before {
+	content: "▲";
+}
+
+#padButtonDown:before {
+	content: "▼";
+}
+
+#padButtonEnter:before {
+	content: "⏎";
+}
+
+#padButtonSpace:before {
+	content: "␣";
+}
+
+#padButtonX:before {
+	content: "X";
+}
+
+#padButtonY:before {
+	content: "Y";
+}
+
+#padButtonLeft, #padButtonRight, #padButtonUp, #padButtonDown {
+	background-color: #ffffff;
+	color: #c0c0c0;
+}
+
+#padButtonEnter {
+	background-color: #ff0000;
+	color: #c00000;
+}
+
+#padButtonSpace {
+	background-color: #ffff00;
+	color: #c0c000;
+}
+
+#padButtonX {
+	background-color: #0000ff;
+	color: #0000c0;
+}
+
+#padButtonY {
+	background-color: #00ff00;
+	color: #00c000;
 }
 
 #textInputArea {

@@ -556,6 +556,7 @@ function initSystem() {
 
 	// スクリーンキーボードの初期化
 	initializeScreenKeys();
+	initializePad();
 	keyLayout = parseInt(readLocalStorage("keyLayout", "1"));
 	if (keyLayout !== 0) keyLayout = 1;
 	switchScreenKeys(keyLayout);

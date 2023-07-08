@@ -198,6 +198,17 @@ const usKeys = [
 	],
 ];
 
+const padInfo = [
+	{"id": "padButtonLeft", "key": "ArrowLeft"},
+	{"id": "padButtonRight", "key": "ArrowRight"},
+	{"id": "padButtonUp", "key": "ArrowUp"},
+	{"id": "padButtonDown", "key": "ArrowDown"},
+	{"id": "padButtonEnter", "key": "Enter"},
+	{"id": "padButtonSpace", "key": " "},
+	{"id": "padButtonX", "key": "x"},
+	{"id": "padButtonY", "key": "y"},
+];
+
 function createScreenKeys(keyInfo, name) {
 	const alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	const screenKeysMain = document.createElement("div");
@@ -381,4 +392,35 @@ function switchScreenKeys(keyNo) {
 		jpScreenKeys.classList.remove("hidden");
 		usScreenKeys.classList.add("hidden");
 	}
+}
+
+function initializePad() {
+	padInfo.forEach(function(padData) {
+		const elem = document.getElementById(padData.id);
+		let touched = false;
+		const pressed = function() {
+			keyDown(padData.key, false, false, false);
+			touched = true;
+		};
+		const released = function() {
+			keyUp(padData.key);
+			touched = false;
+		};
+		elem.addEventListener("mousedown", function() {
+			if (!touched) pressed();
+		});
+		elem.addEventListener("mouseup", function() {
+			if (touched) released();
+		});
+		elem.addEventListener("touchstart", function(event) {
+			event.preventDefault();
+			if (!touched) pressed();
+		});
+		const onTouchEnd = function(event) {
+			event.preventDefault();
+			if (event.targetTouches.length === 0 && touched) released();
+		};
+		elem.addEventListener("touchend", onTouchEnd);
+		elem.addEventListener("touchcancel", onTouchEnd);
+	});
 }

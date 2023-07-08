@@ -31,17 +31,19 @@
 </canvas>
 </p>
 <div id="controlArea">
-<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioKeys" value="keys">
+<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioKey" value="key">
+<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioPad" value="pad">
 <input type="radio" class="controlRadio" name="controlSelect" id="controlRadioData" value="data">
-<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioDevice" value="device">
+<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioIo" value="io">
 <input type="radio" class="controlRadio" name="controlSelect" id="controlRadioSystem" value="system">
 <div id="controlAreaInner">
 <p id="controlTabArea">
 <span id="ledPane">●</span>
 <span id="tabPane">
-<label class="controlTab" for="controlRadioKeys">KEYS</label>
+<label class="controlTab" for="controlRadioKey">KEY</label>
+<label class="controlTab" for="controlRadioPad">PAD</label>
 <label class="controlTab" for="controlRadioData">DATA</label>
-<label class="controlTab" for="controlRadioDevice">DEVICE</label>
+<label class="controlTab" for="controlRadioIo">I/O</label>
 <label class="controlTab" for="controlRadioSystem">SYSTEM</label>
 </span>
 <span id="volumePane">
@@ -63,11 +65,21 @@
 </p>
 <p id="keyForm">
 </p>
+<p id="padForm">
+<span id="padButtonLeft" class="padButton padRow2 padCol1"></span>
+<span id="padButtonRight" class="padButton padRow2 padCol3"></span>
+<span id="padButtonUp" class="padButton padRow1 padCol2"></span>
+<span id="padButtonDown" class="padButton padRow3 padCol2"></span>
+<span id="padButtonEnter" class="padButton padRow2 padCol6"></span>
+<span id="padButtonSpace" class="padButton padRow3 padCol5"></span>
+<span id="padButtonX" class="padButton padRow1 padCol5"></span>
+<span id="padButtonY" class="padButton padRow2 padCol4"></span>
+</p>
 <p id="textInputForm">
 <textarea id="textInputArea" rows="5"></textarea><br>
 <button id="textInputButton" type="button">input text</button>
 </p>
-<p id="deviceForm">
+<p id="ioForm">
 </p>
 <p id="systemForm">
 <span class="configField">
