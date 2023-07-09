@@ -43,8 +43,9 @@ function writeLocalStorage(key, value) {
 }
 
 function setSelectByValue(selectElement, value) {
+	const valueStr = value.toString();
 	for (let i = 0; i < selectElement.options.length; i++) {
-		if (selectElement.options[i].value === value) {
+		if (selectElement.options[i].value === valueStr) {
 			selectElement.selectedIndex = i;
 			break;
 		}
@@ -560,6 +561,14 @@ function initSystem() {
 	keyLayout = parseInt(readLocalStorage("keyLayout", "1"));
 	if (keyLayout !== 0) keyLayout = 1;
 	switchScreenKeys(keyLayout);
+	const systemKeyboardLayoutSelect = document.getElementById("systemKeyboardLayoutSelect");
+	setSelectByValue(systemKeyboardLayoutSelect, keyLayout);
+	systemKeyboardLayoutSelect.addEventListener("change", function() {
+		keyLayout = parseInt(systemKeyboardLayoutSelect.value);
+		if (keyLayout !== 0) keyLayout = 1;
+		switchScreenKeys(keyLayout);
+		writeLocalStorage("keyLayout", keyLayout);
+	});
 
 	// フォントの枠を作る
 	for (let i = 0; i < 0x100; i++) {

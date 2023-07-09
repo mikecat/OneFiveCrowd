@@ -136,6 +136,7 @@ function commandKBD(args) {
 	keyLayout = args[0] === 0 ? 0 : 1;
 	switchScreenKeys(keyLayout);
 	writeLocalStorage("keyLayout", keyLayout);
+	setSelectByValue(document.getElementById("systemKeyboardLayoutSelect"), keyLayout);
 }
 
 function commandRUN() {
