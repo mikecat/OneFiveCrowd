@@ -224,7 +224,7 @@ async function functionUSR_M0(args) {
 
 	const readMemory = function(address, size, signed = false) {
 		if (address % size !== 0) {
-			segFault("unaligned memory read");
+			segFault("unaligned memory read 0x" + address.toString(16));
 		}
 		let res = 0;
 		if (ROM_START_ADDRESS <= address && address + size <= ROM_START_ADDRESS + romBytes.length) {
@@ -236,7 +236,7 @@ async function functionUSR_M0(args) {
 				res |= ramBytes[address - RAM_START_ADDRESS + i] << (8 * i);
 			}
 		} else {
-			segFault("invalid memory read");
+			segFault("invalid memory read 0x" + address.toString(16));
 		}
 		if (signed) {
 			if (size >= 4) res = res >> 0;
@@ -249,14 +249,14 @@ async function functionUSR_M0(args) {
 
 	const writeMemory = function(address, size, value) {
 		if (address % size !== 0) {
-			segFault("unaligned memory write");
+			segFault("unaligned memory write 0x" + address.toString(16));
 		}
 		if (RAM_START_ADDRESS <= address && address + size <= RAM_START_ADDRESS + ramBytes.length) {
 			for (let i = 0; i < size; i++) {
 				ramBytes[address - RAM_START_ADDRESS + i] = (value >> (8 * i)) & 0xff;
 			}
 		} else {
-			segFault("invalid memory write");
+			segFault("invalid memory write 0x" + address.toString(16));
 		}
 	};
 
