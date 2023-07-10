@@ -268,12 +268,12 @@ function functionPOINT(args) {
 
 function functionCOS(args) {
 	// 余弦の256倍を返す
-	return Math.round(Math.cos(args[0] * Math.PI / 180) * 256);
+	return Math.round(Math.cos((args[0] % 360) * Math.PI / 180) * 256);
 }
 
 function functionSIN(args) {
 	// 正弦の256倍を返す
-	return Math.round(Math.sin(args[0] * Math.PI / 180) * 256);
+	return Math.round(Math.sin((args[0] % 360) * Math.PI / 180) * 256);
 }
 
 async function functionSEC_VERIFY(args) {
