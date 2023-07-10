@@ -1,5 +1,188 @@
 "use strict";
 
+const apiMap = {
+	0x2100: { // rnd
+		"tableAddr": 0xC0,
+		"returnsValue": true,
+		"func": function(env, n) {
+			return functionRND([n >> 0]);
+		},
+	},
+	0x2102: { // sin
+		"tableAddr": 0xC2,
+		"returnsValue": true,
+		"func": function(env, n) {
+			return functionSIN([n >> 0]);
+		},
+	},
+	0x2104: { // putc
+		"tableAddr": 0xC4,
+		"returnsValue": false,
+		"func": function(env, n) {
+			putString(String.fromCharCode(n & 0xff));
+		},
+	},
+	0x2106: { // putnum
+		"tableAddr": 0xC6,
+		"returnsValue": false,
+		"func": function(env, n) {
+			putString((n >> 0).toString());
+		},
+	},
+	0x2108: { // putstr
+		"tableAddr": 0xC8,
+		"returnsValue": false,
+		"func": function(env, p) {
+			let str = "";
+			let addr = p >>> 0;
+			for (;;) {
+				const c = env.readMemory(addr, 1, false);
+				if (c === 0) break;
+				str += String.fromCharCode(c);
+			}
+			putString(str);
+		},
+	},
+	0x210A: { // inkey
+		"tableAddr": 0xCA,
+		"returnsValue": true,
+		"func": async function() {
+			return await functionINKEY();
+		},
+	},
+	0x210C: { // cls
+		"tableAddr": 0xCC,
+		"returnsValue": false,
+		"func": function() {
+			commandCLS();
+		},
+	},
+	0x210E: { // locate
+		"tableAddr": 0xCE,
+		"returnsValue": false,
+		"func": function(env, x, y) {
+			commandLOCATE([x >> 0, y >> 0]);
+		},
+	},
+	0x2110: { // scr
+		"tableAddr": 0xD0,
+		"returnsValue": true,
+		"func": function(env, x, y) {
+			return functionSCR([x >> 0, y >> 0]);
+		},
+	},
+	0x2112: { // pset
+		"tableAddr": 0xD2,
+		"returnsValue": false,
+		"func": function(env, x, y) {
+			commandDRAW([x >> 0, y >> 0]);
+		},
+	},
+	0x2114: { // scroll
+		"tableAddr": 0xD4,
+		"returnsValue": false,
+		"func": function(env, n) {
+			commandSCROLL([n >> 0]);
+		},
+	},
+	0x2116: { // wait
+		"tableAddr": 0xD6,
+		"returnsValue": false,
+		"func": async function(env, n) {
+			await commandWAIT([n >> 0]);
+		},
+	},
+	0x2118: { // out
+		"tableAddr": 0xD8,
+		"returnsValue": false,
+		"func": function(env, port, n) {
+			throw "Not implemented: OUT";
+		},
+	},
+	0x211A: { // in
+		"tableAddr": 0xDA,
+		"returnsValue": true,
+		"func": function() {
+			throw "Not implemented: IN";
+		},
+	},
+	0x211C: { // pwm
+		"tableAddr": 0xDC,
+		"returnsValue": false,
+		"func": function(env, port, n, m) {
+			throw "Not implemented: PWM";
+		},
+	},
+	0x211E: { // ana
+		"tableAddr": 0xDE,
+		"returnsValue": true,
+		"func": function(env, port) {
+			throw "Not implemented: ANA";
+		},
+	},
+	0x2120: { // uputc
+		"tableAddr": 0xE0,
+		"returnsValue": false,
+		"func": function(env, ch) {
+			throw "Not implemented: UPUTC";
+		},
+	},
+	0x2124: { // memclear
+		"tableAddr": 0xE4,
+		"returnsValue": false,
+		"func": function(env, dst, len) {
+			// len が負のときは後ろに進むのではなく、何もしない (本家1.4.1で確認)
+			const len2 = len >> 0;
+			for (let i = 0; i < len2; i++) {
+				env.writeMemory((dst + i) >>> 0, 1, 0);
+			}
+		},
+	},
+	0x2126: { // memcpy
+		"tableAddr": 0xE6,
+		"returnsValue": false,
+		"func": function(env, dst, src, len) {
+			// len が負のときは後ろに進むのではなく、何もしない
+			// dst が src よりちょっと先の場合も、前からコピーし、コピー後の値をコピーする
+			// (本家1.4.1で確認)
+			const len2 = len >> 0;
+			for (let i = 0; i < len2; i++) {
+				const c = env.readMemory((src + i) >>> 0, 1, false);
+				env.writeMemory((dst + i) >>> 0, 1, c);
+			}
+		},
+	},
+	0x2128: { // flash1
+		"tableAddr": 0xE8,
+		"returnsValue": true,
+		"func": function(env, startsector, endsector) {
+			throw "Not implemented: FLASH1";
+		},
+	},
+	0x212A: { // flash2
+		"tableAddr": 0xEA,
+		"returnsValue": true,
+		"func": function(env, cmd, dst, src, len) {
+			throw "Not implemented: FLASH2";
+		},
+	},
+	0x212E: { // ws_led
+		"tableAddr": 0xEE,
+		"returnsValue": false,
+		"func": function(env, countrepeat, data, gpiomask) {
+			throw "Not implemented: WS_LED";
+		},
+	},
+};
+
+function initializeApiTable(type) {
+	const lsbOne = type === "m0";
+	Object.keys(apiMap).forEach(function(apiAddress) {
+		const tableAddress = apiMap[apiAddress].tableAddr;
+		romView.setUint16(tableAddress, apiAddress | (lsbOne ? 1 : 0), true);
+	});
+}
+
 async function functionUSR_M0(args) {
 	// マシン語 (M0) のプログラムを実行する
 	const startVirtualAddress = args[0];
@@ -251,6 +434,11 @@ async function functionUSR_M0(args) {
 		return res;
 	};
 
+	const env = {
+		"readMemory": readMemory,
+		"writeMemory": writeMemory,
+	};
+
 	// 実行の初期化
 	const RETURN_ADDRESS = 0x2000, DIVIDE_FUNC = 0x2002;
 	regs[0] = signExtend(startArgument, 16) >>> 0;
@@ -284,6 +472,12 @@ async function functionUSR_M0(args) {
 				regs[1] = r;
 			}
 			regs[PC_IDX] = (regs[LR_IDX] & ~1) >>> 0;
+			continue;
+		} else if (regs[PC_IDX] in apiMap) {
+			const apiInfo = apiMap[regs[PC_IDX]];
+			regs[PC_IDX] = (regs[LR_IDX] & ~1) >>> 0;
+			const ret = await apiInfo.func(env, regs[0], regs[1], regs[2], regs[3]);
+			if (apiInfo.returnsValue) regs[0] = ret >>> 0;
 			continue;
 		}
 		const opCode = readMemory(regs[PC_IDX], 2, false);

@@ -570,6 +570,9 @@ function initSystem() {
 		writeLocalStorage("keyLayout", keyLayout);
 	});
 
+	// マシン語用APIテーブルの初期化
+	initializeApiTable("m0");
+
 	// フォントの枠を作る
 	for (let i = 0; i < 0x100; i++) {
 		fontImages[i] = screenBufferContext.createImageData(16, 16);
