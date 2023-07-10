@@ -357,7 +357,7 @@ const basicFunctions = {
 	"ANA"   : null,
 	"I2CR"  : null,
 	"I2CW"  : null,
-	"USR"   : null,
+	"USR"   : {func: functionUSR, minArg: 1, maxArg: 2},
 	"LANG"  : {func: functionLANG, minArg: 0, maxArg: 0},
 	"LINE"  : {func: functionLINE, minArg: 0, maxArg: 0},
 	"LEN"   : {func: functionLEN, minArg: 1, maxArg: 1},
