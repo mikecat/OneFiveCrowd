@@ -868,12 +868,12 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 		else if (key === "x") btnStatus |= 0x20;
 		ramBytes[BTN_ADDR] = btnStatus;
 	}
-	return false;
 }
 
 function keyDownEvent() {
 	event.preventDefault();
 	keyDown(event.key, event.shiftKey, event.ctrlKey, event.altKey);
+	return false;
 }
 
 function keyUp(key) {
@@ -884,11 +884,11 @@ function keyUp(key) {
 	else if (key === " ") btnStatus &= ~0x10;
 	else if (key === "x" || key == "X") btnStatus &= ~0x20;
 	ramBytes[BTN_ADDR] = btnStatus;
-	return false;
 }
 
 function keyUpEvent() {
 	keyUp(event.key);
+	return false;
 }
 
 // 画面に文字を書き込む
