@@ -201,7 +201,7 @@ async function functionUSR(args) {
 	// マシン語を実行する
 	const startVirtualAddress = args[0];
 	const startArgument = args.length >= 2 ? args[1] : 0;
-	if (startVirtualAddress < 0x700 || 0x1180 <= startVirtualAddress) {
+	if (startVirtualAddress < 0x700 || VIRTUAL_MEM_MAX <= startVirtualAddress) {
 		throw "Illegal argument";
 	}
 	if (systemMachineLanguageSelect.value === "rv32c") {

@@ -52,25 +52,19 @@ function setSelectByValue(selectElement, value) {
 	}
 }
 
-// リトルエンディアン環境かを判定
-const isLittleEndian = (function() {
-	const buffer = new ArrayBuffer(4);
-	const bufferBytes = new Uint8Array(buffer);
-	const bufferUint = new Uint32Array(buffer);
-	bufferBytes[3] = 0x44;
-	bufferBytes[2] = 0x33;
-	bufferBytes[1] = 0x22;
-	bufferBytes[0] = 0x11;
-	return bufferUint[0] === 0x44332211;
-})();
-
 const RAW_SCREEN_WIDTH = 32;
 const RAW_SCREEN_HEIGHT = 24;
 
-const ARRAY_SIZE = 102;
-const PRG_MAX = 0x400;
+const ARRAY_SIZE_JAM = 102;
+const ARRAY_SIZE_CAKE = 358;
+const PRG_MAX_JAM = 0x400;
+const PRG_MAX_CAKE = 0x1000;
 const KEY_MAX = 126;
 const CMD_MAX = 200; // 本体の長さ。終端の0でさらに1バイト使う。
+const VIRTUAL_MEM_MAX_JAM = 0x1180;
+const VIRTUAL_MEM_MAX_CAKE = 0x1f7f;
+let ARRAY_SIZE = ARRAY_SIZE_JAM;
+let VIRTUAL_MEM_MAX = VIRTUAL_MEM_MAX_JAM;
 
 // ROM上の物理アドレス
 const CROM_ADDR = 0x1000;
@@ -78,13 +72,20 @@ const CROM_ADDR = 0x1000;
 const CRAM_ADDR = 0x0;
 const ARRAY_ADDR = CRAM_ADDR + 0x100;
 const VRAM_ADDR = ARRAY_ADDR + 0x100;
-const PRG_ADDR = VRAM_ADDR + 0x300;
-const KEY_ADDR = PRG_ADDR + PRG_MAX + 3;
-const CMD_ADDR = KEY_ADDR + 1 + KEY_MAX;
+const PRG_ADDR_JAM = VRAM_ADDR + 0x300;
+const KEY_ADDR_JAM = PRG_ADDR_JAM + PRG_MAX_JAM + 3;
+const CMD_ADDR_JAM = KEY_ADDR_JAM + 1 + KEY_MAX;
+const ARRAY2_ADDR_CAKE = VRAM_ADDR + 0x300;
+const PRG_ADDR_CAKE = ARRAY2_ADDR_CAKE + 0x200;
+const KEY_ADDR_CAKE = PRG_ADDR_CAKE + PRG_MAX_CAKE + 3;
+const CMD_ADDR_CAKE = KEY_ADDR_CAKE + 1 + KEY_MAX;
+let PRG_ADDR = PRG_ADDR_JAM;
+let KEY_ADDR = KEY_ADDR_JAM;
+let CMD_ADDR = CMD_ADDR_JAM;
 
 // ROMとRAMのバッファ
 const romData = new ArrayBuffer(32 * 1024);
-const ramData = new ArrayBuffer(4 * 1024);
+const ramData = new ArrayBuffer(32 * 1024);
 // ROMとRAMのビュー
 const romView = new DataView(romData);
 const ramView = new DataView(ramData);
@@ -92,29 +93,39 @@ const romBytes = new Uint8Array(romData);
 const ramBytes = new Uint8Array(ramData);
 // 役割ごとのRAMのビュー
 const cramView = new Uint8Array(ramData, CRAM_ADDR, 0x100);
-const arrayView = new Int16Array(ramData, ARRAY_ADDR, ARRAY_SIZE + 26);
 const vramView = new Uint8Array(ramData, VRAM_ADDR, 0x300);
-const prgView = new Uint8Array(ramData, PRG_ADDR, PRG_MAX);
-const keyView = new Uint8Array(ramData, KEY_ADDR, 1 + KEY_MAX);
-const cmdView = new Uint8Array(ramData, CMD_ADDR, CMD_MAX + 1);
+const prgViewJam = new Uint8Array(ramData, PRG_ADDR_JAM, PRG_MAX_JAM);
+const keyViewJam = new Uint8Array(ramData, KEY_ADDR_JAM, 1 + KEY_MAX);
+const cmdViewJam = new Uint8Array(ramData, CMD_ADDR_JAM, CMD_MAX + 1);
+const prgViewCake = new Uint8Array(ramData, PRG_ADDR_CAKE, PRG_MAX_CAKE);
+const keyViewCake = new Uint8Array(ramData, KEY_ADDR_CAKE, 1 + KEY_MAX);
+const cmdViewCake = new Uint8Array(ramData, CMD_ADDR_CAKE, CMD_MAX + 1);
+let prgView = prgViewJam;
+let keyView = keyViewJam;
+let cmdView = cmdViewJam;
+
+let cakeMode = false;
 
 // キーバッファからあふれる分のキー入力データ
 const extraKeyQueue = [];
 
-// 環境に応じて変数と配列のアクセス方法を決定する
-const readArray = isLittleEndian ? function(id) {
-	// リトルエンディアン環境用
-	return arrayView[id];
-} : function(id) {
-	// 非リトルエンディアン環境用
-	return ramView.getInt16(ARRAY_ADDR + 2 * id, true);
+const readArray = function(id) {
+	if (id < 128) {
+		return ramView.getInt16(ARRAY_ADDR + 2 * id, true);
+	} else if (cakeMode) {
+		return ramView.getInt16(ARRAY2_ADDR_CAKE + 2 * (id - 128), true);
+	} else {
+		throw "Index out of range";
+	}
 };
-const writeArray = isLittleEndian ? function(id, value) {
-	// リトルエンディアン環境用
-	arrayView[id] = value;
-} : function(id) {
-	// 非リトルエンディアン環境用
-	ramView.setInt16(ARRAY_ADDR + 2 * id, value, true);
+const writeArray = function(id, value) {
+	if (id < 128) {
+		ramView.setInt16(ARRAY_ADDR + 2 * id, value, true);
+	} else if (cakeMode) {
+		ramView.setInt16(ARRAY2_ADDR_CAKE + 2 * (id - 128), value, true);
+	} else {
+		throw "Index out of range";
+	}
 };
 
 // プログラムを文字列で表現するための文字
@@ -246,8 +257,6 @@ const LIST_WAIT_TIME = TICK_PER_SECOND >> 1;
 
 // 仮想メモリ上のRAMの開始アドレス
 const VIRTUAL_RAM_OFFSET = 0x700;
-// 仮想メモリのサイズ
-const VIRTUAL_MEM_MAX = VIRTUAL_RAM_OFFSET + CMD_ADDR + CMD_MAX + 1;
 
 // 仮想メモリを1バイト読む
 function readVirtualMem(addr) {
@@ -273,6 +282,58 @@ function writeVirtualMem(addr, value) {
 		}
 	}
 }
+
+// Jamモード / Cakeモード を切り替える
+function switchCakeMode(newCakeMode) {
+	if (!cakeMode && newCakeMode) {
+		// Jam → Cake
+		ARRAY_SIZE = ARRAY_SIZE_CAKE;
+		VIRTUAL_MEM_MAX = VIRTUAL_MEM_MAX_CAKE;
+		PRG_ADDR = PRG_ADDR_CAKE;
+		KEY_ADDR = KEY_ADDR_CAKE;
+		CMD_ADDR = CMD_ADDR_CAKE;
+		prgView = prgViewCake;
+		keyView = keyViewCake;
+		cmdView = cmdViewCake;
+		for (let i = 0; i < keyView.length; i++) {
+			keyViewCake[i] = keyViewJam[i];
+		}
+		for (let i = 0; i < cmdView.length; i++) {
+			cmdViewCake[i] = cmdViewJam[i];
+		}
+		for (let i = 0; i < prgViewJam.length; i++) {
+			prgViewCake[i] = prgViewJam[i];
+		}
+		for (let i = prgViewJam.length; i < prgViewCake.length; i++) {
+			prgViewCake[i] = 0;
+		}
+		cakeMode = true;
+	} else if (cakeMode && !newCakeMode) {
+		// Cake → Jam
+		ARRAY_SIZE = ARRAY_SIZE_JAM;
+		VIRTUAL_MEM_MAX = VIRTUAL_MEM_MAX_JAM;
+		PRG_ADDR = PRG_ADDR_JAM;
+		KEY_ADDR = KEY_ADDR_JAM;
+		CMD_ADDR = CMD_ADDR_JAM;
+		prgView = prgViewJam;
+		keyView = keyViewJam;
+		cmdView = cmdViewJam;
+		for (let i = 0; i < prgViewJam.length; i++) {
+			prgViewJam[i] = prgViewCake[i];
+		}
+		for (let i = 0; i < keyView.length; i++) {
+			keyViewJam[i] = keyViewCake[i];
+		}
+		for (let i = 0; i < cmdView.length; i++) {
+			cmdViewJam[i] = cmdViewCake[i];
+		}
+		if (prgValidSize > prgViewJam.length) {
+			prgValidSize = prgViewJam.length;
+			prgDirty = true;
+		}
+		cakeMode = false;
+	}
+};
 
 // 指定したスロットからタイトル (1行目、最大26文字) を取得する
 async function getFileTitle(slot) {
@@ -636,6 +697,15 @@ function initSystem() {
 	});
 	// マシン語用APIテーブルの初期化
 	initializeApiTable(systemMachineLanguageSelect.value);
+
+	// Jamモード / Cakeモード 切り替え
+	const systemMemorySelect = document.getElementById("systemMemorySelect");
+	setSelectByValue(systemMemorySelect, readLocalStorage("memoryMode", "jam"));
+	systemMemorySelect.addEventListener("change", function() {
+		switchCakeMode(systemMemorySelect.value === "cake");
+		writeLocalStorage("memoryMode", systemMemorySelect.value);
+	});
+	switchCakeMode(systemMemorySelect.value === "cake");
 
 	// カーソルを点滅させる
 	if (cursorTimerId !== null) clearInterval(cursorTimerId);
@@ -1207,7 +1277,7 @@ function editProgram(lineno, str) {
 	let lastPos = 0;
 	let replacePos = -1;
 	let replaceSize = 0;
-	while (lastPos + 2 < PRG_MAX) {
+	while (lastPos + 2 < prgView.length) {
 		const currentLineNo = prgView[lastPos] + (prgView[lastPos + 1] << 8);
 		if (currentLineNo === 0) break; // 終端
 		const lineSize = prgView[lastPos + 2];
@@ -1217,12 +1287,12 @@ function editProgram(lineno, str) {
 			if (currentLineNo === lineno) replaceSize = lineSize + 4;
 		}
 		const nextPos = lastPos + 4 + lineSize;
-		if (nextPos > PRG_MAX) break; // 不正なデータを残さない
+		if (nextPos > prgView.length) break; // 不正なデータを残さない
 		lastPos = nextPos;
 	}
 	if (replacePos < 0) replacePos = lastPos;
 	// 挿入/上書き/削除操作を行う
-	if (lastPos - replaceSize + addSize > PRG_MAX) {
+	if (lastPos - replaceSize + addSize > prgView.length) {
 		throw "Out of memory";
 	}
 	// 必要に応じてデータを移動する
@@ -1256,7 +1326,7 @@ function editProgram(lineno, str) {
 		prgView[replacePos + 3 + prgView[replacePos + 2]] = 0;
 	}
 	// 新しい終端を記録する
-	if (newLastPos + 2 <= PRG_MAX) {
+	if (newLastPos + 2 <= prgView.length) {
 		prgView[newLastPos] = 0;
 		prgView[newLastPos + 1] = 0;
 	}
@@ -1503,7 +1573,7 @@ function commandCLS() {
 function commandCLV() {
 	// 配列と変数を初期化する
 	for (let i = 0; i < ARRAY_SIZE + 26; i++) {
-		arrayView[i] = 0;
+		writeArray(i, 0);
 	}
 }
 

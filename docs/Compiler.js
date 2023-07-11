@@ -909,14 +909,18 @@ var compiler = (function() {
 					if (node.nodes.length === 1) {
 						const varId = variableIndice[node.nodes[0].token];
 						return function() {
-							return readArray(ARRAY_SIZE + varId);
+							return readArray(ARRAY_SIZE_JAM + varId);
 						};
 					} else {
 						const expr = compileExpr(node.nodes[1]);
 						return async function() {
 							const idx = await expr();
 							if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
-							return readArray(idx);
+							if (idx < ARRAY_SIZE_JAM) {
+								return readArray(idx);
+							} else {
+								return readArray(idx - ARRAY_SIZE_JAM + 128);
+							}
 						};
 					}
 				} else if (node.kind === "number") {
@@ -1080,7 +1084,7 @@ var compiler = (function() {
 			if (varNode.nodes.length === 1) {
 				const varId = variableIndice[varNode.nodes[0].token];
 				return async function() {
-					await commandINPUT(prompt, ARRAY_SIZE + varId);
+					await commandINPUT(prompt, ARRAY_SIZE_JAM + varId);
 					return [lineno, nextPosInLine];
 				};
 			} else {
@@ -1088,7 +1092,11 @@ var compiler = (function() {
 				return async function() {
 					const idx = await idxExpr();
 					if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
-					await commandINPUT(prompt, idx);
+					if (idx < ARRAY_SIZE_JAM) {
+						await commandINPUT(prompt, idx);
+					} else {
+						await commandINPUT(prompt, idx - ARRAY_SIZE_JAM + 128);
+					}
 					return [lineno, nextPosInLine];
 				};
 			}
@@ -1100,7 +1108,7 @@ var compiler = (function() {
 					if (args.length !== 1) throw null;
 					const varId = variableIndice[varNode.nodes[0].token];
 					return async function() {
-						writeArray(ARRAY_SIZE + varId, await args[0]());
+						writeArray(ARRAY_SIZE_JAM + varId, await args[0]());
 						return [lineno, nextPosInLine];
 					};
 				} else {
@@ -1109,7 +1117,9 @@ var compiler = (function() {
 						const idx = await idxExpr();
 						if (idx < 0 || idx + args.length > ARRAY_SIZE) throw "Index out of range";
 						for (let i = 0; i < args.length; i++) {
-							writeArray(idx + i, await args[i]());
+							const accessIdxRaw = idx + i;
+							const accessIdx = accessIdxRaw < ARRAY_SIZE_JAM ? accessIdxRaw : accessIdxRaw - ARRAY_SIZE_JAM + 128;
+							writeArray(accessIdx, await args[i]());
 						}
 						return [lineno, nextPosInLine];
 					};
@@ -1120,7 +1130,7 @@ var compiler = (function() {
 				if (varNode.nodes.length === 1) {
 					const varId = variableIndice[varNode.nodes[0].token];
 					return async function() {
-						writeArray(ARRAY_SIZE + varId, await expr());
+						writeArray(ARRAY_SIZE_JAM + varId, await expr());
 						return [lineno, nextPosInLine];
 					};
 				} else {
@@ -1128,7 +1138,11 @@ var compiler = (function() {
 					return async function() {
 						const idx = await idxExpr();
 						if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
-						writeArray(idx, await expr());
+						if (idx < ARRAY_SIZE_JAM) {
+							writeArray(idx, await expr());
+						} else {
+							writeArray(idx - ARRAY_SIZE_JAM + 128, await expr());
+						}
 						return [lineno, nextPosInLine];
 					};
 				}
@@ -1179,13 +1193,13 @@ var compiler = (function() {
 		let getLoopVariableIdx;
 		if (loopVariableNode.nodes.length === 1) {
 			const varId = variableIndice[loopVariableNode.nodes[0].token];
-			getLoopVariableIdx = function() { return ARRAY_SIZE + varId; };
+			getLoopVariableIdx = function() { return ARRAY_SIZE_JAM + varId; };
 		} else {
 			const idxExpr = compileExpr(loopVariableNode.nodes[1]);
 			getLoopVariableIdx = async function() {
 				const idx = await idxExpr();
 				if (idx < 0 || ARRAY_SIZE <= idx) throw "Index out of range";
-				return idx;
+				return idx < ARRAY_SIZE_JAM ? idx : idx - ARRAY_SIZE_JAM + 128;
 			};
 		}
 		const initialize = async function() {
