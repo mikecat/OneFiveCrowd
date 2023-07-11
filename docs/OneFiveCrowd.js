@@ -262,7 +262,7 @@ function writeVirtualMem(addr, value) {
 	if (VIRTUAL_RAM_OFFSET <= addr && addr < VIRTUAL_MEM_MAX) {
 		const physicalAddress = addr - VIRTUAL_RAM_OFFSET + CRAM_ADDR;
 		ramBytes[physicalAddress] = value;
-		if(CRAM_ADDR <= physicalAddress && physicalAddress < CRAM_ADDR + 0x100) {
+		if (CRAM_ADDR <= physicalAddress && physicalAddress < CRAM_ADDR + 0x100) {
 			fontDirty = true;
 		}
 		if (VRAM_ADDR <= physicalAddress && physicalAddress < VRAM_ADDR + 0x300) {

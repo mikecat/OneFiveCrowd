@@ -189,7 +189,7 @@ function signExtend(value, numBits) {
 	} else {
 		return value;
 	}
-};
+}
 
 async function functionUSR_M0(startVirtualAddress, startArgument) {
 	// マシン語 (M0) のプログラムを実行する
@@ -217,7 +217,7 @@ async function functionUSR_M0(startVirtualAddress, startArgument) {
 			message += ", 0x" + opCodeHex2;
 		}
 		segFault(message);
-	}
+	};
 
 	// メモリマップの定義
 	const ROM_START_ADDRESS = 0x00000000;
