@@ -643,6 +643,7 @@ function initSystem() {
 		fontImages[i] = screenBufferContext.createImageData(16, 16);
 	}
 
+	// フォント設定UIの初期化
 	const systemFontSelect = document.getElementById("systemFontSelect");
 	setSelectByValue(systemFontSelect, readLocalStorage("font", "1_4"));
 	const switchFont = function() {
@@ -684,28 +685,30 @@ function initSystem() {
 	});
 	switchFont();
 
+	// MML解釈モード設定UIの初期化
 	const systemMMLInterpretationSelect = document.getElementById("systemMMLInterpretationSelect");
 	setSelectByValue(systemMMLInterpretationSelect, readLocalStorage("MMLmode", "new"));
 	systemMMLInterpretationSelect.addEventListener("change", function() {
 		writeLocalStorage("MMLmode", systemMMLInterpretationSelect.value);
 	});
 
+	// 線分描画アルゴリズム設定UIの初期化
 	const systemDrawAlgorithmSelect = document.getElementById("systemDrawAlgorithmSelect");
 	setSelectByValue(systemDrawAlgorithmSelect, readLocalStorage("drawAlgorithm", "bresenham"));
 	systemDrawAlgorithmSelect.addEventListener("change", function() {
 		writeLocalStorage("drawAlgorithm", systemDrawAlgorithmSelect.value);
 	});
 
+	// マシン語モード設定UIの初期化
 	const systemMachineLanguageSelect = document.getElementById("systemMachineLanguageSelect");
 	setSelectByValue(systemMachineLanguageSelect, readLocalStorage("machineLanguage", "m0"));
 	systemMachineLanguageSelect.addEventListener("change", function() {
 		initializeApiTable(systemMachineLanguageSelect.value);
 		writeLocalStorage("machineLanguage", systemMachineLanguageSelect.value);
 	});
-	// マシン語用APIテーブルの初期化
 	initializeApiTable(systemMachineLanguageSelect.value);
 
-	// Jamモード / Cakeモード 切り替え
+	// Jamモード / Cakeモード 切り替えUIの初期化
 	const systemMemorySelect = document.getElementById("systemMemorySelect");
 	setSelectByValue(systemMemorySelect, readLocalStorage("memoryMode", "jam"));
 	systemMemorySelect.addEventListener("change", function() {
