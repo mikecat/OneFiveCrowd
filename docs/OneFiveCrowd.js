@@ -570,9 +570,6 @@ function initSystem() {
 		writeLocalStorage("keyLayout", keyLayout);
 	});
 
-	// マシン語用APIテーブルの初期化
-	initializeApiTable("m0");
-
 	// フォントの枠を作る
 	for (let i = 0; i < 0x100; i++) {
 		fontImages[i] = screenBufferContext.createImageData(16, 16);
@@ -630,6 +627,15 @@ function initSystem() {
 	systemDrawAlgorithmSelect.addEventListener("change", function() {
 		writeLocalStorage("drawAlgorithm", systemDrawAlgorithmSelect.value);
 	});
+
+	const systemMachineLanguageSelect = document.getElementById("systemMachineLanguageSelect");
+	setSelectByValue(systemMachineLanguageSelect, readLocalStorage("machineLanguage", "m0"));
+	systemMachineLanguageSelect.addEventListener("change", function() {
+		initializeApiTable(systemMachineLanguageSelect.value);
+		writeLocalStorage("machineLanguage", systemMachineLanguageSelect.value);
+	});
+	// マシン語用APIテーブルの初期化
+	initializeApiTable(systemMachineLanguageSelect.value);
 
 	// カーソルを点滅させる
 	if (cursorTimerId !== null) clearInterval(cursorTimerId);

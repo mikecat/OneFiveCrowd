@@ -199,7 +199,16 @@ function functionPEEK(args) {
 
 async function functionUSR(args) {
 	// マシン語を実行する
-	return await functionUSR_M0(args);
+	const startVirtualAddress = args[0];
+	const startArgument = args.length >= 2 ? args[1] : 0;
+	if (startVirtualAddress < 0x700 || 0x1180 <= startVirtualAddress) {
+		throw "Illegal argument";
+	}
+	if (systemMachineLanguageSelect.value === "rv32c") {
+		return await functionUSR_RV32C(startVirtualAddress, startArgument);
+	} else {
+		return await functionUSR_M0(startVirtualAddress, startArgument);
+	}
 }
 
 function functionLANG() {

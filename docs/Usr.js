@@ -183,13 +183,16 @@ function initializeApiTable(type) {
 	});
 }
 
-async function functionUSR_M0(args) {
-	// マシン語 (M0) のプログラムを実行する
-	const startVirtualAddress = args[0];
-	const startArgument = args.length >= 2 ? args[1] : 0;
-	if (startVirtualAddress < 0x700 || 0x1180 <= startVirtualAddress) {
-		throw "Illegal argument";
+function signExtend(value, numBits) {
+	if (value & (1 << (numBits - 1))) {
+		return -((value ^ ((1 << numBits) - 1)) + 1);
+	} else {
+		return value;
 	}
+};
+
+async function functionUSR_M0(startVirtualAddress, startArgument) {
+	// マシン語 (M0) のプログラムを実行する
 
 	// レジスタの定義
 	const regs = new Uint32Array(16);
@@ -261,14 +264,6 @@ async function functionUSR_M0(args) {
 	};
 
 	// 実行補助用関数
-
-	const signExtend = function(value, numBits) {
-		if (value & (1 << (numBits - 1))) {
-			return -((value ^ ((1 << numBits) - 1)) + 1);
-		} else {
-			return value;
-		}
-	};
 
 	const add = function(a, b, extra = 0) {
 		const a2 = a >> 0, b2 = b >> 0;
@@ -1075,5 +1070,728 @@ async function functionUSR_M0(args) {
 				break;
 		}
 		regs[PC_IDX] = nextPC;
+	}
+}
+
+async function functionUSR_RV32C(startVirtualAddress, startArgument) {
+	// マシン語 (RV32C) のプログラムを実行する
+
+	// レジスタの定義
+	const regs = new Uint32Array(32);
+	let pc;
+
+	const segFault = function(cause) {
+		console.warn(cause + " at 0x" + pc.toString(16));
+		throw "Segmentation Fault";
+	};
+
+	const unknownInstruction = function(opCode) {
+		let opCodeHex = opCode.toString(16);
+		const opCodeSize = (opCode & 3) === 3 ? 8 : 4;
+		while (opCodeHex.length < opCodeSize) opCodeHex = "0" + opCodeHex;
+		segFault("unknown instruction 0x" + opCodeHex);
+	};
+
+	const correctBits = function(opCode, bitTable) {
+		let res = 0;
+		let bitPos = 0;
+		for (let i = 0; i < bitTable.length; i++) {
+			if (bitTable[i] >= 0) { // ビットの情報を得る
+				res |= ((opCode >> bitPos) & 1) << bitTable[i];
+				bitPos++;
+			} else { // 指定の数スキップする
+				bitPos += -bitTable[i];
+			}
+		}
+		return res;
+	};
+
+	// メモリマップの定義
+	const ROM_START_ADDRESS_1 = 0x00000000;
+	const ROM_START_ADDRESS_2 = 0x08000000;
+	const RAM_START_ADDRESS = 0x20000000;
+
+	// メモリアクセス用関数
+
+	const readMemory = function(address, size, signed = false) {
+		let res = 0;
+		if (ROM_START_ADDRESS_1 <= address && address + size <= ROM_START_ADDRESS_1 + romBytes.length) {
+			for (let i = 0; i < size; i++) {
+				res |= romBytes[address - ROM_START_ADDRESS_1 + i] << (8 * i);
+			}
+		} else if (ROM_START_ADDRESS_2 <= address && address + size <= ROM_START_ADDRESS_2 + romBytes.length) {
+			for (let i = 0; i < size; i++) {
+				res |= romBytes[address - ROM_START_ADDRESS_2 + i] << (8 * i);
+			}
+		} else if (RAM_START_ADDRESS <= address && address + size <= RAM_START_ADDRESS + ramBytes.length) {
+			for (let i = 0; i < size; i++) {
+				res |= ramBytes[address - RAM_START_ADDRESS + i] << (8 * i);
+			}
+		} else {
+			segFault("invalid memory read 0x" + address.toString(16));
+		}
+		if (signed) {
+			if (size >= 4) res = res >> 0;
+			else if (res & (1 << (8 * size - 1))) res |= (~0 << (8 * size));
+		} else {
+			res = res >>> 0;
+		}
+		return res;
+	};
+
+	const writeMemory = function(address, size, value) {
+		if (RAM_START_ADDRESS <= address && address + size <= RAM_START_ADDRESS + ramBytes.length) {
+			for (let i = 0; i < size; i++) {
+				ramBytes[address - RAM_START_ADDRESS + i] = (value >> (8 * i)) & 0xff;
+			}
+		} else {
+			segFault("invalid memory write 0x" + address.toString(16));
+		}
+	};
+
+	const readCSR = function(csr) {
+		return 0;
+	};
+
+	const writeCSR = function(csr, value) {
+		// 何もしない
+	};
+
+	const env = {
+		"readMemory": readMemory,
+		"writeMemory": writeMemory,
+	};
+
+	// 実行の初期化
+	const RETURN_ADDRESS = 0x2000, DIVIDE_FUNC = 0x2002;
+	regs[1] = RETURN_ADDRESS;
+	regs[2] = RAM_START_ADDRESS + ramBytes.length - 32;
+	regs[10] = signExtend(startArgument, 16) >>> 0;
+	regs[11] = (RAM_START_ADDRESS + CRAM_ADDR - 0x700) >>> 0;
+	regs[12] = (ROM_START_ADDRESS_1 + CROM_ADDR) >>> 0;
+	regs[13] = DIVIDE_FUNC;
+	pc = (RAM_START_ADDRESS + CRAM_ADDR + startVirtualAddress - 0x700) >>> 0;
+
+	// 実行
+	let startTime = performance.now();
+	for (;;) {
+		if (performance.now() - startTime >= 20) {
+			updateScreen();
+			await new Promise(function(resolve, reject) {
+				doCallback(resolve);
+			});
+			startTime = performance.now();
+		}
+		if (pc === RETURN_ADDRESS) {
+			return signExtend(regs[10] & 0xffff, 16);
+		} else if (pc === DIVIDE_FUNC) {
+			if (regs[11] === 0) {
+				regs[10] = 0;
+				regs[11] = 0;
+			} else {
+				const q = (regs[10] / regs[11]) >>> 0;
+				const r = (regs[10] % regs[11]) >>> 0;
+				regs[10] = q;
+				regs[11] = r;
+			}
+			pc = (regs[1] & ~1) >>> 0;
+			continue;
+		} else if (pc in apiMap) {
+			const apiInfo = apiMap[pc];
+			pc = (regs[1] & ~1) >>> 0;
+			const ret = await apiInfo.func(env, regs[10], regs[11], regs[12], regs[13]);
+			if (apiInfo.returnsValue) regs[10] = ret >>> 0;
+			continue;
+		}
+		let opCode = readMemory(pc, 2, false);
+		let nextPC = (pc + 2) >>> 0;
+		if ((opCode & 3) === 3) {
+			opCode = (opCode | (readMemory(nextPC, 2, false) << 16)) >>> 0;
+			nextPC = (nextPC + 2) >>> 0;
+		}
+		let wbIdx = 0, wbValue = 0;
+
+		switch (opCode & 3) {
+			case 0:
+				{
+					const rdp_rs2p = (opCode >> 2) & 7;
+					const rs1p = (opCode >> 7) & 7;
+					const uimm_lw_sw = correctBits(opCode, [-5, 6, 2, -3, 3, 4, 5]);
+					switch ((opCode >> 13) & 7) {
+						case 0: // C.ADDI4SPN
+							{
+								const nzuimm = correctBits(opCode, [-5, 3, 2, 6, 7, 8, 9, 4, 5]);
+								if (rdp_rs2p === 0 && nzuimm === 0) { // Illegal instruction
+									segFault("Illegal instruction");
+								}
+								if (nzuimm === 0) unknownInstruction(opCode);
+								wbIdx = rdp_rs2p + 8;
+								wbValue = (regs[2] + nzuimm) >>> 0;
+							}
+							break;
+						case 2: // C.LW
+							wbIdx = rdp_rs2p + 8;
+							wbValue = readMemory((regs[rs1p + 8] + uimm_lw_sw) >>> 0, 4, false);
+							break;
+						case 6: // C.SW
+							writeMemory((regs[rs1p + 8] + uimm_lw_sw) >>> 0, 4, regs[rdp_rs2p + 8]);
+							break;
+						case 1: // C.FLD
+						case 3: // C.FLW
+						case 4: // Reserved
+						case 5: // C.FSD
+						case 7: // C.FSW
+							unknownInstruction(opCode);
+							break;
+					}
+				}
+				break;
+			case 1:
+				{
+					const imm_simple = signExtend(((opCode >> 7) & 0x20) | ((opCode >> 2) & 0x1f), 6);
+					switch ((opCode >> 13) & 7) {
+						case 0: // C.NOP / C.ADDI
+							{
+								const rs1_rd = (opCode >> 7) & 0x1f;
+								wbIdx = rs1_rd;
+								wbValue = (regs[rs1_rd] + imm_simple) >>> 0;
+							}
+							break;
+						case 1: // C.JAL
+						case 5: // C.J
+							{
+								const imm = signExtend(correctBits(opCode, [-2, 5, 1, 2, 3, 7, 6, 10, 8, 9, 4, 11]), 12);
+								if (!(opCode & 0x8000)) { // C.JAL
+									wbIdx = 1;
+									wbValue = nextPC;
+								}
+								nextPC = (pc + imm) >>> 0;
+							}
+							break;
+						case 2: // C.LI
+							wbIdx = (opCode >> 7) & 0x1f;
+							wbValue = imm_simple;
+							break;
+						case 3:
+							if ((opCode & 0x107c) === 0) { // Reserved
+								unknownInstruction(opCode);
+							} else {
+								const rd = (opCode >> 7) & 0x1f;
+								if (rd === 2) { // C.ADDI16SP
+									const imm = signExtend(correctBits(opCode, [-2, 5, 7, 8, 6, 4, -5, 9]), 10);
+									wbIdx = 2;
+									wbValue = (regs[2] + imm) >>> 0;
+								} else { // C.LUI
+									wbIdx = rd;
+									wbValue = (imm_simple << 12) >>> 0;
+								}
+							}
+							break;
+						case 4:
+							if ((opCode & 0x1000) && (opCode & 0x0c00) !== 0x0800) { // Reserved / NSE
+								unknownInstruction(opCode);
+							} else {
+								const rs1_rd = ((opCode >> 7) & 7) + 8;
+								const destValue = regs[rs1_rd];
+								wbIdx = rs1_rd;
+								switch ((opCode >> 10) & 3) {
+									case 0: // C.SRLI
+										wbValue = destValue >>> imm_simple;
+										break;
+									case 1: // C.SRAI
+										wbValue = (destValue >> imm_simple) >>> 0;
+										break;
+									case 2: // C.ANDI
+										wbValue = (destValue & imm_simple) >>> 0;
+										break;
+									case 3:
+										{
+											const rs2 = ((opCode >> 2) & 7) + 8;
+											const srcValue = regs[rs2];
+											switch ((opCode >> 5) & 3) {
+												case 0: // C.SUB
+													wbValue = (destValue - srcValue) >>> 0;
+													break;
+												case 1: // C.XOR
+													wbValue = (destValue ^ srcValue) >>> 0;
+													break;
+												case 2: // C.OR
+													wbValue = (destValue | srcValue) >>> 0;
+													break;
+												case 3: // C.AND
+													wbValue = (destValue & srcValue) >>> 0;
+													break;
+											}
+										}
+										break;
+								}
+							}
+							break;
+						case 6: // C.BEQZ
+						case 7: // C.BNEZ
+							{
+								const imm = signExtend(correctBits(opCode, [-2, 5, 1, 2, 6, 7, -3, 3, 4, 8]), 9);
+								const regValue = regs[((opCode >> 7) & 7) + 8];
+								if (opCode & 0x2000) { // C.BNEZ
+									if (regValue !== 0) nextPC = (pc + imm) >>> 0;
+								} else { // C.BEQZ
+									if (regValue === 0) nextPC = (pc + imm) >>> 0;
+								}
+							}
+							break;
+					}
+				}
+				break;
+			case 2:
+				switch ((opCode >> 13) & 7) {
+					case 0: // C.SLLI
+						if (opCode & 0x1000) { // NSE
+							unknownInstruction(opCode);
+						}
+						const rd_rs1 = (opCode >> 7) & 0x1f;
+						const nzuimm = (opCode >> 2) & 0x1f; // nzuimm[5] = 1 のケースは NSE なので省略
+						wbIdx = rd_rs1;
+						wbValue = (regs[rd_rs1] << nzuimm) >>> 0;
+						break;
+					case 2: // C.LWSP
+						{
+							const rd = (opCode >> 7) & 0x1f;
+							if (rd === 0) { // Reserved
+								unknownInstruction(opCode);
+							} else {
+								const uimm = correctBits(opCode, [-2, 6, 7, 2, 3, 4, -5, 5]);
+								wbIdx = rd;
+								wbValue = readMemory((regs[2] + uimm) >>> 0, 4, false);
+							}
+						}
+						break;
+					case 4:
+						{
+							const rs1_rd = (opCode >> 7) & 0x1f;
+							const rs2 = (opCode >> 2) & 0x1f;
+							if (opCode & 0x1000) {
+								if (rs2 === 0) {
+									if (rs1_rd === 0) { // C.EBREAK
+										// 何もしない
+									} else { // C.JALR
+										wbIdx = 1;
+										wbValue = nextPC;
+										nextPC = regs[rs1_rd];
+									}
+								} else { // C.ADD
+									wbIdx = rs1_rd;
+									wbValue = (regs[rs1_rd] + regs[rs2]) >>> 0;
+								}
+							} else {
+								if (rs2 === 0) { // C.JR
+									if (rs1_rd === 0) { // Reserved
+										unknownInstruction(opCode);
+									}
+									nextPC = regs[rs1_rd];
+								} else { // C.MV
+									wbIdx = rs1_rd;
+									wbValue = regs[rs2];
+								}
+							}
+						}
+						break;
+					case 6: // C.SWSP
+						{
+							const rs2 = (opCode >> 2) & 0x1f;
+							const uimm = correctBits(opCode, [-7, 6, 7, 2, 3, 4, 5]);
+							writeMemory((regs[2] + uimm) >>> 0, 4, regs[rs2]);
+						}
+						break;
+					case 1: // C.FLDSP
+					case 3: // C.FLWSP
+					case 5: // C.FSDSP
+					case 7: // C.FSWSP
+						unknownInstruction(opCode);
+						break;
+				}
+				break;
+			case 3:
+				{
+					const rd = (opCode >> 7) & 0x1f;
+					const rs1 = (opCode >> 15) & 0x1f;
+					const rs2 = (opCode >> 20) & 0x1f;
+					switch ((opCode >> 2) & 0x1f) {
+						case 0x0d: // LUI
+							wbIdx = rd;
+							wbValue = (opCode & 0xfffff000) >>> 0;
+							break;
+						case 0x05: // AUIPC
+							wbIdx = rd;
+							wbValue = (pc + (opCode & 0xfffff000)) >>> 0;
+							break;
+						case 0x1b: // JAL
+							{
+								const imm = signExtend(
+									((opCode >> (31 - 20)) & 0x100000) |
+									((opCode >> (21 -  1)) & 0x0007fe) |
+									((opCode >> (20 - 11)) & 0x000800) |
+									( opCode               & 0x0ff000), 13);
+								wbIdx = rd;
+								wbValue = nextPC;
+								nextPC = (pc + imm) >>> 0;
+							}
+							break;
+						case 0x19: // JALR
+							{
+								const imm = signExtend((opCode >> 20) & 0xfff, 12);
+								wbIdx = rd;
+								wbValue = nextPC;
+								nextPC = ((regs[rs1] + imm) & ~1) >>> 0;
+							}
+							break;
+						case 0x18:
+							{
+								const imm = signExtend(
+									((opCode >> (31 - 12)) & 0x1000) |
+									((opCode >> (25 -  5)) & 0x07e0) |
+									((opCode >> ( 8 -  1)) & 0x001e) |
+									((opCode << (11 -  4)) & 0x0800), 13);
+								let cond = false;
+								switch ((opCode >> 12) & 7) {
+									case 0: // BEQ
+										cond = regs[rs1] === regs[rs2];
+										break;
+									case 1: // BNE
+										cond = regs[rs1] !== regs[rs2];
+										break;
+									case 4: // BLT
+										cond = (regs[rs1] >> 0) < (regs[rs2] >> 0);
+										break;
+									case 5: // BGE
+										cond = (regs[rs1] >> 0) >= (regs[rs2] >> 0);
+										break;
+									case 6: // BLTU
+										cond = regs[rs1] < regs[rs2];
+										break;
+									case 7: // BGEU
+										cond = regs[rs1] >= regs[rs2];
+										break;
+									default:
+										unknownInstruction(opCode);
+										break;
+								}
+								if (cond) nextPC = (pc + imm) >>> 0;
+							}
+							break;
+						case 0x00:
+							{
+								const imm = signExtend((opCode >> 20) & 0xfff, 12);
+								const effectiveAddress = (regs[rs1] + imm) >>> 0;
+								wbIdx = rd;
+								switch ((opCode >> 12) & 7) {
+									case 0: // LB
+										wbValue = readMemory(effectiveAddress, 1, true) >>> 0;
+										break;
+									case 1: // LH
+										wbValue = readMemory(effectiveAddress, 2, true) >>> 0;
+										break;
+									case 2: // LW
+										wbValue = readMemory(effectiveAddress, 4, false);
+										break;
+									case 4: // LBU
+										wbValue = readMemory(effectiveAddress, 1, false);
+										break;
+									case 5: // LHU
+										wbValue = readMemory(effectiveAddress, 2, false);
+										break;
+									default:
+										unknownInstruction(opCode);
+										break;
+								}
+							}
+							break;
+						case 0x08:
+							{
+								const imm = signExtend(((opCode >> 20) & 0xfe0) | ((opCode >> 7) & 0x1f), 12);
+								const effectiveAddress = (regs[rs1] + imm) >>> 0;
+								switch ((opCode >> 12) & 7) {
+									case 0: // SB
+										writeMemory(effectiveAddress, 1, regs[rs2]);
+										break;
+									case 1: // SH
+										writeMemory(effectiveAddress, 2, regs[rs2]);
+										break;
+									case 2: // SW
+										writeMemory(effectiveAddress, 4, regs[rs2]);
+										break;
+									default:
+										unknownInstruction(opCode);
+										break;
+								}
+							}
+							break;
+						case 0x04:
+							{
+								const imm = signExtend((opCode >> 20) & 0xfff, 12);
+								wbIdx = rd;
+								switch ((opCode >> 12) & 7) {
+									case 0: // ADDI
+										wbValue = (regs[rs1] + imm) >>> 0;
+										break;
+									case 2: // SLTI
+										wbValue = (regs[rs1] >> 0) < imm ? 1 : 0;
+										break;
+									case 3: // SLTIU
+										wbValue = regs[rs1] < (imm >>> 0) ? 1 : 0;
+										break;
+									case 4: // XORI
+										wbValue = (regs[rs1] ^ imm) >>> 0;
+										break;
+									case 6: // ORI
+										wbValue = (regs[rs1] | imm) >>> 0;
+										break;
+									case 7: // ANDI
+										wbValue = (regs[rs1] & imm) >>> 0;
+										break;
+									case 1:
+										switch ((opCode >> 25) & 0x7f) {
+											case 0x00: // SLLI
+												wbValue = (regs[rs1] << rs2) >>> 0;
+												break;
+											default:
+												unknownInstruction(opCode);
+												break;
+										}
+										break;
+									case 5:
+										switch ((opCode >> 25) & 0x7f) {
+											case 0x00: // SRLI
+												wbValue = regs[rs1] >>> rs2;
+												break;
+											case 0x20: // SRAI
+												wbValue = (regs[rs1] >> rs2) >>> 0;
+												break;
+											default:
+												unknownInstruction(opCode);
+												break;
+										}
+										break;
+								}
+							}
+							break;
+						case 0x0c:
+							wbIdx = rd;
+							switch ((opCode >> 25) & 0x7f) {
+								case 0x00:
+									switch ((opCode >> 12) & 7) {
+										case 0: // ADD
+											wbValue = (regs[rs1] + regs[rs2]) >> 0;
+											break;
+										case 1: // SLL
+											wbValue = (regs[rs1] << (regs[rs2] & 0x1f)) >> 0;
+											break;
+										case 2: // SLT
+											wbValue = (regs[rs1] >> 0) < (regs[rs2] >> 0) ? 1 : 0;
+											break;
+										case 3: // SLTU
+											wbValue = regs[rs1] < regs[rs2] ? 1 : 0;
+											break;
+										case 4: // XOR
+											wbValue = (regs[rs1] ^ regs[rs2]) >> 0;
+											break;
+										case 5: // SRL
+											wbValue = regs[rs1] >>> (regs[rs2] & 0x1f);
+											break;
+										case 6: // OR
+											wbValue = (regs[rs1] | regs[rs2]) >> 0;
+											break;
+										case 7: // AND
+											wbValue = (regs[rs1] & regs[rs2]) >> 0;
+											break;
+									}
+									break;
+								case 0x20:
+									switch ((opCode >> 12) & 7) {
+										case 0: // SUB
+											wbValue = (regs[rs1] - regs[rs2]) >> 0;
+											break;
+										case 5: // SRA
+											wbValue = (regs[rs1] >> (regs[rs2] & 0x1f)) >> 0;
+											break;
+										default:
+											unknownInstruction(opCode);
+											break;
+									}
+									break;
+								case 0x01:
+									if (opCode & 0x00004000) {
+										switch ((opCode >> 12) & 3) {
+											case 0: // DIV
+												if (regs[rs2] === 0) {
+													wbValue = 0xffffffff;
+												} else if (regs[rs1] === 0x80000000 && regs[rs2] === 0xffffffff) {
+													wbValue = 0x80000000;
+												} else {
+													wbValue = ((regs[rs1] >> 0) / (regs[rs2] >> 0)) >>> 0;
+												}
+												break;
+											case 1: // DIVU
+												if (regs[rs2] === 0) {
+													wbValue = 0xffffffff;
+												} else {
+													wbValue = (regs[rs1] / regs[rs2]) >>> 0;
+												}
+												break;
+											case 2: // REM
+												if (regs[rs2] === 0) {
+													wbValue = regs[rs1];
+												} else if (regs[rs1] === 0x80000000 && regs[rs2] === 0xffffffff) {
+													wbValue = 0;
+												} else {
+													wbValue = ((regs[rs1] >> 0) % (regs[rs2] >> 0)) >>> 0;
+												}
+												break;
+											case 3: // REMU
+												if (regs[rs2] === 0) {
+													wbValue = regs[rs1];
+												} else {
+													wbValue = (regs[rs1] % regs[rs2]) >>> 0;
+												}
+												break;
+										}
+									} else {
+										// 0 : MUL
+										// 1 : MULH
+										// 2 : MULHSU
+										// 3 : MULHU
+										const op = (opCode >> 12) & 3;
+										const multiplicand = [regs[rs1] & 0xffff, (regs[rs1] >> 16) & 0xffff, 0, 0];
+										const multiplier = [regs[rs2] & 0xffff, (regs[rs2] >> 16) & 0xffff, 0, 0];
+										const result = [0, 0, 0, 0, 0, 0, 0, 0];
+										if (op !== 3 && (multiplicand[1] & 0x8000)) {
+											// MUL : don't care
+											// MULH / MULHSU : multiplicand is signed
+											// MULHU : multiplicand is unsigned
+											multiplicand[2] = 0xffff;
+											multiplicand[3] = 0xffff;
+										}
+										if (op < 2 && (multiplier[1] & 0x8000)) {
+											// MUL : don't care
+											// MULH : multiplier is signed
+											// MULHSU / MULHU : multiplier is unsigned
+											multiplier[2] = 0xffff;
+											multiplier[3] = 0xffff;
+										}
+										for (let i = 0; i < 4; i++) {
+											let carry = 0;
+											for (let j = 0; j < 4; j++) {
+												const mult = multiplicand[j] * multiplier[i] + carry;
+												result[i + j] += mult & 0xffff;
+												carry = (mult >>> 16) + (result[i + j] >>> 16);
+												result[i + j] &= 0xffff;
+											}
+											// 最終キャリーを result に反映していない
+											// どうせ参照されない位置なので省略
+										}
+										if (op === 0) {
+											// MUL
+											wbValue = ((result[1] << 16) | result[0]) >>> 0;
+										} else {
+											// MULH / MULHSU / MULHSU
+											wbValue = ((result[3] << 16) | result[2]) >>> 0;
+										}
+									}
+									break;
+								default:
+									unknownInstruction(opCode);
+									break;
+							}
+							break;
+						case 0x03:
+							switch ((opCode >> 12) & 7) {
+								case 0: // FENCE
+									// 何もしない
+									break;
+								case 1: // FENCE.I
+									// 何もしない
+									break;
+								default:
+									unknownInstruction(opCode);
+									break;
+							}
+							break;
+						case 0x1c:
+							{
+								const rd = (opCode >> 7) & 0x1f;
+								const rs1_uimm = (opCode >> 15) & 0x1f;
+								const csr = (opCode >> 20) & 0xfff;
+								switch ((opCode >> 12) & 7) {
+									case 0:
+										if (rd === 0 && rs1_uimm === 0) {
+											switch (csr) {
+												case 0x000: // ECALL
+													// 何もしない
+													break;
+												case 0x001: // EBREAK
+													// 何もしない
+													break;
+												default:
+												unknownInstruction(opCode);
+												break;
+											}
+										} else {
+											unknownInstruction(opCode);
+										}
+										break;
+									case 1: // CSRRW
+										if (rd !== 0) {
+											wbIdx = rd;
+											wbValue = readCSR(csr) >>> 0;
+										}
+										writeCSR(csr, regs[rs1_uimm]);
+										break;
+									case 2: // CSRRS
+										wbIdx = rd;
+										wbValue = readCSR(csr) >>> 0;
+										if (rs1_uimm !== 0) {
+											writeCSR(csr, (wbValue | regs[rs1_uimm]) >>> 0);
+										}
+										break;
+									case 3: // CSRRC
+										wbIdx = rd;
+										wbValue = readCSR(csr) >>> 0;
+										if (rs1_uimm !== 0) {
+											writeCSR(csr, (wbValue & ~regs[rs1_uimm]) >>> 0);
+										}
+										break;
+									case 5: // CSRRWI
+										if (rd !== 0) {
+											wbIdx = rd;
+											wbValue = readCSR(csr) >>> 0;
+										}
+										writeCSR(csr, rs1_uimm);
+										break;
+									case 6: // CSRRSI
+										wbIdx = rd;
+										wbValue = readCSR(csr) >>> 0;
+										if (rs1_uimm !== 0) {
+											writeCSR(csr, (wbValue | rs1_uimm) >>> 0);
+										}
+										break;
+									case 7: // CSRRCI
+										wbIdx = rd;
+										wbValue = readCSR(csr) >>> 0;
+										if (rs1_uimm !== 0) {
+											writeCSR(csr, (wbValue & ~rs1_uimm) >>> 0);
+										}
+										break;
+									default:
+										unknownInstruction(opCode);
+										break;
+								}
+							}
+							break;
+					}
+				}
+				break;
+		}
+
+		if (wbIdx !== 0) regs[wbIdx] = wbValue;
+		pc = nextPC;
 	}
 }
