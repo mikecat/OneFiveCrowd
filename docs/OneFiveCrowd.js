@@ -73,13 +73,16 @@ const CRAM_ADDR = 0x0;
 const ARRAY_ADDR = CRAM_ADDR + 0x100;
 const VRAM_ADDR = ARRAY_ADDR + 0x100;
 const PRG_ADDR_JAM = VRAM_ADDR + 0x300;
-const KEY_ADDR_JAM = PRG_ADDR_JAM + PRG_MAX_JAM + 3;
+const BTN_ADDR_JAM = PRG_ADDR_JAM + PRG_MAX_JAM + 2;
+const KEY_ADDR_JAM = BTN_ADDR_JAM + 1;
 const CMD_ADDR_JAM = KEY_ADDR_JAM + 1 + KEY_MAX;
 const ARRAY2_ADDR_CAKE = VRAM_ADDR + 0x300;
 const PRG_ADDR_CAKE = ARRAY2_ADDR_CAKE + 0x200;
-const KEY_ADDR_CAKE = PRG_ADDR_CAKE + PRG_MAX_CAKE + 3;
+const BTN_ADDR_CAKE = PRG_ADDR_CAKE + PRG_MAX_CAKE + 2;
+const KEY_ADDR_CAKE = BTN_ADDR_CAKE + 1;
 const CMD_ADDR_CAKE = KEY_ADDR_CAKE + 1 + KEY_MAX;
 let PRG_ADDR = PRG_ADDR_JAM;
+let BTN_ADDR = BTN_ADDR_JAM;
 let KEY_ADDR = KEY_ADDR_JAM;
 let CMD_ADDR = CMD_ADDR_JAM;
 
@@ -290,11 +293,13 @@ function switchCakeMode(newCakeMode) {
 		ARRAY_SIZE = ARRAY_SIZE_CAKE;
 		VIRTUAL_MEM_MAX = VIRTUAL_MEM_MAX_CAKE;
 		PRG_ADDR = PRG_ADDR_CAKE;
+		BTN_ADDR = BTN_ADDR_CAKE;
 		KEY_ADDR = KEY_ADDR_CAKE;
 		CMD_ADDR = CMD_ADDR_CAKE;
 		prgView = prgViewCake;
 		keyView = keyViewCake;
 		cmdView = cmdViewCake;
+		ramBytes[BTN_ADDR_CAKE] = ramBytes[BTN_ADDR_JAM];
 		for (let i = 0; i < keyView.length; i++) {
 			keyViewCake[i] = keyViewJam[i];
 		}
@@ -313,6 +318,7 @@ function switchCakeMode(newCakeMode) {
 		ARRAY_SIZE = ARRAY_SIZE_JAM;
 		VIRTUAL_MEM_MAX = VIRTUAL_MEM_MAX_JAM;
 		PRG_ADDR = PRG_ADDR_JAM;
+		BTN_ADDR = BTN_ADDR_JAM;
 		KEY_ADDR = KEY_ADDR_JAM;
 		CMD_ADDR = CMD_ADDR_JAM;
 		prgView = prgViewJam;
@@ -321,6 +327,7 @@ function switchCakeMode(newCakeMode) {
 		for (let i = 0; i < prgViewJam.length; i++) {
 			prgViewJam[i] = prgViewCake[i];
 		}
+		ramBytes[BTN_ADDR_JAM] = ramBytes[BTN_ADDR_CAKE];
 		for (let i = 0; i < keyView.length; i++) {
 			keyViewJam[i] = keyViewCake[i];
 		}
@@ -859,6 +866,7 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 		else if (key === "ArrowDown") btnStatus |= 8;
 		else if (key === " ") btnStatus |= 0x10;
 		else if (key === "x") btnStatus |= 0x20;
+		ramBytes[BTN_ADDR] = btnStatus;
 	}
 	return false;
 }
@@ -875,6 +883,7 @@ function keyUp(key) {
 	else if (key === "ArrowDown") btnStatus &= ~8;
 	else if (key === " ") btnStatus &= ~0x10;
 	else if (key === "x" || key == "X") btnStatus &= ~0x20;
+	ramBytes[BTN_ADDR] = btnStatus;
 	return false;
 }
 
