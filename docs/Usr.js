@@ -47,7 +47,12 @@ const apiMap = {
 		"tableAddr": 0xCA,
 		"returnsValue": true,
 		"func": async function() {
-			return await functionINKEY();
+			const key = await functionINKEY();
+			switch (key) {
+				case 0: return -1;
+				case 0x100: return 0;
+				default: return key;
+			}
 		},
 	},
 	0x210C: { // cls
