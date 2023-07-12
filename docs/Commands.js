@@ -4,7 +4,7 @@ async function commandINPUT(prompt, varIdx) {
 	if (cursorY < 0) {
 		throw "Not match";
 	}
-	putString(prompt);
+	await putString(prompt);
 	const startX = cursorX, startY = cursorY;
 	for (;;) {
 		pollBreak();
@@ -220,7 +220,7 @@ async function commandLIST(args) {
 				shownCount = 0;
 			}
 			shownCount += shownCountDelta;
-			putString(line + "\n");
+			await putString(line + "\n");
 		}
 		ptr += lineLength + 4;
 	}
@@ -241,7 +241,7 @@ function commandEND(){
 	return [-1, 0];
 }
 
-function commandLOCATE(args) {
+async function commandLOCATE(args) {
 	// カーソルを移動する
 	let x, y;
 	if (args.length < 2) {
@@ -260,6 +260,12 @@ function commandLOCATE(args) {
 	if (y >= SCREEN_HEIGHT) y = SCREEN_HEIGHT - 1;
 	cursorX = x;
 	cursorY = y;
+	await sendToUart({"command": "LOCATE", "x": x, "y": y});
+}
+
+async function commandCLS() {
+	clearScreen();
+	await sendToUart({"command": "CLS"});
 }
 
 async function commandSAVE(args) {
@@ -267,7 +273,7 @@ async function commandSAVE(args) {
 	const slot = args.length > 0 ? args[0] : functionFILE();
 	lastFileNo = slot & 0xFF;
 	if (await saveFile(slot)) {
-		putString("Saved " + (1024 - functionFREE()) + "byte\n");
+		await putString("Saved " + (1024 - functionFREE()) + "byte\n");
 	} else {
 		throw "File error";
 	}
@@ -281,7 +287,7 @@ async function commandLOAD(args) {
 		if (prgView[0] === 0xFF && prgView[1] === 0xFF) {
 			throw "File error";
 		} else if (prgView[1] < 0x80) {
-			putString("Loaded " + (1024 - functionFREE()) + "byte\n");
+			await putString("Loaded " + (1024 - functionFREE()) + "byte\n");
 		}
 	} else {
 		for (let i = 0; i < prgView.length; i++) {
@@ -311,9 +317,9 @@ async function commandFILES(args) {
 	let count = 0;
 	for (let i = startNo; i <= endNo;) {
 		const title = await getFileTitle(i);
-		putString("" + i);
-		if (title !== "") putString(" " + title);
-		putString("\n");
+		await putString("" + i);
+		if (title !== "") await putString(" " + title);
+		await putString("\n");
 		if (++count >= BREAK_AFTER_COUNT) {
 			await commandWAIT([60]);
 			count = 0;
@@ -354,7 +360,7 @@ async function commandPLAY(args) {
 	}
 }
 
-function commandSCROLL(args) {
+async function commandSCROLL(args) {
 	// 画面をスクロールする
 	switch (args[0]) {
 		case 0: case 30: // 上
@@ -365,6 +371,7 @@ function commandSCROLL(args) {
 				vramView[SCREEN_WIDTH * (SCREEN_HEIGHT - 1) + x] = 0;
 			}
 			vramDirty = true;
+			await sendToUart({"command": "SCROLL", "direction": "up"});
 			break;
 		case 1: case 29: // 右
 			for (let y = 0; y < SCREEN_HEIGHT; y++) {
@@ -374,6 +381,7 @@ function commandSCROLL(args) {
 				vramView[SCREEN_WIDTH * y] = 0;
 			}
 			vramDirty = true;
+			await sendToUart({"command": "SCROLL", "direction": "right"});
 			break;
 		case 2: case 31: // 下
 			for (let x = 0; x < SCREEN_WIDTH; x++) {
@@ -383,6 +391,7 @@ function commandSCROLL(args) {
 				vramView[x] = 0;
 			}
 			vramDirty = true;
+			await sendToUart({"command": "SCROLL", "direction": "down"});
 			break;
 		case 3: case 28: // 左
 			for (let y = 0; y < SCREEN_HEIGHT; y++) {
@@ -392,6 +401,7 @@ function commandSCROLL(args) {
 				vramView[SCREEN_WIDTH * y + (SCREEN_WIDTH - 1)] = 0;
 			}
 			vramDirty = true;
+			await sendToUart({"command": "SCROLL", "direction": "left"});
 			break;
 	}
 }
@@ -493,18 +503,18 @@ function commandPOKE(args) {
 	}
 }
 
-function commandHELP() {
+async function commandHELP() {
 	// メモリマップを出力する
-	putString("#000 CHAR\n");
-	putString("#" + (VIRTUAL_RAM_OFFSET + CRAM_ADDR).toString(16).toUpperCase() + " PCG\n");
-	putString("#" + (VIRTUAL_RAM_OFFSET + ARRAY_ADDR).toString(16).toUpperCase() + " VAR\n");
-	putString("#" + (VIRTUAL_RAM_OFFSET + VRAM_ADDR).toString(16).toUpperCase() + " VRAM\n");
-	putString("#" + (VIRTUAL_RAM_OFFSET + PRG_ADDR).toString(16).toUpperCase() + " LIST\n");
+	await putString("#000 CHAR\n");
+	await putString("#" + (VIRTUAL_RAM_OFFSET + CRAM_ADDR).toString(16).toUpperCase() + " PCG\n");
+	await putString("#" + (VIRTUAL_RAM_OFFSET + ARRAY_ADDR).toString(16).toUpperCase() + " VAR\n");
+	await putString("#" + (VIRTUAL_RAM_OFFSET + VRAM_ADDR).toString(16).toUpperCase() + " VRAM\n");
+	await putString("#" + (VIRTUAL_RAM_OFFSET + PRG_ADDR).toString(16).toUpperCase() + " LIST\n");
 }
 
-function commandRESET() {
+async function commandRESET() {
 	// システムをリセットする
-	resetSystem();
+	await resetSystem();
 	return [currentLine, currentPositionInLine];
 }
 

@@ -55,6 +55,8 @@ function setSelectByValue(selectElement, value) {
 const RAW_SCREEN_WIDTH = 32;
 const RAW_SCREEN_HEIGHT = 24;
 
+const DEFAULT_BPS = 115200;
+
 const ARRAY_SIZE_JAM = 102;
 const ARRAY_SIZE_CAKE = 358;
 const PRG_MAX_JAM = 0x400;
@@ -536,7 +538,7 @@ function toggleCursor() {
 	updateScreen();
 }
 
-function initSystem() {
+async function initSystem() {
 	// canvasの初期化
 	mainScreen = document.getElementById("mainScreen");
 	mainScreenContext = mainScreen.getContext("2d");
@@ -721,31 +723,58 @@ function initSystem() {
 	if (cursorTimerId !== null) clearInterval(cursorTimerId);
 	cursorTimerId = setInterval(toggleCursor, 500);
 
+	// UARTの初期化を行う
+	const phisicalUartPortStatus = document.getElementById("phisicalUartPortStatus");
+	const phisicalUartPortSwitchButton = document.getElementById("phisicalUartPortSwitchButton");
+	if (uartManager.isWebSerialSupported()) {
+		phisicalUartPortSwitchButton.addEventListener("click", function() {
+			if (uartManager.isConnected()) {
+				uartManager.disconnectPort();
+			} else {
+				uartManager.webSerialRequestPort();
+			}
+		});
+		phisicalUartPortStatus.classList.add("webSerialSupported");
+	} else {
+		phisicalUartPortSwitchButton.disabled = true;
+	}
+	await uartManager.initialize();
+	const showUartConnected = function(connected) {
+		if (connected) {
+			phisicalUartPortStatus.classList.add("uartConnected");
+		} else {
+			phisicalUartPortStatus.classList.remove("uartConnected");
+		}
+	};
+	uartManager.addConnectStatusChangeCallback(showUartConnected);
+	showUartConnected(uartManager.isConnected());
+
 	// 各種初期化を行う
-	resetSystem();
+	await resetSystem();
 
 	// 実行を開始する
 	doCallback(execute);
 }
 
-function resetSystem() {
+async function resetSystem() {
 	// 設定データの初期化
 	okMode = 1;
 	videoZoom = 1;
 	videoInvert = false;
 	SCREEN_WIDTH = RAW_SCREEN_WIDTH;
 	SCREEN_HEIGHT = RAW_SCREEN_HEIGHT;
+	await uartManager.setBps(DEFAULT_BPS);
 	// 各種状態の初期化
+	clearScreen();
 	commandCLP();
 	commandCLV();
 	commandCLK();
-	commandCLS();
 	commandCLT();
 	commandNEW();
 	// プログラムの初期化
 	programs = new Object();
 	programs[-1] = {code: [finalizeExecution, printOK, doInteractive], nextLine: -1};
-	programs[0] = {code: [function(){ putString("OneFiveCrowd\n"); return null; }], nextLine: -1};
+	programs[0] = {code: [async function(){ await putString("OneFiveCrowd\n"); return null; }], nextLine: -1};
 	currentLine = 0;
 	currentPositionInLine = 0;
 	lastErrorLine = -1;
@@ -892,6 +921,39 @@ function keyUp(key) {
 function keyUpEvent() {
 	keyUp(event.key);
 	return false;
+}
+
+// データ (文字列、もしくは特殊操作情報) を設定に沿って変換し、UARTで送信する
+async function sendToUart(data) {
+	if (typeof data === "string") {
+		await uartManager.tx(data);
+	} else {
+		let dataToSend = null;
+		switch (data.command) {
+			case "LOCATE":
+				dataToSend = String.fromCharCode(0x15, 0x20 + data.x, 0x20 + data.y);
+				break;
+			case "CLS":
+				dataToSend = "\x13\x0c";
+				break;
+			case "SCROLL":
+				switch (data.direction) {
+					case "left": dataToSend = "\x15\x1c"; break;
+					case "right": dataToSend = "\x15\x1d"; break;
+					case "up": dataToSend = "\x15\x1e"; break;
+					case "down": dataToSend = "\x15\x1f"; break;
+				}
+				break;
+		}
+		if (dataToSend) {
+			await uartManager.tx(dataToSend);
+		}
+	}
+}
+
+// データ (Uint8Array) をUARTで受信し、設定に沿って処理する
+function receiveFromUart(data) {
+	data.forEach(function(c) { keyInput(c); });
 }
 
 // 画面に文字を書き込む
@@ -1264,10 +1326,11 @@ function putChar(c, isInsert = false) {
 	}
 }
 
-function putString(str) {
+async function putString(str) {
 	for (let i = 0; i < str.length; i++) {
 		putChar(str.charCodeAt(i), false);
 	}
+	await sendToUart(str);
 }
 
 /*
@@ -1402,12 +1465,12 @@ async function execute() {
 		finalizeExecution();
 		if (okMode !== 2) {
 			if (currentLine > 0) {
-				putString("" + e + " in " + currentLine + "\n");
+				await putString("" + e + " in " + currentLine + "\n");
 				if (currentLine in programs) {
-					putString("" + currentLine + " " + programs[currentLine].source + "\n");
+					await putString("" + currentLine + " " + programs[currentLine].source + "\n");
 				}
 			} else {
-				putString("" + e + "\n");
+				await putString("" + e + "\n");
 			}
 		}
 		lastErrorLine = currentLine;
@@ -1422,8 +1485,10 @@ function pollBreak() {
 	if (breakRequest) throw "Break";
 }
 
-function printOK() {
-	if (okMode !== 2) putString("OK\n");
+async function printOK() {
+	if (okMode !== 2) {
+		await putString("OK\n");
+	}
 }
 
 function finalizeExecution() {
@@ -1553,6 +1618,19 @@ function compileProgram() {
 	prgDirty = false;
 }
 
+function clearScreen() {
+	// VRAMを初期化する
+	for (let i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
+		vramView[i] = 0;
+	}
+	// カーソルの位置を左上に戻す
+	cursorX = 0;
+	cursorY = 0;
+	moveCursorMode = false;
+	moveCursorX = null;
+	vramDirty = true;
+}
+
 function commandCLK() {
 	// キーバッファを初期化する
 	keyView[0] = 0;
@@ -1567,19 +1645,6 @@ function commandNEW() {
 	prgDirty = true;
 	// プログラムの実行を終了する
 	return [-1, 0];
-}
-
-function commandCLS() {
-	// VRAMを初期化する
-	for (let i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
-		vramView[i] = 0;
-	}
-	// カーソルの位置を左上に戻す
-	cursorX = 0;
-	cursorY = 0;
-	moveCursorMode = false;
-	moveCursorX = null;
-	vramDirty = true;
 }
 
 function commandCLV() {

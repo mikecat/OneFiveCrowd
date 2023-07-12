@@ -18,21 +18,21 @@ const apiMap = {
 	0x2104: { // putc
 		"tableAddr": 0xC4,
 		"returnsValue": false,
-		"func": function(env, n) {
-			putString(String.fromCharCode(n & 0xff));
+		"func": async function(env, n) {
+			await putString(String.fromCharCode(n & 0xff));
 		},
 	},
 	0x2106: { // putnum
 		"tableAddr": 0xC6,
 		"returnsValue": false,
-		"func": function(env, n) {
-			putString((n >> 0).toString());
+		"func": async function(env, n) {
+			await putString((n >> 0).toString());
 		},
 	},
 	0x2108: { // putstr
 		"tableAddr": 0xC8,
 		"returnsValue": false,
-		"func": function(env, p) {
+		"func": async function(env, p) {
 			let str = "";
 			let addr = p >>> 0;
 			for (;;) {
@@ -40,7 +40,7 @@ const apiMap = {
 				if (c === 0) break;
 				str += String.fromCharCode(c);
 			}
-			putString(str);
+			await putString(str);
 		},
 	},
 	0x210A: { // inkey
@@ -128,8 +128,8 @@ const apiMap = {
 	0x2120: { // uputc
 		"tableAddr": 0xE0,
 		"returnsValue": false,
-		"func": function(env, ch) {
-			throw "Not implemented: UPUTC";
+		"func": async function(env, ch) {
+			await sendToUart(String.fromCharCode(ch & 0xff));
 		},
 	},
 	0x2124: { // memclear

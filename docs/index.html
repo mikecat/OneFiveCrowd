@@ -23,6 +23,7 @@
 <script src="Functions.js"></script>
 <script src="Compiler.js"></script>
 <script src="Usr.js"></script>
+<script src="Uart.js"></script>
 </head>
 <body onload="initSystem();" onkeydown="keyDownEvent();" onkeyup="keyUpEvent();">
 <h1 id="mainTitle">OneFiveCrowd</h1>
@@ -64,9 +65,9 @@
 <input id="volumeSlider" type="range" min="0" max="100" value="50">
 </span>
 </p>
-<p id="keyForm">
-</p>
-<p id="padForm">
+<div id="keyForm">
+</div>
+<div id="padForm">
 <span id="padButtonLeft" class="padButton padRow2 padCol1"></span>
 <span id="padButtonRight" class="padButton padRow2 padCol3"></span>
 <span id="padButtonUp" class="padButton padRow1 padCol2"></span>
@@ -75,14 +76,25 @@
 <span id="padButtonSpace" class="padButton padRow3 padCol5"></span>
 <span id="padButtonX" class="padButton padRow1 padCol5"></span>
 <span id="padButtonY" class="padButton padRow2 padCol4"></span>
-</p>
-<p id="textInputForm">
+</div>
+<div id="textInputForm">
 <textarea id="textInputArea" rows="5"></textarea><br>
 <button id="textInputButton" type="button">input text</button>
-</p>
-<p id="ioForm">
-</p>
-<p id="systemForm">
+</div>
+<div id="ioForm">
+<fieldset id="phisicalUartPortStatus">
+<legend>UART</legend>
+物理ポート：
+<span class="uartNotConnectedMessage">未接続</span>
+<span class="uartConnectedMessage">接続済</span>
+<span class="webSerialUnsupportedMessage">(Web Serial 未対応)</span>
+<button id="phisicalUartPortSwitchButton" type="button">
+<span class="uartNotConnectedMessage">接続</span>
+<span class="uartConnectedMessage">切断</span>
+</button>
+</fieldset>
+</div>
+<div id="systemForm">
 <span class="configField">
 <span class="configRow">
 <span class="configName">フォント</span>
@@ -128,7 +140,7 @@
 </select></span>
 </span>
 </span>
-</p>
+</div>
 </div>
 </div>
 <p>

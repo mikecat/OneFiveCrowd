@@ -27,7 +27,7 @@
 	align-items: center;
 	grid-template-columns: auto 1fr auto;
 	margin-top: 0.5em;
-	margin-bottom: 0.5em;
+	margin-bottom: 1em;
 }
 
 #ledPane {
@@ -329,5 +329,17 @@ label[for="volumeSwitch"] {
 }
 
 .hidden {
+	display: none;
+}
+
+#phisicalUartPortStatus.uartConnected .uartNotConnectedMessage {
+	display: none;
+}
+
+#phisicalUartPortStatus:not(.uartConnected) .uartConnectedMessage {
+	display: none;
+}
+
+#phisicalUartPortStatus.webSerialSupported .webSerialUnsupportedMessage {
 	display: none;
 }
