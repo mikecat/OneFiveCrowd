@@ -1,152 +1,152 @@
 <!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>OneFiveCrowd</title>
-<meta name="viewport" content="width=560">
-<link rel="icon" href="onefive.ico">
-<meta property="og:title" content="OneFiveCrowd">
-<meta property="og:description" content="Webブラウザ上でIchigoJam&reg;用のプログラムを実行します。非公式。">
-<meta property="og:url" content="https://mikecat.github.io/OneFiveCrowd/">
-<meta property="og:image" content="https://mikecat.github.io/OneFiveCrowd/onefive_og.png">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="OneFiveCrowd">
-<meta name="twitter:card" content="summary"> 
-<meta name="twitter:site" content="@mikecat_mixc">
-<link href="index.css" rel="stylesheet">
-<script src="ijfont.js"></script>
-<script src="ed25519.js"></script>
-<script src="SoundManager.js"></script>
-<script src="ScreenKeys.js"></script>
-<script src="OneFiveCrowd.js"></script>
-<script src="Commands.js"></script>
-<script src="Functions.js"></script>
-<script src="Compiler.js"></script>
-<script src="Usr.js"></script>
-<script src="Uart.js"></script>
-</head>
-<body onload="initSystem();" onkeydown="keyDownEvent();" onkeyup="keyUpEvent();">
-<h1 id="mainTitle">OneFiveCrowd</h1>
-<p id="screenArea">
-<canvas id="mainScreen" width="512" height="384">
-非対応のブラウザです。
-</canvas>
-</p>
-<div id="controlArea">
-<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioKey" value="key">
-<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioPad" value="pad">
-<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioData" value="data">
-<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioIo" value="io">
-<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioSystem" value="system">
-<div id="controlAreaInner">
-<p id="controlTabArea">
-<span id="ledPane">●</span>
-<span id="tabPane">
-<label class="controlTab" for="controlRadioKey">KEY</label>
-<label class="controlTab" for="controlRadioPad">PAD</label>
-<label class="controlTab" for="controlRadioData">DATA</label>
-<label class="controlTab" for="controlRadioIo">I/O</label>
-<label class="controlTab" for="controlRadioSystem">SYSTEM</label>
-</span>
-<span id="volumePane">
-<input id="volumeSwitch" type="checkbox">
-<label for="volumeSwitch">
-<svg id="soundOnIcon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="black">
-<polygon points="1,10 1,22 8,22 16,31 16,1 8,10" />
-<line x1="20" y1="8" x2="30" y2="4" />
-<line x1="20" y1="16" x2="30" y2="16" />
-<line x1="20" y1="24" x2="30" y2="28" />
-</svg>
-<svg id="soundOffIcon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="black">
-<polygon points="1,10 1,22 8,22 16,31 16,1 8,10" />
-<line x1="1" y1="31" x2="24" y2="1" stroke-width="2" />
-</svg>
-</label>
-<input id="volumeSlider" type="range" min="0" max="100" value="50">
-</span>
-</p>
-<div id="keyForm">
-</div>
-<div id="padForm">
-<span id="padButtonLeft" class="padButton padRow2 padCol1"></span>
-<span id="padButtonRight" class="padButton padRow2 padCol3"></span>
-<span id="padButtonUp" class="padButton padRow1 padCol2"></span>
-<span id="padButtonDown" class="padButton padRow3 padCol2"></span>
-<span id="padButtonEnter" class="padButton padRow2 padCol6"></span>
-<span id="padButtonSpace" class="padButton padRow3 padCol5"></span>
-<span id="padButtonX" class="padButton padRow1 padCol5"></span>
-<span id="padButtonY" class="padButton padRow2 padCol4"></span>
-</div>
-<div id="textInputForm">
-<textarea id="textInputArea" rows="5"></textarea><br>
-<button id="textInputButton" type="button">input text</button>
-</div>
-<div id="ioForm">
-<fieldset id="phisicalUartPortStatus">
-<legend>UART</legend>
-物理ポート：
-<span class="uartNotConnectedMessage">未接続</span>
-<span class="uartConnectedMessage">接続済</span>
-<span class="webSerialUnsupportedMessage">(Web Serial 未対応)</span>
-<button id="phisicalUartPortSwitchButton" type="button">
-<span class="uartNotConnectedMessage">接続</span>
-<span class="uartConnectedMessage">切断</span>
-</button>
-</fieldset>
-</div>
-<div id="systemForm">
-<span class="configField">
-<span class="configRow">
-<span class="configName">フォント</span>
-<span class="configValue"><select id="systemFontSelect">
-<option value="1_1">1.1.1</option>
-<option value="1_2">1.2</option>
-<option value="1_4" selected>1.4</option>
-</select></span>
-</span>
-<span class="configRow">
-<span class="configName">MML解釈</span>
-<span class="configValue"><select id="systemMMLInterpretationSelect">
-<option value="old">旧 (1.1.1)</option>
-<option value="new" selected>新 (1.2.0)</option>
-</select></span>
-</span>
-<span class="configRow">
-<span class="configName">線分の描画方法</span>
-<span class="configValue"><select id="systemDrawAlgorithmSelect">
-<option value="bresenham" selected>高品質 (ブレゼンハム)</option>
-<option value="linear">互換 (線形補間)</option>
-</select></span>
-</span>
-<span class="configRow">
-<span class="configName">マシン語</span>
-<span class="configValue"><select id="systemMachineLanguageSelect">
-<option value="m0" selected>M0 (従来)</option>
-<option value="rv32c">RV32C (R系)</option>
-</select></span>
-</span>
-<span class="configRow">
-<span class="configName">メモリモード</span>
-<span class="configValue"><select id="systemMemorySelect">
-<option value="jam" selected>Jam</option>
-<option value="cake">Cake</option>
-</select></span>
-</span>
-<span class="configRow">
-<span class="configName">スクリーンキーボード</span>
-<span class="configValue"><select id="systemKeyboardLayoutSelect">
-<option value="0">英語配列</option>
-<option value="1" selected>日本語配列</option>
-</select></span>
-</span>
-</span>
-</div>
-</div>
-</div>
-<p>
-OneFiveCrowd: <a href="https://creativecommons.org/licenses/by/4.0/deed.ja" target="_blank">CC BY 4.0</a> by みけCAT<br>
-IchigoJam FONT: CC BY IchigoJam(<a href="http://ichigojam.net/" target="_blank">http://ichigojam.net/</a>)<br>
-「IchigoJam」はjig.jpの登録商標です。
-</p>
-</body>
+	<head>
+		<meta charset="UTF-8">
+		<title>OneFiveCrowd</title>
+		<meta name="viewport" content="width=560">
+		<link rel="icon" href="onefive.ico">
+		<meta property="og:title" content="OneFiveCrowd">
+		<meta property="og:description" content="Webブラウザ上でIchigoJam&reg;用のプログラムを実行します。非公式。">
+		<meta property="og:url" content="https://mikecat.github.io/OneFiveCrowd/">
+		<meta property="og:image" content="https://mikecat.github.io/OneFiveCrowd/onefive_og.png">
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="OneFiveCrowd">
+		<meta name="twitter:card" content="summary"> 
+		<meta name="twitter:site" content="@mikecat_mixc">
+		<link href="index.css" rel="stylesheet">
+		<script src="ijfont.js"></script>
+		<script src="ed25519.js"></script>
+		<script src="SoundManager.js"></script>
+		<script src="ScreenKeys.js"></script>
+		<script src="OneFiveCrowd.js"></script>
+		<script src="Commands.js"></script>
+		<script src="Functions.js"></script>
+		<script src="Compiler.js"></script>
+		<script src="Usr.js"></script>
+		<script src="Uart.js"></script>
+	</head>
+	<body onload="initSystem();" onkeydown="keyDownEvent();" onkeyup="keyUpEvent();">
+		<h1 id="mainTitle">OneFiveCrowd</h1>
+		<p id="screenArea">
+			<canvas id="mainScreen" width="512" height="384">
+				非対応のブラウザです。
+			</canvas>
+		</p>
+		<div id="controlArea">
+			<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioKey" value="key">
+			<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioPad" value="pad">
+			<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioData" value="data">
+			<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioIo" value="io">
+			<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioSystem" value="system">
+			<div id="controlAreaInner">
+				<p id="controlTabArea">
+					<span id="ledPane">●</span>
+					<span id="tabPane">
+						<label class="controlTab" for="controlRadioKey">KEY</label>
+						<label class="controlTab" for="controlRadioPad">PAD</label>
+						<label class="controlTab" for="controlRadioData">DATA</label>
+						<label class="controlTab" for="controlRadioIo">I/O</label>
+						<label class="controlTab" for="controlRadioSystem">SYSTEM</label>
+					</span>
+					<span id="volumePane">
+						<input id="volumeSwitch" type="checkbox">
+						<label for="volumeSwitch">
+							<svg id="soundOnIcon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="black">
+								<polygon points="1,10 1,22 8,22 16,31 16,1 8,10" />
+								<line x1="20" y1="8" x2="30" y2="4" />
+								<line x1="20" y1="16" x2="30" y2="16" />
+								<line x1="20" y1="24" x2="30" y2="28" />
+							</svg>
+							<svg id="soundOffIcon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="black">
+								<polygon points="1,10 1,22 8,22 16,31 16,1 8,10" />
+								<line x1="1" y1="31" x2="24" y2="1" stroke-width="2" />
+							</svg>
+						</label>
+						<input id="volumeSlider" type="range" min="0" max="100" value="50">
+					</span>
+				</p>
+				<div id="keyForm">
+				</div>
+				<div id="padForm">
+					<span id="padButtonLeft" class="padButton padRow2 padCol1"></span>
+					<span id="padButtonRight" class="padButton padRow2 padCol3"></span>
+					<span id="padButtonUp" class="padButton padRow1 padCol2"></span>
+					<span id="padButtonDown" class="padButton padRow3 padCol2"></span>
+					<span id="padButtonEnter" class="padButton padRow2 padCol6"></span>
+					<span id="padButtonSpace" class="padButton padRow3 padCol5"></span>
+					<span id="padButtonX" class="padButton padRow1 padCol5"></span>
+					<span id="padButtonY" class="padButton padRow2 padCol4"></span>
+				</div>
+				<div id="textInputForm">
+					<textarea id="textInputArea" rows="5"></textarea><br>
+					<button id="textInputButton" type="button">input text</button>
+				</div>
+				<div id="ioForm">
+					<fieldset id="phisicalUartPortStatus">
+						<legend>UART</legend>
+						物理ポート：
+						<span class="uartNotConnectedMessage">未接続</span>
+						<span class="uartConnectedMessage">接続済</span>
+						<span class="webSerialUnsupportedMessage">(Web Serial 未対応)</span>
+						<button id="phisicalUartPortSwitchButton" type="button">
+							<span class="uartNotConnectedMessage">接続</span>
+							<span class="uartConnectedMessage">切断</span>
+						</button>
+					</fieldset>
+				</div>
+				<div id="systemForm">
+					<span class="configField">
+						<span class="configRow">
+							<span class="configName">フォント</span>
+							<span class="configValue"><select id="systemFontSelect">
+								<option value="1_1">1.1.1</option>
+								<option value="1_2">1.2</option>
+								<option value="1_4" selected>1.4</option>
+							</select></span>
+						</span>
+						<span class="configRow">
+							<span class="configName">MML解釈</span>
+							<span class="configValue"><select id="systemMMLInterpretationSelect">
+								<option value="old">旧 (1.1.1)</option>
+								<option value="new" selected>新 (1.2.0)</option>
+							</select></span>
+						</span>
+						<span class="configRow">
+							<span class="configName">線分の描画方法</span>
+							<span class="configValue"><select id="systemDrawAlgorithmSelect">
+								<option value="bresenham" selected>高品質 (ブレゼンハム)</option>
+								<option value="linear">互換 (線形補間)</option>
+							</select></span>
+						</span>
+						<span class="configRow">
+							<span class="configName">マシン語</span>
+							<span class="configValue"><select id="systemMachineLanguageSelect">
+								<option value="m0" selected>M0 (従来)</option>
+								<option value="rv32c">RV32C (R系)</option>
+							</select></span>
+						</span>
+						<span class="configRow">
+							<span class="configName">メモリモード</span>
+							<span class="configValue"><select id="systemMemorySelect">
+								<option value="jam" selected>Jam</option>
+								<option value="cake">Cake</option>
+							</select></span>
+						</span>
+						<span class="configRow">
+							<span class="configName">スクリーンキーボード</span>
+							<span class="configValue"><select id="systemKeyboardLayoutSelect">
+								<option value="0">英語配列</option>
+								<option value="1" selected>日本語配列</option>
+							</select></span>
+						</span>
+					</span>
+				</div>
+			</div>
+		</div>
+		<p>
+			OneFiveCrowd: <a href="https://creativecommons.org/licenses/by/4.0/deed.ja" target="_blank">CC BY 4.0</a> by みけCAT<br>
+			IchigoJam FONT: CC BY IchigoJam(<a href="http://ichigojam.net/" target="_blank">http://ichigojam.net/</a>)<br>
+			「IchigoJam」はjig.jpの登録商標です。
+		</p>
+	</body>
 </html>
