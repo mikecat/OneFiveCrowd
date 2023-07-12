@@ -134,6 +134,27 @@ const uartManager = (function() {
 		if (serialPort) await connectPort(serialPort.port);
 	}
 
+	const portSendQueue = [];
+	let portSendRunning = false;
+	async function portSend(data) {
+		if (!serialPort) return;
+		portSendQueue.push(data);
+		if (!portSendRunning) {
+			portSendRunning = true;
+			const writer = serialPort.port.writable.getWriter();
+			try {
+				while (portSendQueue.length > 0) {
+					await writer.write(portSendQueue.shift());
+				}
+			} catch (e) {
+				console.warn(e);
+			} finally {
+				writer.releaseLock();
+			}
+			portSendRunning = false;
+		}
+	}
+
 	// OneFiveCrowdから周辺機器へデータを送信する
 	async function tx(data) {
 		let dataToSend;
@@ -150,16 +171,7 @@ const uartManager = (function() {
 		connectedDevices.forEach(function(device) {
 			device.rx(dataToSend, bps);
 		});
-		if (serialPort) {
-			const writer = serialPort.port.writable.getWriter();
-			try {
-				await writer.write(dataToSend);
-			} catch (e) {
-				console.warn(e);
-			} finally {
-				writer.releaseLock();
-			}
-		}
+		await portSend(dataToSend);
 	}
 
 	// OneFiveCrowdが周辺機器からデータを受信する
