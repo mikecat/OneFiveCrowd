@@ -471,13 +471,13 @@ function updateScreen() {
 		}
 		if (drawCursor) {
 			if (0 <= cursorX && cursorX < SCREEN_WIDTH && 0 <= cursorY && cursorY < SCREEN_HEIGHT) {
-				const imageData = screenBufferContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
-				for (let i = 0; i < imageData.data.length; i += 4) {
-					imageData.data[i + 0] = 255 - imageData.data[i + 0];
-					imageData.data[i + 1] = 255 - imageData.data[i + 1];
-					imageData.data[i + 2] = 255 - imageData.data[i + 2];
-				}
-				screenBufferContext.putImageData(imageData, cursorX * 16, cursorY * 16);
+				const currentOp = screenBufferContext.globalCompositeOperation;
+				const currentStyle = screenBufferContext.fillStyle;
+				screenBufferContext.globalCompositeOperation = "difference";
+				screenBufferContext.fillStyle = "#FFFFFF";
+				screenBufferContext.fillRect(cursorX * 16, cursorY * 16, 8, 16);
+				screenBufferContext.globalCompositeOperation = currentOp;
+				screenBufferContext.fillStyle = currentStyle;
 				cursorDispX = cursorX;
 				cursorDispY = cursorY;
 			} else {
@@ -498,13 +498,13 @@ function updateScreen() {
 		}
 		// 新しい位置にカーソルを描く
 		if (0 <= cursorX && cursorX < SCREEN_WIDTH && 0 <= cursorY && cursorY < SCREEN_HEIGHT) {
-			const imageData = screenBufferContext.getImageData(cursorX * 16, cursorY * 16, 8, 16);
-			for (let i = 0; i < imageData.data.length; i += 4) {
-				imageData.data[i + 0] = 255 - imageData.data[i + 0];
-				imageData.data[i + 1] = 255 - imageData.data[i + 1];
-				imageData.data[i + 2] = 255 - imageData.data[i + 2];
-			}
-			screenBufferContext.putImageData(imageData, cursorX * 16, cursorY * 16);
+			const currentOp = screenBufferContext.globalCompositeOperation;
+			const currentStyle = screenBufferContext.fillStyle;
+			screenBufferContext.globalCompositeOperation = "difference";
+			screenBufferContext.fillStyle = "#FFFFFF";
+			screenBufferContext.fillRect(cursorX * 16, cursorY * 16, 8, 16);
+			screenBufferContext.globalCompositeOperation = currentOp;
+			screenBufferContext.fillStyle = currentStyle;
 			cursorDispX = cursorX;
 			cursorDispY = cursorY;
 		} else {
