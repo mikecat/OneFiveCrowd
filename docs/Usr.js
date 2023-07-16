@@ -261,7 +261,7 @@ async function functionUSR_M0(startVirtualAddress, startArgument) {
 		}
 		if (RAM_START_ADDRESS <= address && address + size <= RAM_START_ADDRESS + ramBytes.length) {
 			for (let i = 0; i < size; i++) {
-				ramBytes[address - RAM_START_ADDRESS + i] = (value >> (8 * i)) & 0xff;
+				writePhysicalRam(address - RAM_START_ADDRESS + i, (value >> (8 * i)) & 0xff);
 			}
 		} else {
 			segFault("invalid memory write 0x" + address.toString(16));
@@ -1147,7 +1147,7 @@ async function functionUSR_RV32C(startVirtualAddress, startArgument) {
 	const writeMemory = function(address, size, value) {
 		if (RAM_START_ADDRESS <= address && address + size <= RAM_START_ADDRESS + ramBytes.length) {
 			for (let i = 0; i < size; i++) {
-				ramBytes[address - RAM_START_ADDRESS + i] = (value >> (8 * i)) & 0xff;
+				writePhysicalRam(address - RAM_START_ADDRESS + i + VIRTUAL_RAM_OFFSET, (value >> (8 * i)) & 0xff);
 			}
 		} else {
 			segFault("invalid memory write 0x" + address.toString(16));

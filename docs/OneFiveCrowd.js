@@ -263,6 +263,20 @@ const LIST_WAIT_TIME = TICK_PER_SECOND >> 1;
 // 仮想メモリ上のRAMの開始アドレス
 const VIRTUAL_RAM_OFFSET = 0x700;
 
+// 物理RAMに1バイト書き込む
+function writePhysicalRam(addr, value) {
+	ramBytes[addr] = value;
+	if (CRAM_ADDR <= addr && addr < CRAM_ADDR + 0x100) {
+		fontDirty = true;
+	}
+	if (VRAM_ADDR <= addr && addr < VRAM_ADDR + 0x300) {
+		vramDirty = true;
+	}
+	if (PRG_ADDR <= addr && addr < PRG_ADDR + prgValidSize) {
+		prgDirty = true;
+	}
+}
+
 // 仮想メモリを1バイト読む
 function readVirtualMem(addr) {
 	if (addr < 0) return 0;
@@ -275,16 +289,7 @@ function readVirtualMem(addr) {
 function writeVirtualMem(addr, value) {
 	if (VIRTUAL_RAM_OFFSET <= addr && addr < VIRTUAL_MEM_MAX) {
 		const physicalAddress = addr - VIRTUAL_RAM_OFFSET + CRAM_ADDR;
-		ramBytes[physicalAddress] = value;
-		if (CRAM_ADDR <= physicalAddress && physicalAddress < CRAM_ADDR + 0x100) {
-			fontDirty = true;
-		}
-		if (VRAM_ADDR <= physicalAddress && physicalAddress < VRAM_ADDR + 0x300) {
-			vramDirty = true;
-		}
-		if (PRG_ADDR <= physicalAddress && physicalAddress < PRG_ADDR + prgValidSize) {
-			prgDirty = true;
-		}
+		writePhysicalRam(physicalAddress, value);
 	}
 }
 
