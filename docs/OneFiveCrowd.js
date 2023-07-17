@@ -134,6 +134,13 @@ const writeArray = function(id, value) {
 };
 
 // プログラムを文字列で表現するための文字
+// 0x00 - 0x1F 独自定義 (IchigoJam web ではそのまま出力)
+const lowChars =
+	" ⬛▓▒░🏋🧱🧬⌫＿⏎🪜◌■□␏" +
+	"␐▯▏▔▁💍©▕＝／＼🏃⭠⭢⭡⭣";
+// 0x7F 独自定義 (IchigoJam web ではそのまま出力)
+const delChar = "␡";
+// 0x80 - 0xFF IchigoJam web 互換
 const highChars =
 	"　▘▝▀▖▌▞▛▗▚▐▜▄▙▟█" +
 	"・━┃╋┫┣┻┳┏┓┗┛◤◥◣◢" +
@@ -143,7 +150,20 @@ const highChars =
 	"ﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝﾞﾟ" +
 	"←→↑↓♠♥♣♦⚫⚪🔟🍙🐱👾♪🌀" +
 	"🚀🛸⌇🚁💥💰🧰📶🚪🕴🕺💃🏌🏃🚶🍓";
-const highCharsTable = [], highCharsMap = {};
+const lowCharsTable = [], highCharsTable = [], charsMap = {};
+for (let i = 0; i < lowChars.length; i++) {
+	const c = lowChars.charCodeAt(i);
+	if (0xd800 <= c && c <= 0xdbff) {
+		// サロゲートペア (2バイト目のチェックは省略)
+		lowCharsTable.push(lowChars.substring(i, i + 2));
+		i++;
+	} else {
+		lowCharsTable.push(lowChars.charAt(i));
+	}
+}
+if (lowCharsTable.length !== 0x20) {
+	console.warn("invalid lowCharsTable length: " + lowCharsTable.length);
+}
 for (let i = 0; i < highChars.length; i++) {
 	const c = highChars.charCodeAt(i);
 	if (0xd800 <= c && c <= 0xdbff) {
@@ -154,11 +174,65 @@ for (let i = 0; i < highChars.length; i++) {
 		highCharsTable.push(highChars.charAt(i));
 	}
 }
-for (let i = 0; i < highCharsTable.length; i++) {
-	highCharsMap[highCharsTable[i]] = String.fromCharCode(0x80 + i);
-}
 if (highCharsTable.length !== 0x80) {
 	console.warn("invalid highCharsTable length: " + highCharsTable.length);
+}
+for (let i = 0; i < lowCharsTable.length; i++) {
+	charsMap[lowCharsTable[i]] = String.fromCharCode(i);
+}
+charsMap[delChar] = String.fromCharCode(0x7f);
+for (let i = 0; i < highCharsTable.length; i++) {
+	charsMap[highCharsTable[i]] = String.fromCharCode(0x80 + i);
+}
+
+// インポート/エクスポート用文字列を内部文字列に変換する
+function importText(text) {
+	let result = "";
+	for (let i = 0; i < text.length; i++) {
+		const c = text.charCodeAt(i);
+		if (c < 0x80) {
+			result += text.charAt(i);
+			continue;
+		} else if (0xd800 <= c && c <= 0xdbff) {
+			// サロゲートペア候補
+			if (i + 1 < text.length) {
+				const c2 = text.charCodeAt(i + 1);
+				if (0xdc00 <= c2 && c2 <= 0xdfff) {
+					// サロゲートペア
+					const query = text.substring(i, i + 2);
+					if (query in charsMap) {
+						result += charsMap[query];
+					}
+					i++;
+					continue;
+				}
+			}
+		}
+		// その他の上位文字
+		const query = text.charAt(i);
+		if (query in charsMap) {
+			result += charsMap[query];
+		}
+	}
+	return result;
+}
+
+// 内部文字列をインポート/エクスポート用文字列に変換する
+function exportText(text) {
+	let result = "";
+	for (let i = 0; i < text.length; i++) {
+		const c = text.charCodeAt(i) & 0xff;
+		if (c < 0x20) {
+			result += lowCharsTable[c];
+		} else if (c === 0x7f) {
+			result += delChar;
+		} else if (0x80 <= c) {
+			result += highCharsTable[c - 0x80];
+		} else {
+			result += String.fromCharCode(c);
+		}
+	}
+	return result;
 }
 
 // プログラムのコンパイル結果をログに出力するか (テスト用)
@@ -559,35 +633,7 @@ async function initSystem() {
 		e.stopPropagation();
 	});
 	textInputButton.addEventListener("click", function() {
-		const input = textInputArea.value;
-		let toSend = "";
-		for (let i = 0; i < input.length; i++) {
-			const c = input.charCodeAt(i);
-			if (c < 0x80) {
-				toSend += input.charAt(i);
-				continue;
-			} else if (0xd800 <= c && c <= 0xdbff) {
-				// サロゲートペア候補
-				if (i + 1 < input.length) {
-					const c2 = input.charCodeAt(i + 1);
-					if (0xdc00 <= c2 && c2 <= 0xdfff) {
-						// サロゲートペア
-						const query = input.substring(i, i + 2);
-						if (query in highCharsMap) {
-							toSend += highCharsMap[query];
-						}
-						i++;
-						continue;
-					}
-				}
-			}
-			// その他の上位文字
-			const query = input.charAt(i);
-			if (query in highCharsMap) {
-				toSend += highCharsMap[query];
-			}
-		}
-		keyInput(toSend);
+		keyInput(importText(textInputArea.value));
 	});
 
 	// 操作タブの初期化
