@@ -208,10 +208,11 @@ async function commandLIST(args) {
 	let shownCount = 0;
 	while (ptr + 3 <= prgView.length) {
 		const lineNo = prgView[ptr] | (prgView[ptr + 1] << 8);
+		if (lineNo === 0) break;
 		const lineLength = prgView[ptr + 2];
 		if (showMin <= lineNo && lineNo <= showMax && ptr + 3 + lineLength <= prgView.length) {
 			let line = "" + lineNo + " ";
-			for (let i = 0; i < lineLength && ptr + 3 + i < prgView.length && prgView[ptr + 3 + i] !== 0; i++) {
+			for (let i = 0; i < lineLength && prgView[ptr + 3 + i] !== 0; i++) {
 				line += String.fromCharCode(prgView[ptr + 3 + i]);
 			}
 			const shownCountDelta = 1 + Math.floor(line.length / SCREEN_WIDTH);
