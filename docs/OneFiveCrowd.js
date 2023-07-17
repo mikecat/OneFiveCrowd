@@ -671,7 +671,7 @@ async function initSystem() {
 		while (result.length > 0 && result[result.length - 1] === "") {
 			result.pop();
 		}
-		textInputArea.value = result.join("\n") + "\n";
+		textInputArea.value = result.length === 0 ? "" : result.join("\n") + "\n";
 	});
 
 	// 操作タブの初期化
