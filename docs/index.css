@@ -9,6 +9,7 @@
 
 #mainScreen {
 	border: 16px solid black;
+	image-rendering: pixelated;
 }
 
 #controlArea {
