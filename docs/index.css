@@ -106,7 +106,7 @@ label[for="volumeSwitch"] {
 	display: none;
 }
 
-#controlRadioData:not(:checked) ~ * #textInputForm {
+#controlRadioData:not(:checked) ~ * #dataForm {
 	display: none;
 }
 
@@ -240,12 +240,34 @@ label[for="volumeSwitch"] {
 	color: #00c000;
 }
 
+#dataForm {
+	text-align: center;
+}
+
 #textInputArea {
 	width: 512px;
 }
 
-#textInputForm {
-	text-align: center;
+#textControlButtonAreaWrapper {
+	width: 512px;
+	display: inline-block;
+}
+
+#textControlButtonArea {
+	display: flex;
+	padding-top: 0.5em;
+}
+
+#textControlButtonArea button {
+	padding: 0.3em 0.5em;
+}
+
+#textControlButtonArea button:not(:last-child) {
+	margin-right: 0.5em;
+}
+
+#textControlButtonArea #textInputButton {
+	margin-right: auto;
 }
 
 .configField {

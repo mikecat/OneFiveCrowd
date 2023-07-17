@@ -623,9 +623,11 @@ async function initSystem() {
 	mainScreenContext = mainScreen.getContext("2d");
 	mainScreenContext.imageSmoothingEnabled = false;
 
-	// テキスト流し込みUIの初期化
+	// テキスト操作UIの初期化
 	const textInputArea = document.getElementById("textInputArea");
 	const textInputButton = document.getElementById("textInputButton");
+	const programExportButton = document.getElementById("programExportButton");
+	const screenExportButton = document.getElementById("screenExportButton");
 	textInputArea.addEventListener("keydown", function(e) {
 		e.stopPropagation();
 	});
@@ -633,7 +635,43 @@ async function initSystem() {
 		e.stopPropagation();
 	});
 	textInputButton.addEventListener("click", function() {
+		// 入力欄のテキストを入力する
 		keyInput(importText(textInputArea.value));
+	});
+	programExportButton.addEventListener("click", function() {
+		// 現在メモリ上にあるプログラムをテキスト形式で入力欄に書き出す
+		let result = "";
+		let ptr = 0;
+		while (ptr + 3 <= prgView.length) {
+			const lineNo = prgView[ptr] | (prgView[ptr + 1] << 8);
+			if (lineNo === 0) break;
+			const lineLength = prgView[ptr + 2];
+			if (ptr + 3 + lineLength <= prgView.length) {
+				let line = "" + lineNo + " ";
+				for (let i = 0; i < lineLength && prgView[ptr + 3 + i] !== 0; i++) {
+					line += String.fromCharCode(prgView[ptr + 3 + i]);
+				}
+				result += exportText(line) + "\n";
+			}
+			ptr += lineLength + 4;
+		}
+		textInputArea.value = result;
+	});
+	screenExportButton.addEventListener("click", function() {
+		// 現在VRAM上の画面に対応する領域にあるデータを入力欄に書き出す
+		let result = [];
+		for (let i = 0; i < SCREEN_HEIGHT; i++) {
+			let line = "";
+			for (let j = 0; j < SCREEN_WIDTH; j++) {
+				line += String.fromCharCode(vramView[SCREEN_WIDTH * i + j]);
+			}
+			result.push(exportText(line.replace(/\0+$/, "")));
+		}
+		// 末尾の空行は省略する
+		while (result.length > 0 && result[result.length - 1] === "") {
+			result.pop();
+		}
+		textInputArea.value = result.join("\n") + "\n";
 	});
 
 	// 操作タブの初期化
