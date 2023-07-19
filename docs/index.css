@@ -270,6 +270,40 @@ label[for="volumeSwitch"] {
 	margin-right: auto;
 }
 
+#virtualEepromArea {
+	margin-top: 1em;
+}
+
+#virtualEepromControlArea {
+	text-align: left;
+	margin-bottom: 0.5em;
+}
+
+#virtualEepromTemporalIndicator {
+	margin-left: 0.5em;
+}
+
+#virtualEepromTemporalIndicator:not(.temporal) {
+	display: none;
+}
+
+#virtualEepromSelectArea {
+	display: flex;
+}
+
+#virtualEepromSelect {
+	flex-grow: 1;
+}
+
+#virtualEepromControlArea button, #virtualEepromSelectArea button {
+	margin-left: 0.5em;
+	padding: 0.3em 0.5em;
+}
+
+#virtualEepromHelperArea {
+	display: none;
+}
+
 .configField {
 	display: table;
 }

@@ -428,11 +428,24 @@ async function getFileTitle(slot) {
 	if (slot < 0 || 228 <= slot) {
 		// 無効
 		return "";
-	} else if (slot < 100) {
-		// 本体 (localStorage)
+	} else {
 		try {
-			const data = readLocalStorage("save" + slot, "");
-			const dataDecoded = atob(data);
+			let dataDecoded = "";
+			if (slot < 100) {
+				// 本体 (localStorage)
+				const data = readLocalStorage("save" + slot, "");
+				dataDecoded = atob(data);
+			} else {
+				// EEPROM
+				if (virtualEepromManager.enabled()) {
+					const data = await virtualEepromManager.load(slot);
+					dataDecoded = "";
+					for (let i = 0; i < data.length && i < 32; i++) {
+						dataDecoded += String.fromCharCode(data[i]);
+					}
+					while (dataDecoded.length < 32) dataDecoded += "\xff";
+				}
+			}
 			if (dataDecoded.length < 3) return "";
 			const lineNo = dataDecoded.charCodeAt(0) + (dataDecoded.charCodeAt(1) << 8);
 			const dataSize = dataDecoded.charCodeAt(2);
@@ -445,9 +458,6 @@ async function getFileTitle(slot) {
 			console.warn(e);
 			return "";
 		}
-	} else {
-		// EEPROM
-		return "";
 	}
 }
 
@@ -477,6 +487,18 @@ async function loadFile(slot) {
 		}
 	} else {
 		// EEPROM
+		if (virtualEepromManager.enabled()) {
+			const data = await virtualEepromManager.load(slot);
+			if (data === null) return false;
+			for (let i = 0; i < prgView.length && i < data.length; i++) {
+				prgView[i] = data[i];
+			}
+			for (let i = data.length; i < prgView.length; i++) {
+				prgView[i] = 0xff;
+			}
+			prgDirty = true;
+			return true;
+		}
 		return false;
 	}
 }
@@ -501,6 +523,9 @@ async function saveFile(slot) {
 		return writeLocalStorage("save" + slot, btoa(data));
 	} else if (slot < 228) {
 		// EEPROM
+		if (virtualEepromManager.enabled()) {
+			return await virtualEepromManager.save(slot, prgView);
+		}
 		return false;
 	} else {
 		// 無効
@@ -837,6 +862,9 @@ async function initSystem() {
 	};
 	uartManager.addConnectStatusChangeCallback(showUartConnected);
 	showUartConnected(uartManager.isConnected());
+
+	// 仮想EEPROMの初期化を行う
+	await virtualEepromManager.initialize();
 
 	// 各種初期化を行う
 	await resetSystem();

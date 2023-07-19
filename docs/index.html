@@ -24,6 +24,7 @@
 		<script src="Compiler.js"></script>
 		<script src="Usr.js"></script>
 		<script src="Uart.js"></script>
+		<script src="VirtualEeprom.js"></script>
 	</head>
 	<body onload="initSystem();" onkeydown="keyDownEvent();" onkeyup="keyUpEvent();">
 		<h1 id="mainTitle">OneFiveCrowd</h1>
@@ -86,6 +87,30 @@
 							<button id="screenExportButton" type="button">画面<br>エクスポート</button>
 						</div>
 					</div>
+					<fieldset id="virtualEepromArea">
+						<legend>仮想EEPROM</legend>
+						<div id="virtualEepromControlArea">
+							<input type="checkbox" id="virtualEepromConnectCheckbox" class="virtualEepromElements"><label
+							for="virtualEepromConnectCheckbox">接続</label><button
+							id="virtualEepromCreateButton" type="button" class="virtualEepromElements">新規作成</button><button
+							id="virtualEepromImportButton" type="button" class="virtualEepromElements">インポート</button><span
+							id="virtualEepromTemporalIndicator" class="virtualEepromElements">
+								一時参照中
+								<button id="virtualEepromSaveButton" type="button" class="virtualEepromElements">ブラウザに保存</button>
+							</span>
+						</div>
+						<div id="virtualEepromSelectArea">
+							<select id="virtualEepromSelect" class="virtualEepromElements">
+							</select>
+							<button id="virtualEepromRenameButton" type="button" class="virtualEepromElements">名前の変更</button>
+							<button id="virtualEepromExportButton" type="button" class="virtualEepromElements">エクスポート</button>
+							<button id="virtualEepromDeleteButton" type="button" class="virtualEepromElements">削除</button>
+						</div>
+						<div id="virtualEepromHelperArea">
+							<input type="file" id="virtualEepromFileSelector" accept=".json,application/json" class="virtualEepromElements">
+							<a id="virtualEepromDownloadLink" class="virtualEepromElements"></a>
+						</div>
+					</fieldset>
 				</div>
 				<div id="ioForm">
 					<fieldset id="phisicalUartPortStatus">
