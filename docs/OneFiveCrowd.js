@@ -494,7 +494,7 @@ async function loadFile(slot) {
 				prgView[i] = data[i];
 			}
 			for (let i = data.length; i < prgView.length; i++) {
-				prgView[i] = 0xff;
+				prgView[i] = 0;
 			}
 			prgDirty = true;
 			return true;

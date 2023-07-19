@@ -16,6 +16,11 @@ const virtualEepromManager = (function() {
 	const TEMPORAL_PREFIX = "t";
 	const SAVED_PREFIX = "d";
 
+	const emptyData = new Uint8Array(PRG_MAX_CAKE);
+	for (let i = 0; i < emptyData.length; i++) {
+		emptyData[i] = 0xff;
+	}
+
 	function requestAsPromise(request) {
 		return new Promise(function(resolve, reject) {
 			if (!request) reject();
@@ -168,6 +173,8 @@ const virtualEepromManager = (function() {
 				}, key));
 				await eepromSelectUpdateOptions(SAVED_PREFIX + key);
 			}
+			// 新規作成時自動で接続する (参照したい可能性が大きいと考えられるので)
+			elements.virtualEepromConnectCheckbox.checked = true;
 		} catch (e) {
 			console.warn(e);
 		}
@@ -334,7 +341,7 @@ const virtualEepromManager = (function() {
 						for (let j = 0; j < data.length; j++) {
 							dataString += String.fromCharCode(data[j]);
 						}
-						exportedObject.data[i] = btoa(dataString);
+						exportedObject.data[i] = btoa(dataString.replace(/\0+$/, ""));
 					}
 				}
 			}
@@ -475,7 +482,7 @@ const virtualEepromManager = (function() {
 			if (!(id2 in temporalEeproms)) return null;
 			const target = temporalEeproms[id2];
 			if (!target.data) return null;
-			if (!(fileId in target.data)) return new Uint8Array(0); // 読み込みには成功し、結果として空
+			if (!(fileId in target.data)) return emptyData; // 読み込みには成功し、結果として空
 			const data = target.data[fileId];
 			if (!(data instanceof Uint8Array)) return null;
 			return data;
@@ -492,7 +499,7 @@ const virtualEepromManager = (function() {
 					if (!(data instanceof Uint8Array)) return null;
 					return data;
 				} else {
-					return new Uint8Array(0); // 読み込みには成功し、結果として空
+					return emptyData; // 読み込みには成功し、結果として空
 				}
 			} catch (e) {
 				console.warn(e);
@@ -509,6 +516,15 @@ const virtualEepromManager = (function() {
 		if (isNaN(fileId) || Math.floor(fileId) !== fileId || fileId < VALID_ID_MIN || VALID_ID_MAX < fileId) return false;
 		// データが Uint8Array でない場合を弾く
 		if (!(data instanceof Uint8Array)) return false;
+		// データの末尾の0を省いて保存する
+		let lastNonZero = -1;
+		for (let i = data.length - 1; i >= 0; i--) {
+			if (data[i] !== 0) {
+				lastNonZero = i;
+				break;
+			}
+		}
+		const dataTrimmed = data.slice(0, lastNonZero + 1);
 		let id = elements.virtualEepromSelect.value;
 		if (id.substring(0, TEMPORAL_PREFIX.length) === TEMPORAL_PREFIX) {
 			// メモリ上のEEPROMが対象の場合は、まずDBに保存する
@@ -522,7 +538,7 @@ const virtualEepromManager = (function() {
 			try {
 				const tr = db.transaction(EEPROM_DATA, "readwrite");
 				const os = tr.objectStore(EEPROM_DATA);
-				await requestAsPromise(os.put(data, id2 * ID_MULT_FOR_KEY + fileId));
+				await requestAsPromise(os.put(dataTrimmed, id2 * ID_MULT_FOR_KEY + fileId));
 				return true;
 			} catch (e) {
 				console.warn(e);
