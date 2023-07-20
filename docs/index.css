@@ -242,6 +242,7 @@ label[for="volumeSwitch"] {
 
 #dataForm {
 	text-align: center;
+	width: 544px;
 }
 
 #textInputArea {
@@ -302,6 +303,28 @@ label[for="volumeSwitch"] {
 
 #virtualEepromHelperArea {
 	display: none;
+}
+
+#urlExportArea {
+	margin-top: 0.7em;
+	text-align: left;
+}
+
+#urlExportArea .checkSet {
+	white-space: nowrap;
+}
+
+#urlExportArea .checkSet:not(:first-of-type) {
+	margin-left: 0.5em;
+}
+
+#urlExportConfigArea {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+#urlExportButton {
+	padding: 0.3em 0.5em;
 }
 
 .configField {

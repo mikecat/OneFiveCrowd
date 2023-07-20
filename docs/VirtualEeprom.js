@@ -283,20 +283,19 @@ const virtualEepromManager = (function() {
 		await eepromSelectUpdateOptions();
 	}
 
-	let previousExportedURL = null;
-	async function exportVirtualEEPROM() {
+	async function getCurrentEepromData() {
 		const id = elements.virtualEepromSelect.value;
 		let dataToExport = null;
 		if (id.substring(0, TEMPORAL_PREFIX.length) === TEMPORAL_PREFIX) {
 			// メモリ上のEEPROMが対象
 			const id2 = parseInt(id.substring(TEMPORAL_PREFIX.length));
-			if (isNaN(id2)) return;
-			if (!(id2 in temporalEeproms)) return;
+			if (isNaN(id2)) return null;
+			if (!(id2 in temporalEeproms)) return null;
 			dataToExport = temporalEeproms[id2];
 		} else if (db && id.substring(0, SAVED_PREFIX.length) === SAVED_PREFIX) {
 			// DB上のEEPROMが対象
 			const id2 = parseInt(id.substring(SAVED_PREFIX.length));
-			if (isNaN(id2)) return;
+			if (isNaN(id2)) return null;
 			try {
 				const tr = db.transaction([EEPROM_LIST, EEPROM_DATA], "readonly");
 				const os = tr.objectStore(EEPROM_LIST);
@@ -329,6 +328,7 @@ const virtualEepromManager = (function() {
 				console.warn(e);
 			}
 		}
+		if (dataToExport === null) return null;
 		const exportedObject = {};
 		if ("name" in dataToExport) exportedObject.name = dataToExport.name.toString();
 		exportedObject.data = {};
@@ -346,6 +346,13 @@ const virtualEepromManager = (function() {
 				}
 			}
 		}
+		return exportedObject;
+	}
+
+	let previousExportedURL = null;
+	async function exportVirtualEEPROM() {
+		const exportedObject = await getCurrentEepromData();
+		if (!exportedObject) return;
 		const exportedJson = JSON.stringify(exportedObject);
 		const exportedBlob = new Blob([exportedJson], {"type": "application/json"});
 		const exportedURL = URL.createObjectURL(exportedBlob);
@@ -463,6 +470,25 @@ const virtualEepromManager = (function() {
 		await eepromSelectUpdateOptions(readLocalStorage("virtualEepromSelected", ""));
 	}
 
+	// メモリ上のEEPROMを追加する
+	async function addTemporal(data) {
+		const dataToAdd = {};
+		dataToAdd.name = "name" in data ? data.name.toString() : "";
+		dataToAdd.data = {};
+		if ("data" in data) {
+			for (let i = VALID_ID_MIN; i <= VALID_ID_MAX; i++) {
+				if (i in data.data && data.data[i] instanceof Uint8Array) {
+					dataToAdd.data[i] = data.data[i];
+				}
+			}
+		}
+		const key = nextTemporalEepromId++;
+		temporalEeproms[key] = dataToAdd;
+		await eepromSelectUpdateOptions(TEMPORAL_PREFIX + key);
+		// 自動で接続する (参照したい可能性が大きいと考えられるので)
+		elements.virtualEepromConnectCheckbox.checked = true;
+	}
+
 	// 仮想EEPROMが接続されていれば true、されていなければ false を返す
 	function enabled() {
 		return !!elements.virtualEepromConnectCheckbox.checked;
@@ -550,6 +576,8 @@ const virtualEepromManager = (function() {
 
 	return {
 		"initialize": initialize,
+		"addTemporal": addTemporal,
+		"getCurrentEepromData": getCurrentEepromData,
 		"enabled": enabled,
 		"load": load,
 		"save": save,

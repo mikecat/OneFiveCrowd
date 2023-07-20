@@ -111,6 +111,50 @@
 							<a id="virtualEepromDownloadLink" class="virtualEepromElements"></a>
 						</div>
 					</fieldset>
+					<fieldset id="urlExportArea">
+						<legend>URLで共有</legend>
+						<span class="checkSet">
+							<input type="checkbox" id="urlExportText"><label
+							for="urlExportText">テキスト入力</label>
+						</span>
+						<span class="checkSet">
+							<input type="checkbox" id="urlExportProgram" checked><label
+							for="urlExportProgram">プログラム領域</label>
+						</span>
+						<span class="checkSet">
+							<input type="checkbox" id="urlExportVirtualEeprom"><label
+							for="urlExportVirtualEeprom">選択中の仮想EEPROM</label>
+						</span>
+						<fieldset id="urlExportConfigArea">
+							<legend>システム設定</legend>
+							<span class="checkSet">
+								<input type="checkbox" id="urlExportConfigFont"><label
+								for="urlExportConfigFont">フォント</label>
+							</span>
+							<span class="checkSet">
+								<input type="checkbox" id="urlExportConfigMMLMode"><label
+								for="urlExportConfigMMLMode">MML解釈</label>
+							</span>
+							<span class="checkSet">
+								<input type="checkbox" id="urlExportConfigDrawAlgorithm"><label
+								for="urlExportConfigDrawAlgorithm">線分の描画方法</label>
+							</span>
+							<span class="checkSet">
+								<input type="checkbox" id="urlExportConfigMachineLanguage"><label
+								for="urlExportConfigMachineLanguage">マシン語</label>
+							</span>
+							<span class="checkSet">
+								<input type="checkbox" id="urlExportConfigMemory"><label
+								for="urlExportConfigMemory">メモリモード</label>
+							</span>
+							<span class="checkSet">
+								<input type="checkbox" id="urlExportConfigKeyLayout"><label
+								for="urlExportConfigKeyLayout">スクリーンキーボード</label>
+							</span>
+						</fieldset>
+						<button id="urlExportButton" type="button">URL作成</button>
+						※表示中のページのURLが変更されます
+					</fieldset>
 				</div>
 				<div id="ioForm">
 					<fieldset id="phisicalUartPortStatus">

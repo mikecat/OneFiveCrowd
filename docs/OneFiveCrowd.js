@@ -642,7 +642,32 @@ function toggleCursor() {
 	updateScreen();
 }
 
+// 通常のBase64文字列をURL用のBase64文字列に変換する
+function base64ToURL(data) {
+	return data.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+// URL用のBase64文字列から通常のBase64文字列に変換する
+function base64FromURL(data) {
+	let result = data.replace(/-/g, "+").replace(/_/g, "/");
+	while (result.length % 4 !== 0) result += "=";
+	return result;
+}
+
 async function initSystem() {
+	// URLから情報を取得する
+	const params = new URLSearchParams(location.hash.substring(1));
+	const getHashParam = function(name, defaultValue) {
+		return params.has(name) ? parmams.get(name) : defaultValue;
+	};
+	// 以下の優先順位でパラメータを取得する
+	// 1. URLによる設定
+	// 2. localStorageに保存された設定
+	// 3. デフォルト値
+	const getInitialParam = function(name, defaultValue) {
+		return params.has(name) ? params.get(name) : readLocalStorage(name, defaultValue);
+	};
+
 	// canvasの初期化
 	mainScreen = document.getElementById("mainScreen");
 	mainScreenContext = mainScreen.getContext("2d");
@@ -742,7 +767,7 @@ async function initSystem() {
 	// スクリーンキーボードの初期化
 	initializeScreenKeys();
 	initializePad();
-	keyLayout = parseInt(readLocalStorage("keyLayout", "1"));
+	keyLayout = parseInt(getInitialParam("keyLayout", "1"));
 	if (keyLayout !== 0) keyLayout = 1;
 	switchScreenKeys(keyLayout);
 	const systemKeyboardLayoutSelect = document.getElementById("systemKeyboardLayoutSelect");
@@ -761,7 +786,7 @@ async function initSystem() {
 
 	// フォント設定UIの初期化
 	const systemFontSelect = document.getElementById("systemFontSelect");
-	setSelectByValue(systemFontSelect, readLocalStorage("font", "1_4"));
+	setSelectByValue(systemFontSelect, getInitialParam("font", "1_4"));
 	const switchFont = function() {
 		const fontName = systemFontSelect.value;
 		const fontData = fonts[fontName];
@@ -803,21 +828,21 @@ async function initSystem() {
 
 	// MML解釈モード設定UIの初期化
 	const systemMMLInterpretationSelect = document.getElementById("systemMMLInterpretationSelect");
-	setSelectByValue(systemMMLInterpretationSelect, readLocalStorage("MMLmode", "new"));
+	setSelectByValue(systemMMLInterpretationSelect, getInitialParam("MMLmode", "new"));
 	systemMMLInterpretationSelect.addEventListener("change", function() {
 		writeLocalStorage("MMLmode", systemMMLInterpretationSelect.value);
 	});
 
 	// 線分描画アルゴリズム設定UIの初期化
 	const systemDrawAlgorithmSelect = document.getElementById("systemDrawAlgorithmSelect");
-	setSelectByValue(systemDrawAlgorithmSelect, readLocalStorage("drawAlgorithm", "bresenham"));
+	setSelectByValue(systemDrawAlgorithmSelect, getInitialParam("drawAlgorithm", "bresenham"));
 	systemDrawAlgorithmSelect.addEventListener("change", function() {
 		writeLocalStorage("drawAlgorithm", systemDrawAlgorithmSelect.value);
 	});
 
 	// マシン語モード設定UIの初期化
 	const systemMachineLanguageSelect = document.getElementById("systemMachineLanguageSelect");
-	setSelectByValue(systemMachineLanguageSelect, readLocalStorage("machineLanguage", "m0"));
+	setSelectByValue(systemMachineLanguageSelect, getInitialParam("machineLanguage", "m0"));
 	systemMachineLanguageSelect.addEventListener("change", function() {
 		initializeApiTable(systemMachineLanguageSelect.value);
 		writeLocalStorage("machineLanguage", systemMachineLanguageSelect.value);
@@ -826,7 +851,7 @@ async function initSystem() {
 
 	// Jamモード / Cakeモード 切り替えUIの初期化
 	const systemMemorySelect = document.getElementById("systemMemorySelect");
-	setSelectByValue(systemMemorySelect, readLocalStorage("memoryMode", "jam"));
+	setSelectByValue(systemMemorySelect, getInitialParam("memoryMode", "jam"));
 	systemMemorySelect.addEventListener("change", function() {
 		switchCakeMode(systemMemorySelect.value === "cake");
 		writeLocalStorage("memoryMode", systemMemorySelect.value);
@@ -863,11 +888,108 @@ async function initSystem() {
 	uartManager.addConnectStatusChangeCallback(showUartConnected);
 	showUartConnected(uartManager.isConnected());
 
+	// URLで共有機能の初期化
+	const urlExportElements = {};
+	document.querySelectorAll("#urlExportArea input[type=\"checkbox\"]").forEach(function(elem) {
+		urlExportElements[elem.id] = elem;
+	});
+	document.getElementById("urlExportButton").addEventListener("click", async function() {
+		const data = new URLSearchParams();
+		if (urlExportElements.urlExportText.checked) {
+			data.set("text", textInputArea.value);
+		}
+		if (urlExportElements.urlExportProgram.checked) {
+			let programData = "";
+			for (let i = 0; i < prgView.length; i++) {
+				programData += String.fromCharCode(prgView[i]);
+			}
+			data.set("prg", base64ToURL(btoa(programData.replace(/\0+$/, ""))));
+		}
+		if (urlExportElements.urlExportVirtualEeprom.checked) {
+			const virtualEepromData = await virtualEepromManager.getCurrentEepromData();
+			if (virtualEepromData) {
+				if ("name" in virtualEepromData) data.set("en", virtualEepromData.name);
+				if (virtualEepromData.data) {
+					for (let i = 100; i <= 227; i++) {
+						if (i in virtualEepromData.data) {
+							data.set("e" + (i - 100), base64ToURL(virtualEepromData.data[i]));
+						}
+					}
+				}
+			}
+		}
+		if (urlExportElements.urlExportConfigFont.checked) {
+			data.set("font", systemFontSelect.value);
+		}
+		if (urlExportElements.urlExportConfigMMLMode.checked) {
+			data.set("MMLmode", systemMMLInterpretationSelect.value);
+		}
+		if (urlExportElements.urlExportConfigDrawAlgorithm.checked) {
+			data.set("drawAlgorithm", systemDrawAlgorithmSelect.value);
+		}
+		if (urlExportElements.urlExportConfigMachineLanguage.checked) {
+			data.set("machineLanguage", systemMachineLanguageSelect.value);
+		}
+		if (urlExportElements.urlExportConfigMemory.checked) {
+			data.set("memoryMode", systemMemorySelect.value);
+		}
+		if (urlExportElements.urlExportConfigKeyLayout.checked) {
+			data.set("keyLayout", systemKeyboardLayoutSelect.value);
+		}
+		location.hash = data.toString();
+	});
+
 	// 仮想EEPROMの初期化を行う
 	await virtualEepromManager.initialize();
 
+	// URLから仮想EEPROMのデータを設定する
+	let virtualEepromData = null;
+	if (params.has("en")) {
+		if (virtualEepromData === null) virtualEepromData = {};
+		virtualEepromData.name = params.get("en");
+	}
+	for (let i = 0; i <= 127; i++) {
+		const key = "e" + i;
+		if (params.has(key)) {
+			try {
+				if (virtualEepromData === null) virtualEepromData = {};
+				if (!("data" in virtualEepromData)) virtualEepromData.data = {};
+				const data = atob(base64FromURL(params.get(key)));
+				const dataArray = new Uint8Array(data.length);
+				for (let j = 0; j < data.length; j++) {
+					dataArray[j] = data.charCodeAt(j);
+				}
+				virtualEepromData.data[100 + i] = dataArray;
+			} catch (e) {
+				console.warn(e);
+			}
+		}
+	}
+	if (virtualEepromData) {
+		if (!("name" in virtualEepromData)) virtualEepromData.name = "URL";
+		await virtualEepromManager.addTemporal(virtualEepromData);
+	}
+
 	// 各種初期化を行う
 	await resetSystem();
+
+	// URLからプログラム領域のデータを設定する
+	if (params.has("prg")) {
+		try {
+			const data = atob(base64FromURL(params.get("prg")));
+			for (let i = 0; i < data.length && i < prgView.length; i++) {
+				prgView[i] = data.charCodeAt(i);
+			}
+			prgDirty = true;
+		} catch (e) {
+			console.warn(e);
+		}
+	}
+
+	// URLからテキストを入力する
+	if (params.has("text")) {
+		keyInput(importText(params.get("text")));
+	}
 
 	// 実行を開始する
 	doCallback(execute);
