@@ -216,7 +216,7 @@ async function commandLIST(args) {
 				line += String.fromCharCode(prgView[ptr + 3 + i]);
 			}
 			const shownCountDelta = 1 + Math.floor(line.length / SCREEN_WIDTH);
-			if (shownCount + shownCountDelta > LIST_WAIT_LINES) {
+			if (shownCount + shownCountDelta > SCREEN_HEIGHT - 2) {
 				await commandWAIT([LIST_WAIT_TIME]);
 				shownCount = 0;
 			}
