@@ -452,6 +452,206 @@ function commandCONT() {
 	}
 }
 
+function commandRENUM(args) {
+	// プログラム領域のプログラムの行番号を振り直す
+	const start = args.length > 0 ? args[0] : 10;
+	const delta = args.length > 1 ? args[1] : 10;
+	if (start <= 0 || delta <= 0) throw "Illegal argument";
+	// プログラム領域から行番号のリストを取得する
+	const lineNoList = [];
+	let ptr = 0;
+	while (ptr + 3 <= prgView.length) {
+		const lineNo = prgView[ptr] | (prgView[ptr + 1] << 8);
+		if (lineNo === 0) break;
+		const lineLength = prgView[ptr + 2];
+		lineNoList.push(lineNo);
+		ptr += lineLength + 4;
+	}
+	// 取得した行番号のリストを昇順にソートし、重複した行番号を取り除く
+	lineNoList.sort(function(a, b) { return a < b ? -1 : (a > b ? 1 : 0); });
+	for (let i = 1; i < lineNoList.length; i++) {
+		if (lineNoList[i - 1] === lineNoList[i]) {
+			lineNoList.splice(i, 1);
+			i--;
+		}
+	}
+	// 新しい行番号を求める
+	// 存在する行番号の場合 → その行番号に対応する行番号
+	// 存在しない行番号の場合 → 次の存在する行番号に対応する行番号 or (前の存在する行番号に対応する行番号 + 増分)
+	const getNewLineNo = function(oldLineNo) {
+		// 行番号がない or 最初の存在する行番号の前
+		if (lineNoList.length === 0 || oldLineNo <= lineNoList[0]) return start;
+		// 最後の存在する行番号の後ろ
+		if (lineNoList[lineNoList.length - 1] < oldLineNo) return start + delta * lineNoList.length;
+		// めぐる式二分探索で、クエリの行番号以降で最初の存在する行番号を求める
+		let less = 0, ge = lineNoList.length - 1;
+		while (less + 1 < ge) {
+			let m = less + Math.floor((ge - less) / 2);
+			if (lineNoList[m] < oldLineNo) less = m; else ge = m;
+		}
+		// 求めた行番号に対応する新しい行番号
+		return start + delta * ge;
+	};
+	// 行番号を振り直す
+	let lineCount = 0;
+	ptr = 0;
+	while (ptr + 3 <= prgView.length) {
+		const lineNo = prgView[ptr] | (prgView[ptr + 1] << 8);
+		if (lineNo === 0) break;
+		const newLineNoForThisLine = start + delta * lineCount;
+		prgView[ptr] = newLineNoForThisLine & 0xff;
+		prgView[ptr + 1] = (newLineNoForThisLine >> 8) & 0xff;
+		lineCount++;
+		const lineLength = prgView[ptr + 2];
+		const prgOffset = ptr + 3;
+		const trueLineLength = prgOffset + lineLength <= prgView.length ? lineLength : prgView.length - prgOffset;
+		let startPos = -1, status = 0, inString = false;
+		for (let i = 0; i < trueLineLength; i++) {
+			let c = String.fromCharCode(prgView[prgOffset + i]).toUpperCase();
+			// 文字列の中は対象外
+			if (inString) {
+				if (c === "\"") {
+					inString = false;
+					status = 0;
+				}
+				continue;
+			}
+			if (c === "\"") {
+				inString = true;
+				continue;
+			}
+			// コメントは対象外
+			if (c === "'") {
+				break;
+			}
+			switch (status) {
+				case 0:
+					// 後で処理する
+					break;
+				case 10: // G
+					if (c === "O") {
+						status = 20;
+					} else if (c === "S") {
+						status = 21;
+					} else if (c !== " ") {
+						status = 0;
+					}
+					break;
+				case 20: // GO
+					if (c === "T") {
+						status = 30;
+					} else if (c === "S") {
+						status = 31;
+					} else if (c !== " ") {
+						status = 0;
+					}
+					break;
+				case 21: // GS
+					if (c === "B") {
+						status = 100;
+					} else if (c !== " ") {
+						status = 0;
+					}
+					break;
+				case 30: // GOT
+					if (c === "O") {
+						status = 100;
+					} else if (c !== " ") {
+						status = 0;
+					}
+					break;
+				case 31: // GOS
+					if (c === "U") {
+						status = 40;
+					} else if (c !== " ") {
+						status = 0;
+					}
+					break;
+				case 40: // GOSU
+					if (c === "B") {
+						status = 100;
+					} else if (c !== " ") {
+						status = 0;
+					}
+					break;
+				case 1000: // R
+					if (c === "E") {
+						status = 1010;
+					} else if (c !== " ") {
+						status = 0;
+					}
+					break;
+				case 1010: // RE
+					if (c === "M") {
+						status = 2000;
+					} else if (c !== " ") {
+						status = 0;
+					}
+					break;
+				default:
+					throw "RENUM internal error (bug)";
+			}
+			// コメント (REM) は対象外
+			if (status === 2000) {
+				break;
+			}
+			// GOGOTO などのケースに対処するため、1文字目はここで処理する
+			if (status === 0) {
+				if (c === "G") {
+					startPos = i;
+					status = 10;
+				} else if (c === "R") {
+					status = 1000;
+				}
+			}
+			if (status === 100) {
+				status = 0;
+				let numberStart = -1;
+				let oldLineNumber = 0;
+				for (i++; i < trueLineLength; i++) {
+					const c = prgView[prgOffset + i];
+					if (0x30 <= c && c <= 0x39) {
+						if (numberStart < 0) numberStart = i;
+						oldLineNumber = oldLineNumber * 10 + (c - 0x30);
+					} else if (c !== 0x20) {
+						break;
+					}
+				}
+				// 数字と空白以外が現れる前に数字があった場合、行番号として書き換える
+				if (numberStart >= 0) {
+					// startPos : GOTO/GOSUB/GSB の1文字目のGの位置
+					// numberStart : GOTO/GOSUB/GSB に続く数字の1文字目の位置
+					// i : GOTO/GOSUB/GSBの後の数字の後の数字と空白以外の最初の文字の位置
+
+					// まず、[numberStart, i) の範囲に新しい行番号を書き込もうとする
+					// 文字数が足りない場合で、行の文字数が奇数の場合、1文字後ろにずらす
+					// [numberStart, i) の範囲が余った場合は、空白で埋める
+					// 足りない場合は、最大 [startPos + 1, i) を用い、それでも足りない場合は上位桁を捨てる
+					const newLineNumber = "" + getNewLineNo(oldLineNumber);
+					if (i - numberStart < newLineNumber.length && prgView[prgOffset + trueLineLength - 1] === 0) {
+						// 文字数が足りず、行の文字数が奇数 (最終バイトがゼロ) → 1文字後ろにずらす
+						for (let j = trueLineLength - 1; j > i; j--) {
+							prgView[prgOffset + j] = prgView[prgOffset + j - 1];
+						}
+						i++;
+					}
+					let j = i - 1;
+					for (let count = 0; count < newLineNumber.length && j > startPos; count++) {
+						prgView[prgOffset + j] = newLineNumber.charCodeAt(newLineNumber.length - 1 - count);
+						j--;
+					}
+					for (; j >= numberStart; j--) {
+						prgView[prgOffset + j] = 0x20;
+					}
+				}
+				// i は今回処理した範囲の次の位置を指しているので、ループの i++ と打ち消す
+				i--;
+			}
+		}
+		ptr += lineLength + 4;
+	}
+}
+
 async function commandLRUN(args) {
 	// プログラム領域にデータを読み込み、実行する
 	const slot = args.length > 0 ? args[0] : functionFILE();
