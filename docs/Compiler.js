@@ -1,6 +1,6 @@
 "use strict";
 
-const blankChars = " \t\r\n";
+const blankChars = " ";
 // トークンがあれば[トークン, トークンの次の文字の位置]を、なければnullを返す
 const getTokenInfo = (function(tokens) {
 	// トークンをまとめた木を構築する
