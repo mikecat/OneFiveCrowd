@@ -318,10 +318,10 @@ async function commandFILES(args) {
 	let count = 0;
 	for (let i = startNo; i <= endNo;) {
 		const title = await getFileTitle(i);
-		await putString("" + i);
-		if (title !== "") await putString(" " + title);
-		await putString("\n");
-		if (++count >= BREAK_AFTER_COUNT) {
+		let stringToPrint = "" + i;
+		if (title !== "") stringToPrint += " " + title;
+		await putString(stringToPrint.substring(0, SCREEN_WIDTH - 2) + "\n");
+		if (++count >= SCREEN_HEIGHT - 2) {
 			await commandWAIT([60]);
 			count = 0;
 		}
