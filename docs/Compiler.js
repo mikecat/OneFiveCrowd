@@ -302,7 +302,7 @@ const basicCommands = {
 	"FILES"  : {func: commandFILES, minArg: 0, maxArg: 2},
 	"BEEP"   : {func: commandBEEP, minArg: 0, maxArg: 2},
 	"PLAY"   : {func: commandPLAY, minArg: 0, maxArg: 1},
-	"TEMPO"  : null,
+	"TEMPO"  : {func: commandTEMPO, minArg: 1, maxArg: 1},
 	"CLT"    : {func: commandCLT, minArg: 0, maxArg: 0},
 	"SCROLL" : {func: commandSCROLL, minArg: 1, maxArg: 1},
 	"NEXT"   : {func: commandNEXT, minArg: 0, maxArg: 0},

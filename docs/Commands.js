@@ -361,6 +361,11 @@ async function commandPLAY(args) {
 	}
 }
 
+async function commandTEMPO(args) {
+	// 再生中の音楽のテンポを変更する
+	await soundManager.setTempo(args[0]);
+}
+
 async function commandSCROLL(args) {
 	// 画面をスクロールする
 	switch (args[0]) {

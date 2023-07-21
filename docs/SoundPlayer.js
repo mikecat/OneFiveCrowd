@@ -34,6 +34,8 @@ class SoundPlayer extends AudioWorkletProcessor {
 					});
 					thisObj.orderGen = null;
 				}
+			} else if (data.type === "tempo") {
+				thisObj.tempo = data.tempo;
 			}
 		};
 	}

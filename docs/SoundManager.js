@@ -234,6 +234,15 @@ var soundManager = (function() {
 		});
 	};
 
+	const setTempo = async function(newTempo) {
+		const player = await getPlayerNode();
+		if (player === null) return;
+		player.port.postMessage({
+			"type": "tempo",
+			"tempo": newTempo <= 0 ? 32767 : newTempo,
+		});
+	};
+
 	const isPlaying = function() {
 		return runningQueryGen !== null;
 	};
@@ -253,6 +262,7 @@ var soundManager = (function() {
 		"beep": beep,
 		"play": play,
 		"stop": stop,
+		"setTempo": setTempo,
 		"isPlaying": isPlaying,
 		"setVolume": setVolume,
 	};
