@@ -1084,7 +1084,7 @@ function keyInput(key, invokeCallback = true, stopOnEsc = true) {
 }
 
 const specialKeyDict = {
-	"Tab"        : "  ",
+	"Tab"        : 0x09,
 	"Escape"     : 0x1b,
 	"ArrowLeft"  : 0x1c,
 	"ArrowRight" : 0x1d,
