@@ -11,8 +11,12 @@ async function commandINPUT(prompt, varIdx) {
 		for (;;) {
 			pollBreak();
 			const key = dequeueKey();
-			if (key === OVERWRITE_TOGGLE_CHAR && uartInputEchoToScreen) {
-				isOverwriteMode = !isOverwriteMode;
+			if (uartInputEchoToScreen) {
+				if (key === OVERWRITE_TOGGLE_CHAR) {
+					isOverwriteMode = !isOverwriteMode;
+				} else if (key === ROMAN_TOGGLE_CHAR) {
+					isRomanMode = !isRomanMode;
+				}
 			}
 			switch (key) {
 				case -1:

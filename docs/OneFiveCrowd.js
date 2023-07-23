@@ -302,8 +302,15 @@ let cursorY = 0;
 
 // 上書きモードか
 let isOverwriteMode = false;
+// ローマ字入力モードか
+let isRomanMode = false;
+// CapsLock (大文字/小文字入れ替え)モードか
+let isCaseSwapMode = false;
 // INPUTの処理中か (カーソル形状の判定用)
 let isExecutingInput = false;
+
+// ローマ字入力の状態 (これまでに入力された文字列)
+let romanInputStatus = "";
 
 // ローマ字入力モードをトグルする文字
 const ROMAN_TOGGLE_CHAR = 0x0f;
@@ -1044,6 +1051,8 @@ async function resetSystem() {
 	await uartManager.setBps(DEFAULT_BPS);
 	isOverwriteMode = false;
 	isExecutingInput = false;
+	isCaseSwapMode = false;
+	romanInputStatus = "";
 	// 各種状態の初期化
 	clearScreen();
 	commandCLP();
@@ -1083,6 +1092,9 @@ function dequeueKey() {
 	return key;
 }
 
+// key : 入力する文字(整数)または文字列
+// invokeCallback : 入力後要求に応じてコールバックを呼び出すか
+// stopOnEsc : Escキーが入力された場合は入力せずにプログラムの実行停止を要求するか
 function keyInput(key, invokeCallback = true, stopOnEsc = true) {
 	if (typeof(key) === "number") {
 		if (key === 0x1b && stopOnEsc) {
@@ -1104,6 +1116,24 @@ function keyInput(key, invokeCallback = true, stopOnEsc = true) {
 	}
 }
 
+// ローマ字を考慮したキー入力を行う
+// key : 入力する文字 (整数専用)
+function keyRomanInput(key) {
+	if (isRomanMode && ((0x21 <= key && key <= 0x7e) || key == 0x0a || key == 0x10)) {
+		const c = String.fromCharCode(key).toUpperCase();
+		switch (c) {
+			case "A": keyInput(0xb1); break;
+			case "I": keyInput(0xb2); break;
+			case "U": keyInput(0xb3); break;
+			case "E": keyInput(0xb4); break;
+			case "O": keyInput(0xb5); break;
+			default: keyInput(c); break;
+		}
+	} else {
+		keyInput(key);
+	}
+}
+
 const specialKeyDict = {
 	"Tab"        : 0x09,
 	"Escape"     : 0x1b,
@@ -1117,6 +1147,7 @@ const specialKeyDict = {
 	"PageUp"     : 0x13,
 	"PageDown"   : 0x14,
 	"End"        : 0x17,
+	"Insert"     : OVERWRITE_TOGGLE_CHAR,
 	"F1"  : "\x13\x0c",
 	"F2"  : "\x18LOAD",
 	"F3"  : "\x18SAVE",
@@ -1125,7 +1156,10 @@ const specialKeyDict = {
 	"F6"  : "\x18?FREE()\x0a",
 	"F7"  : "\x18OUT0\x0a",
 	"F8"  : "\x18VIDEO1\x0a",
-	"F9"  : "\x18\x0cFILES\x0a"
+	"F9"  : "\x18\x0cFILES\x0a",
+	"F10" : "\x18SWITCH\x0a",
+	"F11" : "\x0c",
+	"F12" : "\x18",
 };
 
 function keyDown(key, shiftKey, ctrlKey, altKey) {
@@ -1135,7 +1169,7 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 		else if (key === "e" || key === "E") keyInput(0x17); // 行末へ
 		else if (key === "k" || key === "K") keyInput(0x0c); // カーソル以降を削除
 		else if (key === "l" || key === "L") keyInput("\x13\x0c"); // 全て削除
-		else if (key === "Shift") keyInput(ROMAN_TOGGLE_CHAR); // アルファベット/カナ切り替え
+		else if (key === "Shift" || key === " ") keyInput(ROMAN_TOGGLE_CHAR); // アルファベット/カナ切り替え
 		else if (key === "Alt") keyInput(OVERWRITE_TOGGLE_CHAR); // 挿入/上書き切り替え
 	} else if (key.length === 1) {
 		let keyCode = key.charCodeAt(0);
@@ -1163,10 +1197,10 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 			else if (keyCode === 0x7e) keyCode = 0x40;
 		}
 		if (shiftKey && keyCode == 0x20) keyCode = 0x0e;
-		keyInput(keyCode);
+		keyRomanInput(keyCode);
 	} else if (!altKey) {
 		if (key === "Enter") {
-			keyInput(shiftKey ? 0x10 : 0x0a);
+			keyRomanInput(shiftKey ? 0x10 : 0x0a);
 		} else if (key in specialKeyDict) {
 			keyInput(specialKeyDict[key]);
 		}
@@ -1184,7 +1218,26 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 
 function keyDownEvent() {
 	event.preventDefault();
-	keyDown(event.key, event.shiftKey, event.ctrlKey, event.altKey);
+	if (event.key === "Hiragana") {
+		isRomanMode = !isRomanMode;
+		if (!isRomanMode) {
+			romanInputStatus = "";
+		}
+	} else if (event.key === "Alphanumeric") {
+		if (isRomanMode) {
+			isRomanMode = false;
+			romanInputStatus = "";
+		} else {
+			isCaseSwapMode = !isCaseSwapMode;
+		}
+	} else {
+		let c = event.key;
+		if (isCaseSwapMode && c.length === 1) {
+			if ("abcdefghijklmnopqrstuvwxyz".indexOf(c) >= 0) c = c.toUpperCase();
+			else if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c) >= 0) c = c.toLowerCase();
+		}
+		keyDown(c, event.shiftKey, event.ctrlKey, event.altKey);
+	}
 	return false;
 }
 
@@ -1804,6 +1857,9 @@ async function doInteractive() {
 	await putString(String.fromCharCode(key), true);
 	if (key === OVERWRITE_TOGGLE_CHAR) {
 		isOverwriteMode = !isOverwriteMode;
+	}
+	if (key === ROMAN_TOGGLE_CHAR) {
+		isRomanMode = !isRomanMode;
 	}
 	if (key === 0x0a && cursorY > 0) {
 		const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
