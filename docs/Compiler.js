@@ -1067,7 +1067,7 @@ var compiler = (function() {
 			const args = compilePrintArguments(command.nodes[1]);
 			return async function() {
 				for (let i = 0; i < args.length; i++) {
-					putString((await args[i].expr()) + args[i].suffix);
+					await putString((await args[i].expr()) + args[i].suffix);
 				}
 				return [lineno, nextPosInLine];
 			};
