@@ -324,6 +324,62 @@ let cursorDispFullWidth = null;
 let cursorOn = false;
 let cursorTimerId = null;
 
+// ローマ字入力用変換表
+const romanMap = {
+	"A": "ｱ", "I": "ｲ", "U": "ｳ", "E": "ｴ", "O": "ｵ",
+	"KA": "ｶ", "KI": "ｷ", "KU": "ｸ", "KE": "ｹ", "KO": "ｺ",
+	"SA": "ｻ", "SI": "ｼ", "SU": "ｽ", "SE": "ｾ", "SO": "ｿ",
+	"TA": "ﾀ", "TI": "ﾁ", "TU": "ﾂ", "TE": "ﾃ", "TO": "ﾄ",
+	"NA": "ﾅ", "NI": "ﾆ", "NU": "ﾇ", "NE": "ﾈ", "NO": "ﾉ",
+	"HA": "ﾊ", "HI": "ﾋ", "HU": "ﾌ", "HE": "ﾍ", "HO": "ﾎ",
+	"MA": "ﾏ", "MI": "ﾐ", "MU": "ﾑ", "ME": "ﾒ", "MO": "ﾓ",
+	"YA": "ﾔ", "YU": "ﾕ", "YO": "ﾖ",
+	"RA": "ﾗ", "RI": "ﾘ", "RU": "ﾙ", "RE": "ﾚ", "RO": "ﾛ",
+	"WA": "ﾜ", "WI": "ｳｨ", "WU": "ｳ", "WE": "ｳｪ", "WO": "ｦ",
+	"NN": "ﾝ", "XN": "ﾝ",
+	"GA": "ｶﾞ", "GI": "ｷﾞ", "GU": "ｸﾞ", "GE": "ｹﾞ", "GO": "ｺﾞ",
+	"ZA": "ｻﾞ", "ZI": "ｼﾞ", "ZU": "ｽﾞ", "ZE": "ｾﾞ", "ZO": "ｿﾞ",
+	"DA": "ﾀﾞ", "DI": "ﾁﾞ", "DU": "ﾂﾞ", "DE": "ﾃﾞ", "DO": "ﾄﾞ",
+	"BA": "ﾊﾞ", "BI": "ﾋﾞ", "BU": "ﾌﾞ", "BE": "ﾍﾞ", "BO": "ﾎﾞ",
+	"PA": "ﾊﾟ", "PI": "ﾋﾟ", "PU": "ﾌﾟ", "PE": "ﾍﾟ", "PO": "ﾎﾟ",
+	"KYA": "ｷｬ", "KYI": "ｷｨ", "KYU": "ｷｭ", "KYE": "ｷｪ", "KYO": "ｷｮ",
+	"SYA": "ｼｬ", "SYI": "ｼｨ", "SYU": "ｼｭ", "SYE": "ｼｪ", "SYO": "ｼｮ",
+	"TYA": "ﾁｬ", "TYI": "ﾁｨ", "TYU": "ﾁｭ", "TYE": "ﾁｪ", "TYO": "ﾁｮ",
+	"NYA": "ﾆｬ", "NYI": "ﾆｨ", "NYU": "ﾆｭ", "NYE": "ﾆｪ", "NYO": "ﾆｮ",
+	"HYA": "ﾋｬ", "HYI": "ﾋｨ", "HYU": "ﾋｭ", "HYE": "ﾋｪ", "HYO": "ﾋｮ",
+	"MYA": "ﾐｬ", "MYI": "ﾐｨ", "MYU": "ﾐｭ", "MYE": "ﾐｪ", "MYO": "ﾐｮ",
+	"RYA": "ﾘｬ", "RYI": "ﾘｨ", "RYU": "ﾘｭ", "RYE": "ﾘｪ", "RYO": "ﾘｮ",
+	"GYA": "ｷﾞｬ", "GYI": "ｷﾞｨ", "GYU": "ｷﾞｭ", "GYE": "ｷﾞｪ", "GYO": "ｷﾞｮ",
+	"ZYA": "ｼﾞｬ", "ZYI": "ｼﾞｨ", "ZYU": "ｼﾞｭ", "ZYE": "ｼﾞｪ", "ZYO": "ｼﾞｮ",
+	"DYA": "ﾁﾞｬ", "DYI": "ﾁﾞｨ", "DYU": "ﾁﾞｭ", "DYE": "ﾁﾞｪ", "DYO": "ﾁﾞｮ",
+	"BYA": "ﾋﾞｬ", "BYI": "ﾋﾞｨ", "BYU": "ﾋﾞｭ", "BYE": "ﾋﾞｪ", "BYO": "ﾋﾞｮ",
+	"PYA": "ﾋﾟｬ", "PYI": "ﾋﾟｨ", "PYU": "ﾋﾟｭ", "PYE": "ﾋﾟｪ", "PYO": "ﾋﾟｮ",
+	"XA": "ｧ", "XI": "ｨ", "XU": "ｩ", "XE": "ｪ", "XO": "ｫ", "XTU": "ｯ",
+	"LA": "ｧ", "LI": "ｨ", "LU": "ｩ", "LE": "ｪ", "LO": "ｫ", "LTU": "ｯ",
+	"DHA": "ﾃﾞｬ", "DHI": "ﾃﾞｨ", "DHU": "ﾃﾞｭ", "DHE": "ﾃﾞｪ", "DHO": "ﾃﾞｮ",
+	"SHA": "ｼｬ", "SHI": "ｼ", "SHU": "ｼｭ", "SHE": "ｼｪ", "SHO": "ｼｮ",
+	"CHA": "ﾁｬ", "CHI": "ﾁ", "CHU": "ﾁｭ", "CHE": "ﾁｪ", "CHO": "ﾁｮ",
+	"THA": "ﾃｬ", "THI": "ﾃｨ", "THU": "ﾃｭ", "THE": "ﾃｪ", "THO": "ﾃｮ",
+	"FA": "ﾌｧ", "FI": "ﾌｨ", "FU": "ﾌ", "FE": "ﾌｪ", "FO": "ﾌｫ",
+	"FYA": "ﾌｬ", "FYU": "ﾌｭ", "FYO": "ﾌｮ",
+	"JA": "ｼﾞｬ", "JI": "ｼﾞ", "JU": "ｼﾞｭ", "JE": "ｼﾞｪ", "JO": "ｼﾞｮ",
+	"JYA": "ｼﾞｬ", "JYI": "ｼﾞｨ", "JYU": "ｼﾞｭ", "JYE": "ｼﾞｪ", "JYO": "ｼﾞｮ",
+	"VA": "ｳﾞｧ", "VI": "ｳﾞｨ", "VU": "ｳﾞ", "VE": "ｳﾞｪ", "VO": "ｳﾞｫ",
+	"CA": "ｶ", "CI": "ｷ", "CU": "ｸ", "CE": "ｹ", "CO": "ｺ",
+	"CYA": "ｷｬ", "CYI": "ｷｨ", "CYU": "ｷｭ", "CYE": "ｷｪ", "CYO": "ｷｮ",
+	"LYA": "ｬ", "LYI": "ｨ", "LYU": "ｭ", "LYE": "ｪ", "LYO": "ｮ",
+	"QA": "ｸｧ", "QI": "ｸｨ", "QU": "ｸｩ", "QE": "ｸｪ", "QO": "ｸｫ",
+	"QYA": "ｬ", "QYI": "ｨ", "QYU": "ｭ", "QYE": "ｪ", "QYO": "ｮ",
+	"VYA": "ｬ", "VYI": "ｨ", "VYU": "ｭ", "VYE": "ｪ", "VYO": "ｮ",
+	"WYA": "ｬ", "WYI": "ｨ", "WYU": "ｭ", "WYE": "ｪ", "WYO": "ｮ",
+	"XYA": "ｬ", "XYI": "ｨ", "XYU": "ｭ", "XYE": "ｪ", "XYO": "ｮ",
+	",": "､", ".": "｡", "[": "｢", "]": "｣", "-": "ｰ", "/": "･", "\\": "¥",
+	"_bs_xtu": "\x08ｯ", "_bs_nn": "\x08ﾝ",
+};
+Object.keys(romanMap).forEach(function(romanKey) {
+	romanMap[romanKey] = importText(romanMap[romanKey]);
+});
+
 // 画面拡大率
 let videoZoom = 1;
 // 画面反転
@@ -1121,19 +1177,48 @@ function keyInput(key, invokeCallback = true, stopOnEsc = true) {
 function keyRomanInput(key) {
 	if (isRomanMode && ((0x21 <= key && key <= 0x7e) || key == 0x0a || key == 0x10)) {
 		const c = String.fromCharCode(key).toUpperCase();
-		switch (c) {
-			case "A": keyInput(0xb1); break;
-			case "I": keyInput(0xb2); break;
-			case "U": keyInput(0xb3); break;
-			case "E": keyInput(0xb4); break;
-			case "O": keyInput(0xb5); break;
-			default: keyInput(c); break;
+		const newStatus = romanInputStatus + c;
+		let charsToRemove = 0, charsToAdd = "", charsToEnter = null;
+		const last1 = newStatus.substring(newStatus.length - 1);
+		const last2 = newStatus.substring(newStatus.length - 2);
+		const last3 = newStatus.substring(newStatus.length - 3);
+		if (newStatus.length >= 3 && (last3 in romanMap)) {
+			charsToRemove = 2;
+			charsToEnter = romanMap[last3];
+		} else if (newStatus.length >= 2 && (last2 in romanMap)) {
+			charsToRemove = 1;
+			charsToEnter = romanMap[last2];
+		} else if (last1 in romanMap) {
+			charsToEnter = romanMap[last1];
+		} else if (romanInputStatus.substring(romanInputStatus.length - 1) === c && "BCDFGHJKLMPQRSTVWXYZ".indexOf(c) >= 0) {
+			// N 以外の同じ子音が連続 → 小さい「ッ」を入力する
+			charsToRemove = 1;
+			charsToAdd = c;
+			charsToEnter = romanMap._bs_xtu;
+		}
+		// N の後に関係ない入力 → 「ン」を入力する
+		// 記号など変換が有効な場合もあるため、else if にしない
+		if (romanInputStatus.substring(romanInputStatus.length - 1) === "N" && "NAIUEOY".indexOf(c) < 0) {
+			keyInput(romanMap._bs_nn);
+		}
+		if (charsToEnter !== null) {
+			for (let i = 0; i < charsToRemove; i++) keyInput(0x08);
+			keyInput(charsToEnter + charsToAdd);
+			romanInputStatus = charsToAdd;
+		} else {
+			romanInputStatus += c;
+			if (romanInputStatus.length >= 3) romanInputStatus = romanInputStatus.substring(romanInputStatus.length - 2);
+			keyInput(c);
 		}
 	} else {
+		if (isRomanMode && key == 0x08 && romanInputStatus.length > 0) {
+			romanInputStatus = romanInputStatus.substring(0, romanInputStatus.length - 1);
+		}
 		keyInput(key);
 	}
 }
 
+// 特殊キー (ローマ字入力システムを通す)
 const specialKeyDict = {
 	"Tab"        : 0x09,
 	"Escape"     : 0x1b,
@@ -1148,6 +1233,10 @@ const specialKeyDict = {
 	"PageDown"   : 0x14,
 	"End"        : 0x17,
 	"Insert"     : OVERWRITE_TOGGLE_CHAR,
+};
+
+// ファンクションキー (ローマ字入力システムを通さない)
+const functionKeyDict = {
 	"F1"  : "\x13\x0c",
 	"F2"  : "\x18LOAD",
 	"F3"  : "\x18SAVE",
@@ -1202,7 +1291,9 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 		if (key === "Enter") {
 			keyRomanInput(shiftKey ? 0x10 : 0x0a);
 		} else if (key in specialKeyDict) {
-			keyInput(specialKeyDict[key]);
+			keyRomanInput(specialKeyDict[key]);
+		} else if (key in functionKeyDict) {
+			keyInput(functionKeyDict[key]);
 		}
 	}
 	if (!ctrlKey && !altKey) {
