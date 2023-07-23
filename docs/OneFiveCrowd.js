@@ -300,9 +300,20 @@ let uartInputCrAsLf = false; // シリアル入力されるCRをLFに変換す�
 let cursorX = 0;
 let cursorY = 0;
 
+// 上書きモードか
+let isOverwriteMode = false;
+// INPUTの処理中か (カーソル形状の判定用)
+let isExecutingInput = false;
+
+// ローマ字入力モードをトグルする文字
+const ROMAN_TOGGLE_CHAR = 0x0f;
+// 上書きモードをトグルする文字
+const OVERWRITE_TOGGLE_CHAR = 0x11;
+
 // カーソルアニメーション用
 let cursorDispX = -1;
 let cursorDispY = -1;
+let cursorDispFullWidth = null;
 let cursorOn = false;
 let cursorTimerId = null;
 
@@ -573,6 +584,9 @@ function updateScreen() {
 		vramDirty = true;
 	}
 	const drawCursor = cursorOn && (keyBlocked || forceShowCursor);
+	// インタラクティブまたはINPUTの実行時は、カーソル形状は上書きモードを反映する
+	// そうでないときは、カーソル形状は常に全幅
+	const isCursorFullWidth = !(currentLine < 0 || isExecutingInput) || isOverwriteMode;
 	let videoUpdated = videoConfigUpdated;
 	videoConfigUpdated = false;
 	if (vramDirty) {
@@ -589,21 +603,23 @@ function updateScreen() {
 				const currentStyle = screenBufferContext.fillStyle;
 				screenBufferContext.globalCompositeOperation = "difference";
 				screenBufferContext.fillStyle = "#FFFFFF";
-				screenBufferContext.fillRect(cursorX * 16, cursorY * 16, 8, 16);
+				screenBufferContext.fillRect(cursorX * 16, cursorY * 16, isCursorFullWidth ? 16 : 8, 16);
 				screenBufferContext.globalCompositeOperation = currentOp;
 				screenBufferContext.fillStyle = currentStyle;
 				cursorDispX = cursorX;
 				cursorDispY = cursorY;
+				cursorDispFullWidth = isCursorFullWidth;
 			} else {
 				cursorDispX = cursorDispY = -1;
+				cursorDispFullWidth = null;
 			}
 		} else {
 			cursorDispX = cursorDispY = -1;
 		}
 		vramDirty = false;
 		videoUpdated = true;
-	} else if (drawCursor && (cursorX != cursorDispX || cursorY != cursorDispY)) {
-		// カーソルの位置がずれている
+	} else if (drawCursor && (cursorX !== cursorDispX || cursorY !== cursorDispY || isCursorFullWidth !== cursorDispFullWidth)) {
+		// カーソルの位置がずれているか、形が変わっている
 		// 古い位置のカーソルを消す
 		if (0 <= cursorDispX && cursorDispX < SCREEN_WIDTH && 0 <= cursorDispY && cursorDispY < SCREEN_HEIGHT) {
 			screenBufferContext.putImageData(
@@ -616,13 +632,15 @@ function updateScreen() {
 			const currentStyle = screenBufferContext.fillStyle;
 			screenBufferContext.globalCompositeOperation = "difference";
 			screenBufferContext.fillStyle = "#FFFFFF";
-			screenBufferContext.fillRect(cursorX * 16, cursorY * 16, 8, 16);
+			screenBufferContext.fillRect(cursorX * 16, cursorY * 16, isCursorFullWidth ? 16 : 8, 16);
 			screenBufferContext.globalCompositeOperation = currentOp;
 			screenBufferContext.fillStyle = currentStyle;
 			cursorDispX = cursorX;
 			cursorDispY = cursorY;
+			cursorDispFullWidth = isCursorFullWidth;
 		} else {
 			cursorDispX = cursorDispY = -1;
+			cursorDispFullWidth = null;
 		}
 		videoUpdated = true;
 	} else if (!drawCursor && 0 <= cursorDispX && cursorDispX < SCREEN_WIDTH && 0 <= cursorDispY && cursorDispY < SCREEN_HEIGHT) {
@@ -631,6 +649,7 @@ function updateScreen() {
 			fontImages[vramView[cursorDispY * SCREEN_WIDTH + cursorDispX]],
 			cursorDispX * 16, cursorDispY * 16);
 		cursorDispX = cursorDispY = -1;
+		cursorDispFullWidth = null;
 		videoUpdated = true;
 	}
 	if (videoUpdated) {
@@ -1023,6 +1042,8 @@ async function resetSystem() {
 	uartNoStopOnEsc = false;
 	uartInputCrAsLf = false;
 	await uartManager.setBps(DEFAULT_BPS);
+	isOverwriteMode = false;
+	isExecutingInput = false;
 	// 各種状態の初期化
 	clearScreen();
 	commandCLP();
@@ -1114,8 +1135,8 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 		else if (key === "e" || key === "E") keyInput(0x17); // 行末へ
 		else if (key === "k" || key === "K") keyInput(0x0c); // カーソル以降を削除
 		else if (key === "l" || key === "L") keyInput("\x13\x0c"); // 全て削除
-		else if (key === "Shift") keyInput(0x0f); // アルファベット/カナ切り替え
-		else if (key === "Alt") keyInput(0x11); // 挿入/上書き切り替え
+		else if (key === "Shift") keyInput(ROMAN_TOGGLE_CHAR); // アルファベット/カナ切り替え
+		else if (key === "Alt") keyInput(OVERWRITE_TOGGLE_CHAR); // 挿入/上書き切り替え
 	} else if (key.length === 1) {
 		let keyCode = key.charCodeAt(0);
 		// アルファベット大文字と小文字を入れ替える
@@ -1595,7 +1616,9 @@ function putChar(c, isInsert = false) {
 async function putString(str, isEchoback = false, isInputEcho = false) {
 	if ((isInputEcho ? uartInputEchoToScreen : uartPrintToScreen) || isEchoback) {
 		for (let i = 0; i < str.length; i++) {
-			putChar(str.charCodeAt(i), isEchoback);
+			// インタラクティブまたはINPUTの場合、上書きモードの設定に従う
+			// そうでない場合 (PRINTなど)、常に上書きする
+			putChar(str.charCodeAt(i), (isEchoback || isInputEcho) && !isOverwriteMode);
 		}
 	}
 	if (isEchoback ? uartEchoback : (isInputEcho ? uartInputEchoToSerial : uartPrintToSerial)) {
@@ -1779,6 +1802,9 @@ async function doInteractive() {
 		return [currentLine, currentPositionInLine];
 	}
 	await putString(String.fromCharCode(key), true);
+	if (key === OVERWRITE_TOGGLE_CHAR) {
+		isOverwriteMode = !isOverwriteMode;
+	}
 	if (key === 0x0a && cursorY > 0) {
 		const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
 		let start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
