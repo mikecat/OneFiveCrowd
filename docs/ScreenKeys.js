@@ -295,8 +295,8 @@ function createScreenKeys(keyInfo, name) {
 							if (keyData.keyCode) {
 								keyToSend = keyData.keyCode;
 							} else {
-								if (keyToSend in highCharsMap) {
-									keyToSend = highCharsMap[keyToSend];
+								if (keyToSend in charsMap) {
+									keyToSend = charsMap[keyToSend];
 								} else if (keyToSend.length === 1) {
 									if (alphabets.indexOf(keyToSend) >= 0) {
 										keyToSend = keyToSend.toLowerCase();
