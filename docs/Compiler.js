@@ -330,7 +330,7 @@ const basicCommands = {
 	"CLO"    : null,
 	"SRND"   : {func: commandSRND, minArg: 1, maxArg: 1},
 	"COPY"   : {func: commandCOPY, minArg: 3, maxArg: 3},
-	"UART"   : null,
+	"UART"   : {func: commandUART, minArg: 1, maxArg: 2},
 	"OK"     : {func: commandOK, minArg: 0, maxArg: 1},
 	"IoT.OUT": null,
 	"SWITCH" : null,

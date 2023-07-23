@@ -284,6 +284,18 @@ let okMode = 1;
 // キーボードレイアウト
 let keyLayout = 1;
 
+// シリアル入出力設定
+let uartPrintToScreen = true; // PRINTなどの出力を画面に反映するか
+let uartPrintToSerial = true; // PRINTなどの出力をシリアル出力するか
+let uartPrintControl = true; // CLSなどの制御信号をシリアル出力するか
+let uartEchoback = false; // インタラクティブで入力される文字をシリアル出力するか
+let uartOutputCrlf = false; // シリアル出力時LFをCR+LFに変換するか
+let uartInputEchoToScreen = true; // INPUTで入力される文字を画面に反映するか
+let uartInputEchoToSerial = false; // INPUTで入力される文字をシリアル出力するか
+let uartNoInput = false; // シリアル入力を無視するか
+let uartNoStopOnEsc = false; // シリアル入力されるESCを実行停止要求として扱わないようにするか
+let uartInputCrAsLf = false; // シリアル入力されるCRをLFに変換するか
+
 // カーソル位置
 let cursorX = 0;
 let cursorY = 0;
@@ -1000,6 +1012,16 @@ async function resetSystem() {
 	videoInvert = false;
 	SCREEN_WIDTH = RAW_SCREEN_WIDTH;
 	SCREEN_HEIGHT = RAW_SCREEN_HEIGHT;
+	uartPrintToScreen = true;
+	uartPrintToSerial = true;
+	uartPrintControl = true;
+	uartEchoback = false;
+	uartOutputCrlf = false;
+	uartInputEchoToScreen = true;
+	uartInputEchoToSerial = false;
+	uartNoInput = false;
+	uartNoStopOnEsc = false;
+	uartInputCrAsLf = false;
 	await uartManager.setBps(DEFAULT_BPS);
 	// 各種状態の初期化
 	clearScreen();
@@ -1040,9 +1062,9 @@ function dequeueKey() {
 	return key;
 }
 
-function keyInput(key, invokeCallback = true) {
+function keyInput(key, invokeCallback = true, stopOnEsc = true) {
 	if (typeof(key) === "number") {
-		if (key === 0x1b){
+		if (key === 0x1b && stopOnEsc) {
 			// Esc
 			if (currentLine >= 0) breakRequest = true;
 		} else {
@@ -1052,7 +1074,7 @@ function keyInput(key, invokeCallback = true) {
 		if (key.length === 0) return;
 		for (let i = 0; i < key.length; i++) {
 			const c = key.charCodeAt(i);
-			if (0 <= c && c < 0x100) keyInput(c, false);
+			if (0 <= c && c < 0x100) keyInput(c, false, stopOnEsc);
 		}
 	}
 	if (invokeCallback && keyBlocked) {
@@ -1163,8 +1185,9 @@ function keyUpEvent() {
 // データ (文字列、もしくは特殊操作情報) を設定に沿って変換し、UARTで送信する
 async function sendToUart(data) {
 	if (typeof data === "string") {
+		if (uartOutputCrlf) data = data.replace(/\n/g, "\r\n");
 		await uartManager.tx(data);
-	} else {
+	} else if (uartPrintControl) {
 		let dataToSend = null;
 		switch (data.command) {
 			case "LOCATE":
@@ -1190,7 +1213,11 @@ async function sendToUart(data) {
 
 // データ (Uint8Array) をUARTで受信し、設定に沿って処理する
 function receiveFromUart(data) {
-	data.forEach(function(c) { keyInput(c); });
+	if (!uartNoInput) {
+		data.forEach(function(c) {
+			keyInput(c === 0x0d && uartInputCrAsLf ? 0x0a : c, true, !uartNoStopOnEsc);
+		});
+	}
 }
 
 // 画面に文字を書き込む
@@ -1563,11 +1590,17 @@ function putChar(c, isInsert = false) {
 	}
 }
 
-async function putString(str) {
-	for (let i = 0; i < str.length; i++) {
-		putChar(str.charCodeAt(i), false);
+// isEchoback : インタラクティブのエコーバックか
+// isInputEcho : INPUTの入力反映か
+async function putString(str, isEchoback = false, isInputEcho = false) {
+	if ((isInputEcho ? uartInputEchoToScreen : uartPrintToScreen) || isEchoback) {
+		for (let i = 0; i < str.length; i++) {
+			putChar(str.charCodeAt(i), isEchoback);
+		}
 	}
-	await sendToUart(str);
+	if (isEchoback ? uartEchoback : (isInputEcho ? uartInputEchoToSerial : uartPrintToSerial)) {
+		await sendToUart(str);
+	}
 }
 
 /*
@@ -1738,14 +1771,14 @@ function finalizeExecution() {
 	gosubStack.splice(0);
 }
 
-function doInteractive() {
+async function doInteractive() {
 	const key = dequeueKey();
 	if (key < 0) {
 		// キー入力がないので、処理を保留する
 		keyBlocked = true;
 		return [currentLine, currentPositionInLine];
 	}
-	putChar(key, true);
+	await putString(String.fromCharCode(key), true);
 	if (key === 0x0a && cursorY > 0) {
 		const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
 		let start = (cursorY - 1) * SCREEN_WIDTH + cursorX;

@@ -23,7 +23,7 @@ async function commandINPUT(prompt, varIdx) {
 				break;
 			case 0x08:
 				// Backspace
-				if (cursorX !== startX) putChar(0x08);
+				if (cursorX !== startX) await putString("\x08", false, true);
 				break;
 			case 0x0a:
 				// Enter
@@ -43,7 +43,7 @@ async function commandINPUT(prompt, varIdx) {
 							try {
 								const ret = await executable();
 								writeArray(varIdx, ret);
-								putChar(0x0a);
+								await putString("\n");
 								return;
 							} catch(e) {
 							}
@@ -52,7 +52,7 @@ async function commandINPUT(prompt, varIdx) {
 					}
 					// 何も有効な入力が無かった場合、0 を格納する
 					writeArray(varIdx, 0);
-					putChar(0x0a);
+					await putString("\n");
 					return;
 				}
 				break;
@@ -89,7 +89,7 @@ async function commandINPUT(prompt, varIdx) {
 				// 無視
 				break;
 			default:
-				putChar(key);
+				await putString(String.fromCharCode(key), false, true);
 				break;
 		}
 	}
@@ -745,6 +745,24 @@ function commandCOPY(args) {
 			writeVirtualMem(dest + i, readVirtualMem(src + i));
 		}
 	}
+}
+
+function commandUART(args) {
+	// シリアルポートの入出力設定を行う
+	const outputConfig = args[0] & 0xf;
+	const inputConfig = args.length > 1 ? args[1] : 1;
+	// 出力設定
+	uartPrintToScreen = (outputConfig & 8) === 0;
+	uartPrintToSerial = (outputConfig & 3) !== 0;
+	uartPrintControl = (outputConfig & 3) === 2;
+	uartEchoback = (outputConfig & 4) !== 0;
+	uartOutputCrlf = (outputConfig & 3) === 3;
+	uartInputEchoToScreen = outputConfig < 12;
+	uartInputEchoToSerial = uartEchoback && uartPrintToSerial;
+	// 入力設定
+	uartNoInput = inputConfig === 0;
+	uartNoStopOnEsc = (inputConfig & 2) !== 0;
+	uartInputCrAsLf = (inputConfig & 4) !== 0;
 }
 
 function commandOK(args) {
