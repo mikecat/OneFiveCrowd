@@ -471,7 +471,7 @@ function switchCakeMode(newCakeMode) {
 		for (let i = 0; i < cmdView.length; i++) {
 			cmdViewCake[i] = cmdViewJam[i];
 		}
-		for (let i = 0; i < prgViewJam.length; i++) {
+		for (let i = prgViewJam.length - 1; i >= 0; i--) {
 			prgViewCake[i] = prgViewJam[i];
 		}
 		for (let i = prgViewJam.length; i < prgViewCake.length; i++) {
