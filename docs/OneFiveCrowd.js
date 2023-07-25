@@ -1178,7 +1178,7 @@ function keyRomanInput(key) {
 	if (isRomanMode && ((0x21 <= key && key <= 0x7e) || key == 0x0a || key == 0x10)) {
 		const c = String.fromCharCode(key).toUpperCase();
 		const newStatus = romanInputStatus + c;
-		let charsToRemove = 0, charsToAdd = "", charsToEnter = null;
+		let charsToRemove = 0, charsToEnter = null;
 		const last1 = newStatus.substring(newStatus.length - 1);
 		const last2 = newStatus.substring(newStatus.length - 2);
 		const last3 = newStatus.substring(newStatus.length - 3);
@@ -1192,9 +1192,8 @@ function keyRomanInput(key) {
 			charsToEnter = romanMap[last1];
 		} else if (romanInputStatus.substring(romanInputStatus.length - 1) === c && "BCDFGHJKLMPQRSTVWXYZ".indexOf(c) >= 0) {
 			// N 以外の同じ子音が連続 → 小さい「ッ」を入力する
-			charsToRemove = 1;
-			charsToAdd = c;
-			charsToEnter = romanMap._bs_xtu;
+			romanInputStatus = "";
+			keyInput(romanMap._bs_xtu);
 		}
 		// N の後に関係ない入力 → 「ン」を入力する
 		// 記号など変換が有効な場合もあるため、else if にしない
@@ -1203,8 +1202,8 @@ function keyRomanInput(key) {
 		}
 		if (charsToEnter !== null) {
 			for (let i = 0; i < charsToRemove; i++) keyInput(0x08);
-			keyInput(charsToEnter + charsToAdd);
-			romanInputStatus = charsToAdd;
+			keyInput(charsToEnter);
+			romanInputStatus = "";
 		} else {
 			romanInputStatus += c;
 			if (romanInputStatus.length >= 3) romanInputStatus = romanInputStatus.substring(romanInputStatus.length - 2);
