@@ -1,7 +1,7 @@
 OneFiveCrowd
 ============
 
-[https://mikecat.github.io/OneFiveCrowd/](https://mikecat.github.io/OneFiveCrowd/)
+[https://onefivecrowd.mikecat.work/](https://onefivecrowd.mikecat.work/)
 
 ## これは何？
 
