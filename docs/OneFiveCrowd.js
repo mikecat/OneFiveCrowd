@@ -955,7 +955,7 @@ async function initSystem() {
 	cursorTimerId = setInterval(toggleCursor, 500);
 
 	// UARTの初期化を行う
-	const phisicalUartPortStatus = document.getElementById("phisicalUartPortStatus");
+	const phisicalUartArea = document.getElementById("phisicalUartArea");
 	const phisicalUartPortSwitchButton = document.getElementById("phisicalUartPortSwitchButton");
 	if (uartManager.isWebSerialSupported()) {
 		phisicalUartPortSwitchButton.addEventListener("click", function() {
@@ -965,20 +965,27 @@ async function initSystem() {
 				uartManager.webSerialRequestPort();
 			}
 		});
-		phisicalUartPortStatus.classList.add("webSerialSupported");
+		phisicalUartArea.classList.add("webSerialSupported");
 	} else {
 		phisicalUartPortSwitchButton.disabled = true;
 	}
 	await uartManager.initialize();
 	const showUartConnected = function(connected) {
 		if (connected) {
-			phisicalUartPortStatus.classList.add("uartConnected");
+			phisicalUartArea.classList.add("uartConnected");
 		} else {
-			phisicalUartPortStatus.classList.remove("uartConnected");
+			phisicalUartArea.classList.remove("uartConnected");
 		}
 	};
 	uartManager.addConnectStatusChangeCallback(showUartConnected);
 	showUartConnected(uartManager.isConnected());
+
+	const virtualMixJuiceConnectCheckbox = document.getElementById("virtualMixJuiceConnectCheckbox");
+	virtualMixJuice.setUartConnected(virtualMixJuiceConnectCheckbox.checked);
+	virtualMixJuiceConnectCheckbox.addEventListener("change", function() {
+		virtualMixJuice.setUartConnected(virtualMixJuiceConnectCheckbox.checked);
+	});
+	uartManager.connectDevice(virtualMixJuice);
 
 	// URLで共有機能の初期化
 	const urlExportElements = {};

@@ -412,14 +412,18 @@ label[for="volumeSwitch"] {
 	display: none;
 }
 
-#phisicalUartPortStatus.uartConnected .uartNotConnectedMessage {
+#phisicalUartArea.uartConnected .uartNotConnectedMessage {
 	display: none;
 }
 
-#phisicalUartPortStatus:not(.uartConnected) .uartConnectedMessage {
+#phisicalUartArea:not(.uartConnected) .uartConnectedMessage {
 	display: none;
 }
 
-#phisicalUartPortStatus.webSerialSupported .webSerialUnsupportedMessage {
+#phisicalUartArea.webSerialSupported .webSerialUnsupportedMessage {
 	display: none;
+}
+
+#virtualUartDevicesArea {
+	margin-top: 0.5em;
 }

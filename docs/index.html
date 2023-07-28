@@ -25,6 +25,7 @@
 		<script src="Usr.js"></script>
 		<script src="Uart.js"></script>
 		<script src="VirtualEeprom.js"></script>
+		<script src="VirtualMixJuice.js"></script>
 	</head>
 	<body onload="initSystem();" onkeydown="keyDownEvent();" onkeyup="keyUpEvent();">
 		<h1 id="mainTitle">OneFiveCrowd</h1>
@@ -157,16 +158,22 @@
 					</fieldset>
 				</div>
 				<div id="ioForm">
-					<fieldset id="phisicalUartPortStatus">
+					<fieldset>
 						<legend>UART</legend>
-						物理ポート：
-						<span class="uartNotConnectedMessage">未接続</span>
-						<span class="uartConnectedMessage">接続済</span>
-						<span class="webSerialUnsupportedMessage">(Web Serial 未対応)</span>
-						<button id="phisicalUartPortSwitchButton" type="button">
-							<span class="uartNotConnectedMessage">接続</span>
-							<span class="uartConnectedMessage">切断</span>
-						</button>
+						<div id="phisicalUartArea">
+							物理ポート：
+							<span class="uartNotConnectedMessage">未接続</span>
+							<span class="uartConnectedMessage">接続済</span>
+							<span class="webSerialUnsupportedMessage">(Web Serial 未対応)</span>
+							<button id="phisicalUartPortSwitchButton" type="button">
+								<span class="uartNotConnectedMessage">接続</span>
+								<span class="uartConnectedMessage">切断</span>
+							</button>
+						</div>
+						<div id="virtualUartDevicesArea">
+							<input type="checkbox" id="virtualMixJuiceConnectCheckbox"><label
+							for="virtualMixJuiceConnectCheckbox">仮想MixJuice</label>
+						</div>
 					</fieldset>
 				</div>
 				<div id="systemForm">
