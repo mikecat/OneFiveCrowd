@@ -1961,18 +1961,20 @@ async function doInteractive() {
 		if (vramView[start] !== 0) {
 			while (start > 0 && vramView[start - 1] !== 0) start--;
 			while (end < limit && vramView[end] !== 0) end++;
-			if (end - start <= CMD_MAX) {
-				for (let i = start; i < end; i++) {
-					cmdView[i - start] = vramView[i];
+			if (vramView[start] !== 0x27) {
+				if (end - start <= CMD_MAX) {
+					for (let i = start; i < end; i++) {
+						cmdView[i - start] = vramView[i];
+					}
+					cmdView[end - start] = 0;
+					const compilationResult = compileLine(CMD_ADDR, 0, true);
+					if (compilationResult !== null) {
+						programs[0] = compilationResult;
+						return [0, 0];
+					}
+				} else {
+					throw "Line too long";
 				}
-				cmdView[end - start] = 0;
-				const compilationResult = compileLine(CMD_ADDR, 0, true);
-				if (compilationResult !== null) {
-					programs[0] = compilationResult;
-					return [0, 0];
-				}
-			} else {
-				throw "Line too long";
 			}
 		}
 	}
