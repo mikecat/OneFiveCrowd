@@ -707,6 +707,9 @@ async function commandHELP() {
 	await putString("#" + (VIRTUAL_RAM_OFFSET + CRAM_ADDR).toString(16).toUpperCase() + " PCG\n");
 	await putString("#" + (VIRTUAL_RAM_OFFSET + ARRAY_ADDR).toString(16).toUpperCase() + " VAR\n");
 	await putString("#" + (VIRTUAL_RAM_OFFSET + VRAM_ADDR).toString(16).toUpperCase() + " VRAM\n");
+	if (cakeMode) {
+		await putString("#" + (VIRTUAL_RAM_OFFSET + ARRAY2_ADDR_CAKE).toString(16).toUpperCase() + " VAR2\n");
+	}
 	await putString("#" + (VIRTUAL_RAM_OFFSET + PRG_ADDR).toString(16).toUpperCase() + " LIST\n");
 }
 
