@@ -987,6 +987,23 @@ async function initSystem() {
 	});
 	uartManager.connectDevice(virtualMixJuice);
 
+	const pancakeScreen = document.getElementById("pancakeScreen");
+	const virtualPanCakeConnectCheckbox = document.getElementById("virtualPanCakeConnectCheckbox");
+	const setVirtualPanCakeConnected = function(connected) {
+		virtualPanCake.setUartConnected(virtualPanCakeConnectCheckbox.checked);
+		if (connected) {
+			pancakeScreen.classList.add("connected");
+		} else {
+			pancakeScreen.classList.remove("connected");
+		}
+	};
+	virtualPanCake.setCanvas(pancakeScreen);
+	setVirtualPanCakeConnected(virtualPanCakeConnectCheckbox.checked);
+	virtualPanCakeConnectCheckbox.addEventListener("change", function() {
+		setVirtualPanCakeConnected(virtualPanCakeConnectCheckbox.checked);
+	});
+	uartManager.connectDevice(virtualPanCake);
+
 	// URLで共有機能の初期化
 	const urlExportElements = {};
 	document.querySelectorAll("#urlExportArea input[type=\"checkbox\"]").forEach(function(elem) {

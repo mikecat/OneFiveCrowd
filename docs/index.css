@@ -12,6 +12,18 @@
 	image-rendering: pixelated;
 }
 
+#pancakeScreen {
+	width: 480px;
+	height: 270px;
+	border: solid black;
+	border-width: 73px 32px;
+	image-rendering: pixelated;
+}
+
+#pancakeScreen:not(.enabled), #pancakeScreen:not(.connected) {
+	display: none;
+}
+
 #controlArea {
 	text-align: center;
 }
