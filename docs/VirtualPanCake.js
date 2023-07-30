@@ -84,6 +84,85 @@ const virtualPanCake = (function() {
 		updateCanvas();
 	}
 
+	function line(args) {
+		if (args.length < 5) return;
+		const sx = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
+		const sy = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
+		const dx = args[2] >= 0x80 ? args[2] - 0x100 : args[2];
+		const dy = args[3] >= 0x80 ? args[3] - 0x100 : args[3];
+		const color = args[4] & 0xf;
+		const sb = getScreenBuffer();
+		const drawPoint = function(x, y) {
+			if (x < 0 || PANCAKE_SCREEN_WIDTH <= x || y < 0 || PANCAKE_SCREEN_HEIGHT <= y) return;
+			sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
+		};
+		// とりあえず IchigoJam の DRAW で使われていると推測されるアルゴリズムを使用
+		// TODO: 互換性確認
+		if (sx === dx && sy === dy) {
+			drawPoint(sx, sy);
+		} else if (Math.abs(sx - dx) >= Math.abs(sy - dy)) {
+			if (sx <= dx) {
+				for (let x = sx; x <= dx; x++) {
+					drawPoint(x, sy + Math.trunc((dy - sy) * (x - sx) / (dx - sx)));
+				}
+			} else {
+				for (let x = dx; x <= sx; x++) {
+					drawPoint(x, dy + Math.trunc((sy - dy) * (x - dx) / (sx - dx)));
+				}
+			}
+		} else {
+			if (sy <= dy) {
+				for (let y = sy; y <= dy; y++) {
+					drawPoint(sx + Math.trunc((dx - sx) * (y - sy) / (dy - sy)), y);
+				}
+			} else {
+				for (let y = dy; y <= sy; y++) {
+					drawPoint(dx + Math.trunc((sx - dx) * (y - dy) / (sy - dy)), y);
+				}
+			}
+		}
+		updateCanvas();
+	}
+
+	// 整数 n の平方根を四捨五入して整数で求める
+	function sqrt_round(n) {
+		if (n <= 0) return 0;
+		if (n === 1) return 1;
+		let le = 0, greater = n;
+		while (le + 1 < greater) {
+			const m = le + ((greater - le) >>> 1);
+			if ((2 * m - 1) * (2 * m - 1) <= 4 * n) le = m; else greater = m;
+		}
+		return le;
+	}
+
+	function circle(args) {
+		if (args.length < 4) return;
+		const cx = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
+		const cy = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
+		const r = args[2];
+		const color = args[3] & 0xf;
+		const sb = getScreenBuffer();
+		const drawPoint = function(x, y) {
+			if (x < 0 || PANCAKE_SCREEN_WIDTH <= x || y < 0 || PANCAKE_SCREEN_HEIGHT <= y) return;
+			sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
+		};
+		// TODO: このアルゴリズムでは実機と微妙に描画結果が異なる (実機より中心寄りに描画される場所がある)
+		let prev_pos = r;
+		for (let i = 0; i <= r; i++) {
+			const pos = sqrt_round(r * r - i * i);
+			if (pos < prev_pos) prev_pos--;
+			for (let j = prev_pos; j >= pos; j--) {
+				drawPoint(cx + i, cy + j);
+				drawPoint(cx + i, cy - j);
+				drawPoint(cx - i, cy + j);
+				drawPoint(cx - i, cy - j);
+			}
+			prev_pos = pos;
+		}
+		updateCanvas();
+	}
+
 	function image(args) {
 		if (args.length < 1) return;
 		const imgData = getResourceImage(args[0]);
@@ -143,17 +222,21 @@ const virtualPanCake = (function() {
 
 	const functionTableText = {
 		"CLEAR": clear,
+		"LINE": line,
 		"IMAGE": image,
 		"VIDEO": video,
 		"RESET": reset,
+		"CIRCLE": circle,
 		"BPS": bps,
 		"WBUF": wbuf,
 	};
 	const functionTableBinary = {
 		0x00: clear,
+		0x01: line,
 		0x04: image,
 		0x05: video,
 		0x0D: reset,
+		0x0E: circle,
 		0x13: bps,
 		0x17: wbuf,
 	};
@@ -199,7 +282,7 @@ const virtualPanCake = (function() {
 				// 実機のパース方法とは違いそうだが、仕様外の入力に対する挙動は保証しないことにした
 				const params = [];
 				const paramsHex = paramsStr.replace(/[^0-9a-fA-F]/g, "");
-				for (let i = 0; i < paramsHex.length; i++) {
+				for (let i = 0; i < paramsHex.length; i += 2) {
 					params.push(parseInt(paramsHex.substring(i, i + 2), 16));
 				}
 				// テキストモードでは、渡された生のテキストも関数に渡す
