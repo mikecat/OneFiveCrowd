@@ -3,11 +3,11 @@
 // このファイルは、OneFiveCrowd に対する CC BY 4.0 ライセンス (by みけCAT) の対象外とする。
 // This file is NOT subject of CC BY 4.0 license (by MikeCAT) for OneFiveCrowd.
 
-// このファイル (変換結果) は、CC BY-NC 4.0 ライセンスで提供する。(by みけCAT)
-// This file (result of conversion) is provided under CC BY-NC 4.0 license (by MikeCAT)
+// このファイルは、CC BY-NC 4.0 ライセンスで提供する。(by みけCAT)
+// This file is provided under CC BY-NC 4.0 license (by MikeCAT)
 // https://creativecommons.org/licenses/by-nc/4.0/deed.ja
 
-const virtualPanCakeResource_NC = (function() {
+const virtualPanCakeResource = (function() {
 	// 以下の images および sprites は、 http://pancake.shizentai.jp/ において
 	// クリエイティブ・コモンズ 表示 - 非営利 4.0 国際 ライセンスの下に提供されている
 	// PanCakeのリソース画像を変換したものである。(2023年7月28日閲覧)
@@ -201,8 +201,23 @@ const virtualPanCakeResource_NC = (function() {
 		[15,0,0,0,0,0,0,15,15,0,1,1,1,1,0,15,15,0,1,0,0,1,0,15,15,0,1,1,1,1,0,15,15,0,0,0,0,1,0,15,15,0,1,1,1,1,0,15,15,0,0,0,0,0,0,15,15,15,15,15,15,15,15,15],
 	];
 
+	const spriteTransparentColors = [
+		1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,8,8,
+		8,8,8,8, 8,8,8,0, 0,0,10,10, 0,0,15,0,
+		15,0,15,0, 0,0,0,0, 0,0,0,0, 0,10,10,11,
+		11,11,0,0, 0,0,0,0, 0,0,0,0, 9,9,15,0,
+		0,0,0,8, 0,0,15,0, 0,0,0,0, 1,1,0,1,
+		1,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0,
+		0,0,0,0, 0,0,0,0, 8,8,8,8, 8,8,8,8,
+		15,15,15,15, 15,15,15,15, 0,0,0,1, 1,1,1,1,
+		15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+		15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+		15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+	];
+
 	return {
 		"images": images,
 		"sprites": sprites,
+		"spriteTransparentColors": spriteTransparentColors,
 	};
 })();

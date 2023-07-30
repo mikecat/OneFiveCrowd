@@ -40,15 +40,18 @@ const virtualPanCake = (function() {
 	let binaryLineLengthExpected = null;
 
 	function getResourceImage(id) {
-		if (typeof virtualPanCakeResource_NC === "undefined") return null;
-		if (id < 0 || virtualPanCakeResource_NC.images.length <= id) return null;
-		return virtualPanCakeResource_NC.images[id];
+		if (typeof virtualPanCakeResource === "undefined") return null;
+		if (id < 0 || virtualPanCakeResource.images.length <= id) return null;
+		return virtualPanCakeResource.images[id];
 	}
 
 	function getResourceSprite(id) {
-		if (typeof virtualPanCakeResource_NC === "undefined") return null;
-		if (id < 0 || virtualPanCakeResource_NC.sprites.length <= id) return null;
-		return virtualPanCakeResource_NC.sprites[id];
+		if (typeof virtualPanCakeResource === "undefined") return null;
+		if (id < 0 || virtualPanCakeResource.sprites.length <= id) return null;
+		return {
+			"img": virtualPanCakeResource.sprites[id],
+			"transparent": id < virtualPanCakeResource.spriteTransparentColors.length ? virtualPanCakeResource.spriteTransparentColors[id] : 0xff,
+		};
 	}
 
 	function setCanvasEnabled(enabled) {
@@ -88,6 +91,61 @@ const virtualPanCake = (function() {
 			if ((2 * m - 1) * (2 * m - 1) <= 4 * n) le = m; else greater = m;
 		}
 		return le;
+	}
+
+	// spriteDate: スプライトを表す1次元配列
+	// flip: 左右反転するならtrue、しないならfalse
+	// rotate: 0: 回転なし 1: 時計回りに90度回転 2: 180度回転 3: 時計回りに270度回転
+	function flipAndRotate(spriteData, flip, rotate) {
+		let result = spriteData;
+		if (flip) {
+			const flipped = new Array(PANCAKE_SPRITE_WIDTH * PANCAKE_SPRITE_HEIGHT);
+			for (let y = 0; y < PANCAKE_SPRITE_HEIGHT; y++) {
+				for (let x = 0; x < PANCAKE_SPRITE_WIDTH; x++) {
+					flipped[y * PANCAKE_SPRITE_WIDTH + x] = spriteData[y * PANCAKE_SPRITE_WIDTH + (PANCAKE_SPRITE_WIDTH - 1 - x)];
+				}
+			}
+			result = flipped;
+		}
+		switch (rotate & 3) {
+			case 0:
+				// 何もしない
+				break;
+			case 1:
+				{
+					const rotated = new Array(PANCAKE_SPRITE_WIDTH * PANCAKE_SPRITE_HEIGHT);
+					for (let y = 0; y < PANCAKE_SPRITE_HEIGHT; y++) {
+						for (let x = 0; x < PANCAKE_SPRITE_WIDTH; x++) {
+							rotated[y * PANCAKE_SPRITE_WIDTH + x] = result[(PANCAKE_SPRITE_HEIGHT - 1 - x) * PANCAKE_SPRITE_WIDTH + y];
+						}
+					}
+					result = rotated;
+				}
+				break;
+			case 2:
+				{
+					const rotated = new Array(PANCAKE_SPRITE_WIDTH * PANCAKE_SPRITE_HEIGHT);
+					for (let y = 0; y < PANCAKE_SPRITE_HEIGHT; y++) {
+						for (let x = 0; x < PANCAKE_SPRITE_WIDTH; x++) {
+							rotated[y * PANCAKE_SPRITE_WIDTH + x] = result[(PANCAKE_SPRITE_HEIGHT - 1 - y) * PANCAKE_SPRITE_WIDTH + (PANCAKE_SPRITE_WIDTH - 1 - x)];
+						}
+					}
+					result = rotated;
+				}
+				break;
+			case 3:
+				{
+					const rotated = new Array(PANCAKE_SPRITE_WIDTH * PANCAKE_SPRITE_HEIGHT);
+					for (let y = 0; y < PANCAKE_SPRITE_HEIGHT; y++) {
+						for (let x = 0; x < PANCAKE_SPRITE_WIDTH; x++) {
+							rotated[y * PANCAKE_SPRITE_WIDTH + x] = result[x * PANCAKE_SPRITE_WIDTH + (PANCAKE_SPRITE_WIDTH - 1 - y)];
+						}
+					}
+					result = rotated;
+				}
+				break;
+		}
+		return result;
 	}
 
 	function clear(args) {
@@ -132,6 +190,31 @@ const virtualPanCake = (function() {
 			} else {
 				for (let y = dy; y <= sy; y++) {
 					drawPoint(dx + Math.trunc((sx - dx) * (y - dy) / (sy - dy)), y);
+				}
+			}
+		}
+		updateCanvas();
+	}
+
+	function stamps(args) {
+		if (args.length < 3) return;
+		const px = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
+		const py = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
+		const imgId = args[2];
+		const flip = args.length >= 4 && args[3] !== 0;
+		const rotate = args.length >= 5 ? args[4] & 3 : 0;
+		const sprite = getResourceSprite(imgId);
+		if (!sprite) return;
+		const img = flipAndRotate(sprite.img, flip, rotate);
+		const sb = getScreenBuffer();
+		for (let dy = 0; dy < PANCAKE_SPRITE_HEIGHT; dy++) {
+			for (let dx = 0; dx < PANCAKE_SPRITE_WIDTH; dx++) {
+				const color = img[dy * PANCAKE_SPRITE_WIDTH + dx];
+				if (color !== sprite.transparent) {
+					const x = px + dx, y = py + dy;
+					if (0 <= x && x < PANCAKE_SCREEN_WIDTH && 0 <= y && y < PANCAKE_SCREEN_HEIGHT) {
+						sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
+					}
 				}
 			}
 		}
@@ -230,6 +313,7 @@ const virtualPanCake = (function() {
 		"RESET": reset,
 		"CIRCLE": circle,
 		"BPS": bps,
+		"STAMPS": stamps,
 		"WBUF": wbuf,
 	};
 	const functionTableBinary = {
@@ -240,6 +324,7 @@ const virtualPanCake = (function() {
 		0x0D: reset,
 		0x0E: circle,
 		0x13: bps,
+		0x14: stamps,
 		0x17: wbuf,
 	};
 
