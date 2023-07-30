@@ -60,8 +60,10 @@ const virtualPanCake = (function() {
 		}
 	}
 
-	function updateCanvas() {
-		if (!canvasContext) return;
+	// force : ダブルバッファリング有効時にも更新を行うか
+	// ダブルバッファリング有効時、通常の描画コマンドを実行しても画面更新は不要
+	function updateCanvas(force = false) {
+		if (!canvasContext || (enableDoubleBuffering && !force)) return;
 		const screenBuffer = screenBuffers[enableDoubleBuffering ? currentScreenBuffer : 0];
 		for (let i = 0; i < PANCAKE_SCREEN_WIDTH * PANCAKE_SCREEN_HEIGHT; i++) {
 			imageData.data[4 * i + 0] = colorPalette[screenBuffer[i]][0];
@@ -165,7 +167,7 @@ const virtualPanCake = (function() {
 		for (let i = 0; i < sb.length; i++) {
 			sb[i] = img ? img[i] : 0;
 		}
-		updateCanvas();
+		updateCanvas(true);
 	}
 
 	function circle(args) {
@@ -217,7 +219,7 @@ const virtualPanCake = (function() {
 			currentScreenBuffer = 0;
 		}
 		enableDoubleBuffering = newEnable;
-		updateCanvas();
+		updateCanvas(true);
 	}
 
 	const functionTableText = {
