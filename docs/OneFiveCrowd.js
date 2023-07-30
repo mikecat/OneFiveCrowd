@@ -1421,7 +1421,7 @@ function putChar(c, isInsert = false) {
 			cursorY = c - 32;
 			if (cursorY < -1) cursorY = -1;
 			if (cursorY >= SCREEN_HEIGHT) cursorY = SCREEN_HEIGHT - 1;
-			moveCurssorMode = false;
+			moveCursorMode = false;
 			moveCursorX = null;
 		}
 		return;
