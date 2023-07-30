@@ -76,6 +76,18 @@ const virtualPanCake = (function() {
 		return screenBuffers[enableDoubleBuffering ? 1 - currentScreenBuffer : currentScreenBuffer];
 	}
 
+	// 整数 n の平方根を四捨五入して整数で求める
+	function sqrt_round(n) {
+		if (n <= 0) return 0;
+		if (n === 1) return 1;
+		let le = 0, greater = n;
+		while (le + 1 < greater) {
+			const m = le + ((greater - le) >>> 1);
+			if ((2 * m - 1) * (2 * m - 1) <= 4 * n) le = m; else greater = m;
+		}
+		return le;
+	}
+
 	function clear(args) {
 		if (args.length < 1) return;
 		const color = args[0] & 0xf;
@@ -124,45 +136,6 @@ const virtualPanCake = (function() {
 		updateCanvas();
 	}
 
-	// 整数 n の平方根を四捨五入して整数で求める
-	function sqrt_round(n) {
-		if (n <= 0) return 0;
-		if (n === 1) return 1;
-		let le = 0, greater = n;
-		while (le + 1 < greater) {
-			const m = le + ((greater - le) >>> 1);
-			if ((2 * m - 1) * (2 * m - 1) <= 4 * n) le = m; else greater = m;
-		}
-		return le;
-	}
-
-	function circle(args) {
-		if (args.length < 4) return;
-		const cx = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
-		const cy = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
-		const r = args[2];
-		const color = args[3] & 0xf;
-		const sb = getScreenBuffer();
-		const drawPoint = function(x, y) {
-			if (x < 0 || PANCAKE_SCREEN_WIDTH <= x || y < 0 || PANCAKE_SCREEN_HEIGHT <= y) return;
-			sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
-		};
-		// TODO: このアルゴリズムでは実機と微妙に描画結果が異なる (実機より中心寄りに描画される場所がある)
-		let prev_pos = r;
-		for (let i = 0; i <= r; i++) {
-			const pos = sqrt_round(r * r - i * i);
-			if (pos < prev_pos) prev_pos--;
-			for (let j = prev_pos; j >= pos; j--) {
-				drawPoint(cx + i, cy + j);
-				drawPoint(cx + i, cy - j);
-				drawPoint(cx - i, cy + j);
-				drawPoint(cx - i, cy - j);
-			}
-			prev_pos = pos;
-		}
-		updateCanvas();
-	}
-
 	function image(args) {
 		if (args.length < 1) return;
 		const imgData = getResourceImage(args[0]);
@@ -191,6 +164,33 @@ const virtualPanCake = (function() {
 		const sb = screenBuffers[0];
 		for (let i = 0; i < sb.length; i++) {
 			sb[i] = img ? img[i] : 0;
+		}
+		updateCanvas();
+	}
+
+	function circle(args) {
+		if (args.length < 4) return;
+		const cx = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
+		const cy = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
+		const r = args[2];
+		const color = args[3] & 0xf;
+		const sb = getScreenBuffer();
+		const drawPoint = function(x, y) {
+			if (x < 0 || PANCAKE_SCREEN_WIDTH <= x || y < 0 || PANCAKE_SCREEN_HEIGHT <= y) return;
+			sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
+		};
+		// TODO: このアルゴリズムでは実機と微妙に描画結果が異なる (実機より中心寄りに描画される場所がある)
+		let prev_pos = r;
+		for (let i = 0; i <= r; i++) {
+			const pos = sqrt_round(r * r - i * i);
+			if (pos < prev_pos) prev_pos--;
+			for (let j = prev_pos; j >= pos; j--) {
+				drawPoint(cx + i, cy + j);
+				drawPoint(cx + i, cy - j);
+				drawPoint(cx - i, cy + j);
+				drawPoint(cx - i, cy - j);
+			}
+			prev_pos = pos;
 		}
 		updateCanvas();
 	}
