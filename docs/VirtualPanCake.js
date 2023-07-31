@@ -196,6 +196,45 @@ const virtualPanCake = (function() {
 		updateCanvas();
 	}
 
+	function stamp(args) {
+		if (args.length < 35) return;
+		const px = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
+		const py = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
+		const transparent = args[2];
+		const sb = getScreenBuffer();
+		for (let dy = 0; dy < PANCAKE_SPRITE_HEIGHT; dy++) {
+			for (let dx = 0; dx < PANCAKE_SPRITE_WIDTH; dx++) {
+				const color = (args[3 + dy * (PANCAKE_SPRITE_WIDTH >> 1) + (dx >> 1)] >> (dx & 1 ? 0 : 4)) & 0xf;
+				if (color !== transparent) {
+					const x = px + dx, y = py + dy;
+					if (0 <= x && x < PANCAKE_SCREEN_WIDTH && 0 <= y && y < PANCAKE_SCREEN_HEIGHT) {
+						sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
+					}
+				}
+			}
+		}
+		updateCanvas();
+	}
+
+	function stamp1(args) {
+		if (args.length < 11) return;
+		const px = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
+		const py = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
+		const color = args[2] & 0xf;
+		const sb = getScreenBuffer();
+		for (let dy = 0; dy < PANCAKE_SPRITE_HEIGHT; dy++) {
+			for (let dx = 0; dx < PANCAKE_SPRITE_WIDTH; dx++) {
+				if ((args[3 + dy] >> (PANCAKE_SPRITE_WIDTH - 1 - dx)) & 1) {
+					const x = px + dx, y = py + dy;
+					if (0 <= x && x < PANCAKE_SCREEN_WIDTH && 0 <= y && y < PANCAKE_SCREEN_HEIGHT) {
+						sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
+					}
+				}
+			}
+		}
+		updateCanvas();
+	}
+
 	function stamps(args) {
 		if (args.length < 3) return;
 		const px = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
@@ -308,6 +347,8 @@ const virtualPanCake = (function() {
 	const functionTableText = {
 		"CLEAR": clear,
 		"LINE": line,
+		"STAMP": stamp,
+		"STAMP1": stamp1,
 		"IMAGE": image,
 		"VIDEO": video,
 		"RESET": reset,
@@ -319,6 +360,8 @@ const virtualPanCake = (function() {
 	const functionTableBinary = {
 		0x00: clear,
 		0x01: line,
+		0x02: stamp,
+		0x03: stamp1,
 		0x04: image,
 		0x05: video,
 		0x0D: reset,
