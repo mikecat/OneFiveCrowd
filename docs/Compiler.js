@@ -1318,7 +1318,9 @@ var compiler = (function() {
 				try {
 					return compileLine(ast, lineno, 0);
 				} catch (e) {
-					throw e === null ? "Syntax error" : e;
+					return [function() {
+						throw e === null ? "Syntax error" : e;
+					}];
 				}
 			} else {
 				return null;
