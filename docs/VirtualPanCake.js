@@ -94,7 +94,7 @@ const virtualPanCake = (function() {
 		return le;
 	}
 
-	// spriteDate: スプライトを表す1次元配列
+	// spriteData: スプライトを表す1次元配列
 	// flip: 左右反転するならtrue、しないならfalse
 	// rotate: 0: 回転なし 1: 時計回りに90度回転 2: 180度回転 3: 時計回りに270度回転
 	function flipAndRotate(spriteData, flip, rotate) {
