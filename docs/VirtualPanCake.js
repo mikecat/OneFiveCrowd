@@ -16,6 +16,113 @@ const virtualPanCake = (function() {
 	];
 	const PANCAKE_SCREEN_WIDTH = 80, PANCAKE_SCREEN_HEIGHT = 45;
 	const PANCAKE_SPRITE_WIDTH = 8, PANCAKE_SPRITE_HEIGHT = 8;
+	const SPRITE_MAX = 32, USER_SPRITE_ID_START = 0xf0;
+
+	const sprites = [];
+	for (let i = 0; i < SPRITE_MAX; i++) {
+		sprites.push({
+			"imgId": -1,
+			"x": 0,
+			"y": 0,
+			"flip": false,
+			"rotate": 0,
+		});
+	}
+	// 初期値は実機の出力結果に基づく
+	const userSpriteImages = [
+		{ // F0
+			"img": [
+				0,0,1,1,1,1,0,0, 0,1,1,1,1,1,1,0, 0,2,1,1,2,1,1,0, 0,1,1,1,1,1,1,1,
+				1,1,2,2,1,1,1,0, 0,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,0, 0,0,1,1,1,1,1,1,
+			],
+			"transparent": 0,
+		}, { // F1
+			"img": [
+				3,8,8,3,8,8,8,8, 8,3,3,3,3,8,8,1, 8,8,0,6,3,8,1,1, 8,6,6,6,3,1,1,8,
+				2,8,8,10,10,1,8,8, 5,6,10,10,10,8,8,8, 5,8,8,10,10,10,10,8, 5,8,8,8,6,6,8,8,
+			],
+			"transparent": 8,
+		}, { // F2
+			"img": [
+				8,8,8,8,8,8,8,8, 8,8,2,2,2,8,8,8, 8,8,0,2,0,2,8,8, 8,2,2,2,2,2,8,2,
+				2,8,2,2,2,2,8,2, 2,2,8,2,2,8,2,8, 8,2,2,2,2,2,8,8, 2,8,2,8,2,8,2,2,
+			],
+			"transparent": 8,
+		}, { // F3
+			"img": [
+				8,8,8,1,8,8,8,8, 8,8,1,1,1,8,8,8, 8,1,1,1,1,1,8,8, 8,8,0,1,0,8,8,1,
+				1,8,1,1,1,8,8,1, 1,8,1,1,1,8,1,8, 8,1,1,1,1,1,8,8, 1,8,1,8,1,8,1,1,
+			],
+			"transparent": 8,
+		}, { // F4
+			"img": [
+				8,8,2,2,2,2,8,8, 8,2,2,2,2,2,2,8, 8,2,0,6,0,2,2,8, 8,6,6,6,6,2,2,8,
+				8,8,2,2,2,2,2,8, 8,6,2,2,5,2,8,8, 8,2,2,2,2,2,2,8, 8,8,1,8,1,8,8,8,
+			],
+			"transparent": 8,
+		}, { //F5
+			"img": [
+				8,3,3,8,3,3,8,8, 8,8,3,8,8,3,8,8, 8,8,3,3,3,3,8,8, 8,3,0,6,0,3,8,8,
+				8,6,6,2,6,3,3,8, 8,3,3,3,3,3,8,8, 8,8,3,3,3,3,3,8, 8,8,8,1,8,1,8,8,
+			],
+			"transparent": 8,
+		}, { // F6
+			"img": [
+				8,8,8,8,8,8,8,8, 1,1,1,6,6,1,1,1, 8,1,6,6,6,6,1,8, 8,8,0,6,0,6,8,8,
+				8,6,6,6,6,6,1,8, 8,8,1,15,15,1,1,8, 8,1,15,15,15,1,1,1, 8,8,9,8,8,9,8,8,
+			],
+			"transparent": 8,
+		}, { // F7
+			"img": [
+				1,1,5,5,8,8,8,8, 8,8,8,8,8,11,8,8, 8,11,11,11,11,11,11,8, 11,11,0,0,11,11,8,8,
+				8,11,0,1,11,8,8,8, 11,11,11,11,11,11,8,8, 8,11,11,11,11,11,11,8, 8,8,11,11,8,8,8,8,
+			],
+			"transparent": 8,
+		}, { // F8
+			"img": [
+				8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8, 8,8,13,13,14,13,8,8, 8,13,14,13,13,13,13,8,
+				8,13,13,13,13,14,13,8, 8,13,13,13,13,13,13,8, 8,8,8,9,6,8,8,8, 8,8,8,6,6,8,8,8,
+			],
+			"transparent": 8,
+		}, { // F9
+			"img": [
+				8,8,2,8,8,8,8,8, 8,2,4,2,8,8,8,8, 8,4,6,5,2,8,8,8, 8,8,5,2,8,8,8,8,
+				8,8,1,1,8,8,8,8, 8,8,1,1,8,8,5,5, 5,8,1,1,8,5,8,5, 8,5,5,5,5,8,5,8,
+			],
+			"transparent": 8,
+		}, { // FA
+			"img": [
+				0,0,0,7,9,9,0,0, 0,8,8,7,8,8,8,0, 8,8,8,8,8,8,8,8, 8,8,8,8,8,8,1,8,
+				8,8,8,8,8,8,1,8, 8,8,8,8,8,1,8,8, 0,8,8,8,8,8,8,0, 0,0,8,8,8,8,0,0,
+			],
+			"transparent": 0,
+		}, { // FB
+			"img": [
+				0,0,0,0,0,7,0,0, 0,0,0,1,7,7,7,0, 0,0,0,1,1,7,7,7, 0,0,2,2,1,1,7,0,
+				0,2,2,5,2,2,1,0, 2,5,2,2,2,0,0,0, 0,2,5,2,0,0,0,0, 0,0,2,0,0,0,0,0,
+			],
+			"transparent": 0,
+		}, { // FC
+			"img": [
+				0,0,0,0,0,0,0,0, 0,0,7,7,7,7,0,0, 0,0,5,5,5,5,0,0, 0,5,1,5,5,5,5,0,
+				0,5,1,5,5,5,5,0, 1,5,5,5,5,5,5,1, 1,15,5,5,5,5,15,1, 0,1,15,15,15,15,1,0,
+			],
+			"transparent": 0,
+		}, { // FD
+			"img": [
+				3,3,3,2,3,3,3,3, 3,1,1,1,1,1,1,3, 2,1,0,1,1,0,1,2, 3,1,1,1,1,1,1,3,
+				3,3,2,2,2,2,3,3, 1,3,2,8,8,2,3,1, 3,0,2,2,2,2,0,3, 3,0,3,3,3,3,0,3,
+			],
+			"transparent": 3,
+		}, { // FE
+			"img": [
+				0,0,5,5,5,0,0,0, 0,0,5,5,5,0,0,0, 0,0,5,5,5,0,0,0, 0,0,0,9,11,11,11,0,
+				0,0,0,9,9,11,11,0, 0,0,9,9,11,11,11,0, 0,0,0,9,0,0,0,0, 0,0,0,9,0,0,0,0,
+			],
+			"transparent": 0,
+		},
+	];
+
 	let canvas = null, canvasContext = null, imageData = null;
 	const screenBuffers = [
 		new Uint8Array(PANCAKE_SCREEN_WIDTH * PANCAKE_SCREEN_HEIGHT),
@@ -53,6 +160,13 @@ const virtualPanCake = (function() {
 			"img": virtualPanCakeResource.sprites[id],
 			"transparent": id < virtualPanCakeResource.spriteTransparentColors.length ? virtualPanCakeResource.spriteTransparentColors[id] : 0xff,
 		};
+	}
+
+	function getSprite(id) {
+		if (USER_SPRITE_ID_START <= id && (id - USER_SPRITE_ID_START) < userSpriteImages.length) {
+			return userSpriteImages[id - USER_SPRITE_ID_START];
+		}
+		return getResourceSprite(id);
 	}
 
 	function setCanvasEnabled(enabled) {
@@ -158,6 +272,24 @@ const virtualPanCake = (function() {
 			for (let i = 0; i < sb.length; i++) sb[i] = spriteBackground;
 		} else {
 			for (let i = 0; i < sb.length; i++) sb[i] = spriteBackground[i];
+		}
+		for (let i = 0; i < sprites.length; i++) {
+			if (sprites[i].imgId >= 0) {
+				const sprite = getSprite(sprites[i].imgId);
+				if (!sprite) continue;
+				const img = flipAndRotate(sprite.img, sprites[i].flip, sprites[i].rotate);
+				for (let dy = 0; dy < PANCAKE_SPRITE_HEIGHT; dy++) {
+					for (let dx = 0; dx < PANCAKE_SPRITE_WIDTH; dx++) {
+						const color = img[dy * PANCAKE_SPRITE_WIDTH + dx];
+						if (color !== sprite.transparent) {
+							const x = sprites[i].x + dx, y = sprites[i].y + dy;
+							if (0 <= x && x < PANCAKE_SCREEN_WIDTH && 0 <= y && y < PANCAKE_SCREEN_HEIGHT) {
+								sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
+							}
+						}
+					}
+				}
+			}
 		}
 		// 他の画面バッファにコピーする
 		for (let i = 0; i < sb.length; i++) {
@@ -297,15 +429,48 @@ const virtualPanCake = (function() {
 		updateCanvas(true);
 	}
 
+	function spriteCreate(args) {
+		if (args.length < 2) return;
+		const sid = args[0];
+		const imgId = args[1];
+		if (sid >= sprites.length) return;
+		if (imgId === 0xff) {
+			sprites[sid].imgId = -1;
+		} else {
+			if (!getSprite(imgId)) return; // 画像IDの有効性チェック
+			sprites[sid].imgId = imgId;
+		}
+		if (spriteEnabled) {
+			renderSprite();
+			updateCanvas(true);
+		}
+	}
+
+	function spriteMove(args) {
+		if (args.length < 3) return;
+		const sid = args[0];
+		const x = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
+		const y = args[2] >= 0x80 ? args[2] - 0x100 : args[2];
+		if (sid >= sprites.length) return;
+		sprites[sid].x = x;
+		sprites[sid].y = y;
+		if (spriteEnabled) {
+			renderSprite();
+			updateCanvas(true);
+		}
+	}
+
 	function reset() {
 		// 初期化するもの
 		// ・ダブルバッファリングの状態 (WBUF)
 		// ・起動時に表示されている画面バッファ
 		// ・スプライト処理の有効化状態
+		// ・スプライトの画像選択、位置、反転設定、回転設定
 		// 初期化しないもの
 		// ・画面出力有効/無効設定 (PC VIDEO xx)
 		// ・通信速度 (BPS)
 		// ・起動時に表示されていない画面バッファ
+		// ・スプライトの画像データ (SPRITE USER)
 		currentScreenBuffer = 0;
 		enableDoubleBuffering = false;
 		spriteEnabled = false;
@@ -313,6 +478,13 @@ const virtualPanCake = (function() {
 		const sb = screenBuffers[0];
 		for (let i = 0; i < sb.length; i++) {
 			sb[i] = img ? img[i] : 0;
+		}
+		for (let i = 0; i < sprites.length; i++) {
+			sprites[i].imgId = -1;
+			sprites[i].x = 0;
+			sprites[i].y = 0;
+			sprites[i].flip = false;
+			sprites[i].rotate = 0;
 		}
 		updateCanvas(true);
 	}
@@ -344,6 +516,46 @@ const virtualPanCake = (function() {
 		updateCanvas();
 	}
 
+	function spriteFlip(args) {
+		if (args.length < 2) return;
+		const sid = args[0];
+		const flip = args[1] !== 0;
+		if (sid >= sprites.length) return;
+		sprites[sid].flip = flip;
+		if (spriteEnabled) {
+			renderSprite();
+			updateCanvas(true);
+		}
+	}
+
+	function spriteRotate(args) {
+		if (args.length < 2) return;
+		const sid = args[0];
+		const rotate = args[1] & 3;
+		if (sid >= sprites.length) return;
+		sprites[sid].rotate = rotate;
+		if (spriteEnabled) {
+			renderSprite();
+			updateCanvas(true);
+		}
+	}
+
+	function spriteUser(args) {
+		if (args.length < 34) return;
+		const imgId = args[0];
+		const transparent = args[1];
+		if (imgId < USER_SPRITE_ID_START || (imgId - USER_SPRITE_ID_START) >= userSpriteImages.length) return;
+		const imgData = userSpriteImages[imgId - USER_SPRITE_ID_START];
+		for (let i = 0; i < imgData.img.length; i++) {
+			imgData.img[i] = (args[2 + (i >> 1)] >> (i & 1 ? 0 : 4)) & 0xf;
+		}
+		imgData.transparent = transparent;
+		if (spriteEnabled) {
+			renderSprite();
+			updateCanvas(true);
+		}
+	}
+
 	function bps(args, rawCommand) {
 		if (args.length < 2) return;
 		let newBps;
@@ -364,7 +576,7 @@ const virtualPanCake = (function() {
 		const imgId = args[2];
 		const flip = args.length >= 4 && args[3] !== 0;
 		const rotate = args.length >= 5 ? args[4] & 3 : 0;
-		const sprite = getResourceSprite(imgId);
+		const sprite = getSprite(imgId);
 		if (!sprite) return;
 		const img = flipAndRotate(sprite.img, flip, rotate);
 		const sb = getScreenBuffer();
@@ -402,8 +614,13 @@ const virtualPanCake = (function() {
 		"IMAGE": image,
 		"VIDEO": video,
 		"SPRITE START": spriteStart,
+		"SPRITE CREATE": spriteCreate,
+		"SPRITE MOVE": spriteMove,
 		"RESET": reset,
 		"CIRCLE": circle,
+		"SPRITE FLIP": spriteFlip,
+		"SPRITE ROTATE": spriteRotate,
+		"SPRITE USER": spriteUser,
 		"BPS": bps,
 		"STAMPS": stamps,
 		"WBUF": wbuf,
@@ -416,8 +633,13 @@ const virtualPanCake = (function() {
 		0x04: image,
 		0x05: video,
 		0x06: spriteStart,
+		0x07: spriteCreate,
+		0x08: spriteMove,
 		0x0D: reset,
 		0x0E: circle,
+		0x10: spriteFlip,
+		0x11: spriteRotate,
+		0x12: spriteUser,
 		0x13: bps,
 		0x14: stamps,
 		0x17: wbuf,
