@@ -2015,8 +2015,8 @@ function compileLine(addr, lineno, enableEdit = false) {
 	if (enableEdit && tokens.length > 0 && tokens[0].kind === "number") {
 		// プログラムの編集
 		const numberToken = tokens[0].token;
-		const left = source.substring(numberToken.length);
-		const line = /^\s/.test(left) ? left.substring(1) : left;
+		const left = source.replace(/^ +/, "").substring(numberToken.length);
+		const line = /^ /.test(left) ? left.substring(1) : left;
 		const lineNo =
 			numberToken.charAt(0) === "#" ? parseInt(numberToken.substring(1), 16) :
 			numberToken.charAt(0) === "`" ? parseInt(numberToken.substring(1), 2) :
