@@ -22,6 +22,7 @@ const virtualPanCake = (function() {
 		new Uint8Array(PANCAKE_SCREEN_WIDTH * PANCAKE_SCREEN_HEIGHT),
 	];
 	let currentScreenBuffer = 0, enableDoubleBuffering = false;
+	let spriteEnabled = false, spriteBackground = 0;
 
 	// 起動時の画面を最初のリソース画像にする
 	{
@@ -67,7 +68,7 @@ const virtualPanCake = (function() {
 	// ダブルバッファリング有効時、通常の描画コマンドを実行しても画面更新は不要
 	function updateCanvas(force = false) {
 		if (!canvasContext || (enableDoubleBuffering && !force)) return;
-		const screenBuffer = screenBuffers[enableDoubleBuffering ? currentScreenBuffer : 0];
+		const screenBuffer = screenBuffers[currentScreenBuffer];
 		for (let i = 0; i < PANCAKE_SCREEN_WIDTH * PANCAKE_SCREEN_HEIGHT; i++) {
 			imageData.data[4 * i + 0] = colorPalette[screenBuffer[i]][0];
 			imageData.data[4 * i + 1] = colorPalette[screenBuffer[i]][1];
@@ -148,8 +149,24 @@ const virtualPanCake = (function() {
 		return result;
 	}
 
+	// スプライト処理を行い、結果を画面バッファに書き込む
+	function renderSprite() {
+		if (!spriteEnabled) return;
+		// まず最初の画面バッファに書き込む
+		const sb = screenBuffers[0];
+		if (typeof spriteBackground === "number") {
+			for (let i = 0; i < sb.length; i++) sb[i] = spriteBackground;
+		} else {
+			for (let i = 0; i < sb.length; i++) sb[i] = spriteBackground[i];
+		}
+		// 他の画面バッファにコピーする
+		for (let i = 0; i < sb.length; i++) {
+			screenBuffers[1][i] = sb[i];
+		}
+	}
+
 	function clear(args) {
-		if (args.length < 1) return;
+		if (spriteEnabled || args.length < 1) return;
 		const color = args[0] & 0xf;
 		const sb = getScreenBuffer();
 		for (let i = 0; i < sb.length; i++) sb[i] = color;
@@ -157,7 +174,7 @@ const virtualPanCake = (function() {
 	}
 
 	function line(args) {
-		if (args.length < 5) return;
+		if (spriteEnabled || args.length < 5) return;
 		const sx = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
 		const sy = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
 		const dx = args[2] >= 0x80 ? args[2] - 0x100 : args[2];
@@ -197,7 +214,7 @@ const virtualPanCake = (function() {
 	}
 
 	function stamp(args) {
-		if (args.length < 35) return;
+		if (spriteEnabled || args.length < 35) return;
 		const px = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
 		const py = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
 		const transparent = args[2];
@@ -217,7 +234,7 @@ const virtualPanCake = (function() {
 	}
 
 	function stamp1(args) {
-		if (args.length < 11) return;
+		if (spriteEnabled || args.length < 11) return;
 		const px = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
 		const py = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
 		const color = args[2] & 0xf;
@@ -236,7 +253,7 @@ const virtualPanCake = (function() {
 	}
 
 	function image(args) {
-		if (args.length < 1) return;
+		if (spriteEnabled || args.length < 1) return;
 		const imgData = getResourceImage(args[0]);
 		if (!imgData) return;
 		const sb = getScreenBuffer();
@@ -247,6 +264,37 @@ const virtualPanCake = (function() {
 	function video(args) {
 		if (args.length < 1) return;
 		setCanvasEnabled(args[0] !== 0);
+	}
+
+	function spriteStart(args) {
+		if (args.length < 1) return;
+		const background = args[0];
+		if (background === 0xff) {
+			// スプライト処理を停止する
+			spriteEnabled = false;
+			// ダブルバッファリングを無効化する
+			// 実機で確認した結果、描画コマンドが即画面に反映され、画面の入れ替えを行うとスプライト処理の結果に戻ったため
+			enableDoubleBuffering = false;
+			// 描画先 (兼表示対象) を「現在描画先でない方」に設定する
+			// TODO: 実機で確認した結果、電源投入から同じコマンドを打っても結果が変わることがあり、詳しい法則は未解明
+			currentScreenBuffer = 1 - currentScreenBuffer;
+		} else {
+			// 背景を設定する (無効な背景が指定された場合は処理キャンセル)
+			if ((background & 0xf0) === 0x10) {
+				// 色指定
+				spriteBackground = background & 0xf;
+			} else {
+				// 画像指定
+				const img = getResourceImage(background);
+				if (!img) return;
+				spriteBackground = img;
+			}
+			// スプライト処理を開始する
+			spriteEnabled = true;
+			// スプライト処理を実行する
+			renderSprite();
+		}
+		updateCanvas(true);
 	}
 
 	function reset() {
@@ -268,7 +316,7 @@ const virtualPanCake = (function() {
 	}
 
 	function circle(args) {
-		if (args.length < 4) return;
+		if (spriteEnabled || args.length < 4) return;
 		const cx = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
 		const cy = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
 		const r = args[2];
@@ -308,7 +356,7 @@ const virtualPanCake = (function() {
 	}
 
 	function stamps(args) {
-		if (args.length < 3) return;
+		if (spriteEnabled || args.length < 3) return;
 		const px = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
 		const py = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
 		const imgId = args[2];
@@ -351,6 +399,7 @@ const virtualPanCake = (function() {
 		"STAMP1": stamp1,
 		"IMAGE": image,
 		"VIDEO": video,
+		"SPRITE START": spriteStart,
 		"RESET": reset,
 		"CIRCLE": circle,
 		"BPS": bps,
@@ -364,6 +413,7 @@ const virtualPanCake = (function() {
 		0x03: stamp1,
 		0x04: image,
 		0x05: video,
+		0x06: spriteStart,
 		0x0D: reset,
 		0x0E: circle,
 		0x13: bps,
