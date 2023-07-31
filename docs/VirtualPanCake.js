@@ -301,12 +301,14 @@ const virtualPanCake = (function() {
 		// 初期化するもの
 		// ・ダブルバッファリングの状態 (WBUF)
 		// ・起動時に表示されている画面バッファ
+		// ・スプライト処理の有効化状態
 		// 初期化しないもの
 		// ・画面出力有効/無効設定 (PC VIDEO xx)
 		// ・通信速度 (BPS)
 		// ・起動時に表示されていない画面バッファ
 		currentScreenBuffer = 0;
 		enableDoubleBuffering = false;
+		spriteEnabled = false;
 		const img = getResourceImage(0);
 		const sb = screenBuffers[0];
 		for (let i = 0; i < sb.length; i++) {
