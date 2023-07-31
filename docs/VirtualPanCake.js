@@ -235,31 +235,6 @@ const virtualPanCake = (function() {
 		updateCanvas();
 	}
 
-	function stamps(args) {
-		if (args.length < 3) return;
-		const px = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
-		const py = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
-		const imgId = args[2];
-		const flip = args.length >= 4 && args[3] !== 0;
-		const rotate = args.length >= 5 ? args[4] & 3 : 0;
-		const sprite = getResourceSprite(imgId);
-		if (!sprite) return;
-		const img = flipAndRotate(sprite.img, flip, rotate);
-		const sb = getScreenBuffer();
-		for (let dy = 0; dy < PANCAKE_SPRITE_HEIGHT; dy++) {
-			for (let dx = 0; dx < PANCAKE_SPRITE_WIDTH; dx++) {
-				const color = img[dy * PANCAKE_SPRITE_WIDTH + dx];
-				if (color !== sprite.transparent) {
-					const x = px + dx, y = py + dy;
-					if (0 <= x && x < PANCAKE_SCREEN_WIDTH && 0 <= y && y < PANCAKE_SCREEN_HEIGHT) {
-						sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
-					}
-				}
-			}
-		}
-		updateCanvas();
-	}
-
 	function image(args) {
 		if (args.length < 1) return;
 		const imgData = getResourceImage(args[0]);
@@ -330,6 +305,31 @@ const virtualPanCake = (function() {
 			newBps = (args[0] << 8) | args[1];
 		}
 		deviceBps = newBps === 0 ? DEVICE_BPS_DEFAULT : newBps;
+	}
+
+	function stamps(args) {
+		if (args.length < 3) return;
+		const px = args[0] >= 0x80 ? args[0] - 0x100 : args[0];
+		const py = args[1] >= 0x80 ? args[1] - 0x100 : args[1];
+		const imgId = args[2];
+		const flip = args.length >= 4 && args[3] !== 0;
+		const rotate = args.length >= 5 ? args[4] & 3 : 0;
+		const sprite = getResourceSprite(imgId);
+		if (!sprite) return;
+		const img = flipAndRotate(sprite.img, flip, rotate);
+		const sb = getScreenBuffer();
+		for (let dy = 0; dy < PANCAKE_SPRITE_HEIGHT; dy++) {
+			for (let dx = 0; dx < PANCAKE_SPRITE_WIDTH; dx++) {
+				const color = img[dy * PANCAKE_SPRITE_WIDTH + dx];
+				if (color !== sprite.transparent) {
+					const x = px + dx, y = py + dy;
+					if (0 <= x && x < PANCAKE_SCREEN_WIDTH && 0 <= y && y < PANCAKE_SCREEN_HEIGHT) {
+						sb[y * PANCAKE_SCREEN_WIDTH + x] = color;
+					}
+				}
+			}
+		}
+		updateCanvas();
 	}
 
 	function wbuf(args) {
