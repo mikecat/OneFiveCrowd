@@ -1277,7 +1277,7 @@ const functionKeyDict = {
 function keyDown(key, shiftKey, ctrlKey, altKey) {
 	if (ctrlKey) {
 		if (key === "a" || key === "A") keyInput(0x12); // 行頭へ
-		if (key === "c" || key === "C") keyInput(0x1b); // ESC
+		else if (key === "c" || key === "C") keyInput(0x1b); // ESC
 		else if (key === "e" || key === "E") keyInput(0x17); // 行末へ
 		else if (key === "k" || key === "K") keyInput(0x0c); // カーソル以降を削除
 		else if (key === "l" || key === "L") keyInput("\x13\x0c"); // 全て削除
