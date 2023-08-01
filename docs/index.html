@@ -130,7 +130,7 @@
 							for="urlExportVirtualEeprom">選択中の仮想EEPROM</label>
 						</span>
 						<fieldset id="urlExportConfigArea">
-							<legend>システム設定</legend>
+							<legend>動作設定</legend>
 							<span class="checkSet">
 								<input type="checkbox" id="urlExportConfigFont"><label
 								for="urlExportConfigFont">フォント</label>
@@ -150,10 +150,6 @@
 							<span class="checkSet">
 								<input type="checkbox" id="urlExportConfigMemory"><label
 								for="urlExportConfigMemory">メモリモード</label>
-							</span>
-							<span class="checkSet">
-								<input type="checkbox" id="urlExportConfigKeyLayout"><label
-								for="urlExportConfigKeyLayout">スクリーンキーボード</label>
 							</span>
 						</fieldset>
 						<button id="urlExportButton" type="button">URL作成</button>
@@ -182,51 +178,59 @@
 					</fieldset>
 				</div>
 				<div id="systemForm">
-					<span class="configField">
-						<span class="configRow">
-							<span class="configName">フォント</span>
-							<span class="configValue"><select id="systemFontSelect">
-								<option value="1_1">1.1.1</option>
-								<option value="1_2">1.2</option>
-								<option value="1_4" selected>1.4</option>
-							</select></span>
+					<fieldset>
+						<legend>動作設定</legend>
+						<span class="configField">
+							<span class="configRow">
+								<span class="configName">フォント</span>
+								<span class="configValue"><select id="systemFontSelect">
+									<option value="1_1">1.1.1</option>
+									<option value="1_2">1.2</option>
+									<option value="1_4" selected>1.4</option>
+								</select></span>
+							</span>
+							<span class="configRow">
+								<span class="configName">MML解釈</span>
+								<span class="configValue"><select id="systemMMLInterpretationSelect">
+									<option value="old">旧 (1.1.1)</option>
+									<option value="new" selected>新 (1.2.0)</option>
+								</select></span>
+							</span>
+							<span class="configRow">
+								<span class="configName">線分の描画方法</span>
+								<span class="configValue"><select id="systemDrawAlgorithmSelect">
+									<option value="bresenham" selected>高品質 (ブレゼンハム)</option>
+									<option value="linear">互換 (線形補間)</option>
+								</select></span>
+							</span>
+							<span class="configRow">
+								<span class="configName">マシン語</span>
+								<span class="configValue"><select id="systemMachineLanguageSelect">
+									<option value="m0" selected>M0 (従来)</option>
+									<option value="rv32c">RV32C (R系)</option>
+								</select></span>
+							</span>
+							<span class="configRow">
+								<span class="configName">メモリモード</span>
+								<span class="configValue"><select id="systemMemorySelect">
+									<option value="jam" selected>Jam</option>
+									<option value="cake">Cake</option>
+								</select></span>
+							</span>
 						</span>
-						<span class="configRow">
-							<span class="configName">MML解釈</span>
-							<span class="configValue"><select id="systemMMLInterpretationSelect">
-								<option value="old">旧 (1.1.1)</option>
-								<option value="new" selected>新 (1.2.0)</option>
-							</select></span>
+					</fieldset>
+					<fieldset id="environmentConfiguration">
+						<legend>環境設定</legend>
+						<span class="configField">
+							<span class="configRow">
+								<span class="configName">スクリーンキーボード</span>
+								<span class="configValue"><select id="systemKeyboardLayoutSelect">
+									<option value="0">英語配列</option>
+									<option value="1" selected>日本語配列</option>
+								</select></span>
+							</span>
 						</span>
-						<span class="configRow">
-							<span class="configName">線分の描画方法</span>
-							<span class="configValue"><select id="systemDrawAlgorithmSelect">
-								<option value="bresenham" selected>高品質 (ブレゼンハム)</option>
-								<option value="linear">互換 (線形補間)</option>
-							</select></span>
-						</span>
-						<span class="configRow">
-							<span class="configName">マシン語</span>
-							<span class="configValue"><select id="systemMachineLanguageSelect">
-								<option value="m0" selected>M0 (従来)</option>
-								<option value="rv32c">RV32C (R系)</option>
-							</select></span>
-						</span>
-						<span class="configRow">
-							<span class="configName">メモリモード</span>
-							<span class="configValue"><select id="systemMemorySelect">
-								<option value="jam" selected>Jam</option>
-								<option value="cake">Cake</option>
-							</select></span>
-						</span>
-						<span class="configRow">
-							<span class="configName">スクリーンキーボード</span>
-							<span class="configValue"><select id="systemKeyboardLayoutSelect">
-								<option value="0">英語配列</option>
-								<option value="1" selected>日本語配列</option>
-							</select></span>
-						</span>
-					</span>
+					</fieldset>
 				</div>
 			</div>
 		</div>

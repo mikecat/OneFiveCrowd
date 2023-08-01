@@ -1049,9 +1049,6 @@ async function initSystem() {
 		if (urlExportElements.urlExportConfigMemory.checked) {
 			data.set("memoryMode", systemMemorySelect.value);
 		}
-		if (urlExportElements.urlExportConfigKeyLayout.checked) {
-			data.set("keyLayout", systemKeyboardLayoutSelect.value);
-		}
 		location.hash = data.toString();
 	});
 
