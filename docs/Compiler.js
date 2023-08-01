@@ -66,6 +66,11 @@ const getTokenInfo = (function(tokens) {
 	"LEFT", "RIGHT", "UP", "DOWN", "SPACE", "MOD", "DRAW", "POS", "POINT",
 	"COS", "SIN", "WS.LED", "KBD", "DAC",
 	"SEC.PUBKEY", "SEC.SIGN", "SEC.VERIFY",
+	"PC.CLEAR", "PC.LINE", "PC.STAMP", "PC.STAMP1", "PC.IMAGE",
+	"PC.VIDEO", "PC.SSTART", "PC.SCREATE", "PC.SMOVE", "PC.SOUND",
+	"PC.SOUND1", "PC.MSCORE", "PC.MPLAY", "PC.RESET", "PC.CIRCLE",
+	"PC.OUT", "PC.SFLIP", "PC.SROTATE", "PC.SUSER", "PC.BPS",
+	"PC.STAMPS", "PC.MLOAD", "PC.WBUF",
 	":", "+", "-", "*", "/", "%", "(", ")", "=", "<", ">", ",", "[", "]", ";",
 	"&", "|", "^", "~", "!", "?", "'",
 	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
@@ -239,6 +244,11 @@ function_arguments ::= (空)
                      | "CLO" | "SRND" | "COPY" | "UART" | "OK" | "IoT.OUT" | "SWITCH"
                      | "DRAW" | "WS.LED" | "KBD" | "DAC"
                      | "SEC.PUBKEY" | "SEC.SIGN"
+                     | "PC.CLEAR" | "PC.LINE" | "PC.STAMP" | "PC.STAMP1" | "PC.IMAGE"
+                     | "PC.VIDEO" | "PC.SSTART" | "PC.SCREATE" | "PC.SMOVE" | "PC.SOUND"
+                     | "PC.SOUND1" | "PC.MSCORE" | "PC.MPLAY" | "PC.RESET" | "PC.CIRCLE"
+                     | "PC.OUT" | "PC.SFLIP" | "PC.SROTATE" | "PC.SUSER" | "PC.BPS"
+                     | "PC.STAMPS" | "PC.MLOAD" | "PC.WBUF"
      function_name ::= "BTN" | "TICK" | "INKEY" | "ASC" | "SCR" | "VPEEK" | "ABS"
                      | "SOUND" | "FREE" | "VER" | "FILE" | "PEEK" | "IN" | "ANA"
                      | "I2CR" | "I2CW" | "USR" | "LANG" | "LINE" | "LEN" | "IoT.IN"
@@ -338,6 +348,29 @@ const basicCommands = {
 	"WS.LED" : null,
 	"SEC.PUBKEY" : {func: commandSEC_PUBKEY, minArg: 2, maxArg: 2},
 	"SEC.SIGN"   : {func: commandSEC_SIGN, minArg: 4, maxArg: 4},
+	"PC.CLEAR"   : {func: commandPC_CLEAR, minArg: 1, maxArg: 1},
+	"PC.LINE"    : {func: commandPC_LINE, minArg: 5, maxArg: 5},
+	"PC.STAMP"   : {func: commandPC_STAMP, minArg: 4, maxArg: 4},
+	"PC.STAMP1"  : {func: commandPC_STAMP1, minArg: 4, maxArg: 4},
+	"PC.IMAGE"   : {func: commandPC_IMAGE, minArg: 1, maxArg: 1},
+	"PC.VIDEO"   : {func: commandPC_VIDEO, minArg: 1, maxArg: 1},
+	"PC.SSTART"  : {func: commandPC_SSTART, minArg: 1, maxArg: 1},
+	"PC.SCREATE" : {func: commandPC_SCREATE, minArg: 2, maxArg: 2},
+	"PC.SMOVE"   : {func: commandPC_SMOVE, minArg: 3, maxArg: 3},
+	"PC.SOUND"   : {func: commandPC_SOUND, minArg: 8, maxArg: 8},
+	"PC.SOUND1"  : {func: commandPC_SOUND1, minArg: 3, maxArg: 3},
+	"PC.MSCORE"  : {func: commandPC_MSCORE, minArg: 4, maxArg: 4},
+	"PC.MPLAY"   : {func: commandPC_MPLAY, minArg: 1, maxArg: 2},
+	"PC.RESET"   : {func: commandPC_RESET, minArg: 0, maxArg: 0},
+	"PC.CIRCLE"  : {func: commandPC_CIRCLE, minArg: 4, maxArg: 4},
+	"PC.OUT"     : {func: commandPC_OUT, minArg: 1, maxArg: 1},
+	"PC.SFLIP"   : {func: commandPC_SFLIP, minArg: 2, maxArg: 2},
+	"PC.SROTATE" : {func: commandPC_SROTATE, minArg: 2, maxArg: 2},
+	"PC.SUSER"   : {func: commandPC_SUSER, minArg: 3, maxArg: 3},
+	"PC.BPS"     : {func: commandPC_BPS, minArg: 1, maxArg: 1},
+	"PC.STAMPS"  : {func: commandPC_STAMPS, minArg: 3, maxArg: 5},
+	"PC.MLOAD"   : {func: commandPC_MLOAD, minArg: 2, maxArg: 2},
+	"PC.WBUF"    : {func: commandPC_WBUF, minArg: 1, maxArg: 1},
 };
 
 const basicFunctions = {

@@ -872,3 +872,195 @@ async function commandSEC_SIGN(args) {
 	const sign = new Uint8Array(await ed25519.sign(message, privateKey));
 	for (let i = 0; i < 64; i++) writeVirtualMem(args[0] + i, sign[i]);
 }
+
+async function commandPC_CLEAR(args) {
+	// PanCakeのCLEARに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x04\x00" + String.fromCharCode(args[0] & 0xff));
+}
+
+async function commandPC_LINE(args) {
+	// PanCakeのLINEに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x08\x01" + String.fromCharCode(
+		args[0] & 0xff, args[1] & 0xff, args[2] & 0xff, args[3] & 0xff, args[4] & 0xff
+	));
+}
+
+async function commandPC_STAMP(args) {
+	// PanCakeのSTAMPに相当するバイナリコマンドをUARTで送信する
+	let data = "\x80\x26\x02" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff, args[2] & 0xff);
+	let eos = false;
+	let address = args[3];
+	let cbuf = 0;
+	for (let i = 0; i < 64; i++) {
+		const c_raw = eos ? 0 : readVirtualMem(address++);
+		if (c_raw === 0 || c_raw === 0x22) eos = true;
+		const c = eos ? 0 : c_raw;
+		const c_int_raw = parseInt(c, 16);
+		const c_int = isNaN(c_int_raw) ? 0 : c_int_raw;
+		if (i % 2 === 0) {
+			cbuf = c_int;
+		} else {
+			data += String.fromCharCode((cbuf << 4) | c_int);
+		}
+	}
+	await sendToUart(data);
+}
+
+async function commandPC_STAMP1(args) {
+	// PanCakeのSTAMP1に相当するバイナリコマンドをUARTで送信する
+	let data = "\x80\x0E\x03" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff, args[2] & 0xff);
+	let eos = false;
+	let address = args[3];
+	let cbuf = 0;
+	for (let i = 0; i < 16; i++) {
+		const c_raw = eos ? 0 : readVirtualMem(address++);
+		if (c_raw === 0 || c_raw === 0x22) eos = true;
+		const c = eos ? 0 : c_raw;
+		const c_int_raw = parseInt(c, 16);
+		const c_int = isNaN(c_int_raw) ? 0 : c_int_raw;
+		if (i % 2 === 0) {
+			cbuf = c_int;
+		} else {
+			data += String.fromCharCode((cbuf << 4) | c_int);
+		}
+	}
+	await sendToUart(data);
+}
+
+async function commandPC_IMAGE(args) {
+	// PanCakeのIMAGEに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x04\x04" + String.fromCharCode(args[0] & 0xff));
+}
+
+async function commandPC_VIDEO(args) {
+	// PanCakeのVIDEOに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x04\x05" + String.fromCharCode(args[0] & 0xff));
+}
+
+async function commandPC_SSTART(args) {
+	// PanCakeのSPRITE STARTに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x04\x06" + String.fromCharCode(args[0] & 0xff));
+}
+
+async function commandPC_SCREATE(args) {
+	// PanCakeのSPRITE CREATEに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x05\x07" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff));
+}
+
+async function commandPC_SMOVE(args) {
+	// PanCakeのSPRITE MOVEに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x06\x08" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff, args[2] & 0xff));
+}
+
+async function commandPC_SOUND(args) {
+	// PanCakeのSOUNDに相当するバイナリコマンドをUARTで送信する
+	let data = "\x80\x0B\x09";
+	for (let i = 0; i < 8; i++) {
+		data += String.fromCharCode(args[i] & 0xff);
+	}
+	await sendToUart(data);
+}
+
+async function commandPC_SOUND1(args) {
+	// PanCakeのSOUND1に相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x06\x0A" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff, args[2] & 0xff));
+}
+
+async function commandPC_MSCORE(args) {
+	// PanCakeのMUSIC SCOREに相当するテキストコマンドをUARTで送信する
+	const ch = args[0] & 0xff, playFlag = args[1] & 0xff, options = args[2] & 0xff;
+	let mml = "";
+	let mmlAddress = args[3];
+	for (;;) {
+		const c = readVirtualMem(mmlAddress++);
+		if (c === 0 || c === 0x22) break;
+		mml += String.fromCharCode(c);
+	}
+	const argString = [ch, playFlag, options].map(function(value) {
+		const res = value.toString(16).toUpperCase();
+		if (res.length >= 2) return res;
+		return "0" + res;
+	}).join(" ");
+	await sendToUart("PC MUSIC SCORE " + argString + " " + mml);
+}
+
+async function commandPC_MPLAY(args) {
+	// PanCakeのMUSIC PLAYに相当するバイナリコマンドをUARTで送信する
+	if (args.length >= 2) {
+		await sendToUart("\x80\x05\x0C" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff));
+	} else {
+		await sendToUart("\x80\x04\x0C" + String.fromCharCode(args[0] & 0xff));
+	}
+}
+
+async function commandPC_RESET(args) {
+	// PanCakeのRESETに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x03\x0D");
+}
+
+async function commandPC_CIRCLE(args) {
+	// PanCakeのCIRCLEに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x07\x0E" + String.fromCharCode(
+		args[0] & 0xff, args[1] & 0xff, args[2] & 0xff, args[3] & 0xff
+	));
+}
+
+async function commandPC_OUT(args) {
+	// PanCakeのOUTに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x04\x0F" + String.fromCharCode(args[0] & 0xff));
+}
+
+async function commandPC_SFLIP(args) {
+	// PanCakeのSPRITE FLIPに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x05\x10" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff));
+}
+
+async function commandPC_SROTATE(args) {
+	// PanCakeのSPRITE ROTATEに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x05\x11" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff));
+}
+
+async function commandPC_SUSER(args) {
+	// PanCakeのSPRITE USERに相当するバイナリコマンドをUARTで送信する
+	let data = "\x80\x25\x12" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff);
+	let eos = false;
+	let address = args[2];
+	let cbuf = 0;
+	for (let i = 0; i < 64; i++) {
+		const c_raw = eos ? 0 : readVirtualMem(address++);
+		if (c_raw === 0 || c_raw === 0x22) eos = true;
+		const c = eos ? 0 : c_raw;
+		const c_int_raw = parseInt(c, 16);
+		const c_int = isNaN(c_int_raw) ? 0 : c_int_raw;
+		if (i % 2 === 0) {
+			cbuf = c_int;
+		} else {
+			data += String.fromCharCode((cbuf << 4) | c_int);
+		}
+	}
+	await sendToUart(data);
+}
+
+async function commandPC_BPS(args) {
+	// PanCakeのBPSに相当するバイナリコマンドをUARTで送信する
+	const bps = args[0] === -1 ? 57600 : (args[0] === -2 ? 38400 : args[0] & 0xffff);
+	await sendToUart("\x80\x05\x13" + String.fromCharCode(bps & 0xff, (bps >> 8) & 0xff));
+}
+
+async function commandPC_STAMPS(args) {
+	// PanCakeのSTAMPSに相当するバイナリコマンドをUARTで送信する
+	let data = String.fromCharCode(args[0] & 0xff, args[1] & 0xff, args[2] & 0xff);
+	if (args.length >= 4) data += String.fromCharCode(args[3] & 0xff);
+	if (args.length >= 5) data += String.fromCharCode(args[4] & 0xff);
+	await sendToUart(String.fromCharCode(0x80, data.length + 3, 0x14) + data);
+}
+
+async function commandPC_MLOAD(args) {
+	// PanCakeのMUSIC LOADに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x05\x15" + String.fromCharCode(args[0] & 0xff, args[1] & 0xff));
+}
+
+async function commandPC_WBUF(args) {
+	// PanCakeのWBUFに相当するバイナリコマンドをUARTで送信する
+	await sendToUart("\x80\x04\x17" + String.fromCharCode(args[0] & 0xff));
+}
