@@ -859,7 +859,7 @@ async function initSystem() {
 	// スクリーンキーボードの初期化
 	initializeScreenKeys();
 	initializePad();
-	keyLayout = parseInt(getInitialParam("keyLayout", "1"));
+	keyLayout = parseInt(readLocalStorage("keyLayout", "1"));
 	if (keyLayout !== 0) keyLayout = 1;
 	switchScreenKeys(keyLayout);
 	const systemKeyboardLayoutSelect = document.getElementById("systemKeyboardLayoutSelect");
