@@ -950,6 +950,18 @@ async function initSystem() {
 	});
 	switchCakeMode(systemMemorySelect.value === "cake");
 
+	// Ctrl+V で貼り付け入力機能の設定UIの初期化
+	const pasteByCtrlVCheckbox = document.getElementById("pasteByCtrlVCheckbox");
+	pasteByCtrlVCheckbox.checked = readLocalStorage("pasteByCtrlV", "no") !== "no";
+	if (!navigator.clipboard || !navigator.clipboard.readText) {
+		pasteByCtrlVCheckbox.disabled = true;
+	} else {
+		document.getElementById("pasteNotSupportedIndicator").classList.add("supported");
+	}
+	pasteByCtrlVCheckbox.addEventListener("change", function() {
+		writeLocalStorage("pasteByCtrlV", pasteByCtrlVCheckbox.checked ? "yes" : "no");
+	});
+
 	// カーソルを点滅させる
 	if (cursorTimerId !== null) clearInterval(cursorTimerId);
 	cursorTimerId = setInterval(toggleCursor, 500);
@@ -1280,6 +1292,15 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 		else if (key === "l" || key === "L") keyInput("\x13\x0c"); // 全て削除
 		else if (key === "Shift" || key === " ") keyInput(ROMAN_TOGGLE_CHAR); // アルファベット/カナ切り替え
 		else if (key === "Alt") keyInput(OVERWRITE_TOGGLE_CHAR); // 挿入/上書き切り替え
+		else if (key === "v" || key === "V") { // 貼り付け
+			if (document.getElementById("pasteByCtrlVCheckbox").checked && navigator.clipboard && navigator.clipboard.readText) {
+				navigator.clipboard.readText().then(function(pastedText) {
+					keyInput(importText(pastedText));
+				}, function(error) {
+					console.warn(error);
+				});
+			}
+		}
 	} else if (key.length === 1) {
 		let keyCode = key.charCodeAt(0);
 		// アルファベット大文字と小文字を入れ替える

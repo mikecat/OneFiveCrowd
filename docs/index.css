@@ -361,6 +361,10 @@ label[for="volumeSwitch"] {
 	padding-bottom: 0.3em;
 }
 
+#pasteNotSupportedIndicator.supported {
+	display: none;
+}
+
 .screenKeyMain {
 	display: grid;
 	grid-template-rows: repeat(6, 2em);
