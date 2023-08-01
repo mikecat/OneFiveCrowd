@@ -1208,7 +1208,7 @@ function keyInput(key, invokeCallback = true, stopOnEsc = true) {
 // ローマ字を考慮したキー入力を行う
 // key : 入力する文字 (整数専用)
 function keyRomanInput(key) {
-	if (isRomanMode && ((0x21 <= key && key <= 0x7e) || key == 0x0a || key == 0x10)) {
+	if (isRomanMode && ((0x21 <= key && key <= 0x7e) || key === 0x0a || key === 0x10)) {
 		const c = String.fromCharCode(key).toUpperCase();
 		const newStatus = romanInputStatus + c;
 		let charsToRemove = 0, charsToEnter = null;
@@ -1243,7 +1243,7 @@ function keyRomanInput(key) {
 			keyInput(c);
 		}
 	} else {
-		if (isRomanMode && key == 0x08 && romanInputStatus.length > 0) {
+		if (isRomanMode && key === 0x08 && romanInputStatus.length > 0) {
 			romanInputStatus = romanInputStatus.substring(0, romanInputStatus.length - 1);
 		}
 		keyInput(key);
