@@ -326,8 +326,8 @@ label[for="volumeSwitch"] {
 	white-space: nowrap;
 }
 
-#urlExportArea .checkSet:not(:first-of-type) {
-	margin-left: 0.5em;
+#urlExportArea .checkSet:not(:last-of-type) {
+	margin-right: 0.5em;
 }
 
 #urlExportConfigArea {
