@@ -12,6 +12,10 @@
 	image-rendering: pixelated;
 }
 
+#mainScreen.disabled {
+	display: none;
+}
+
 #pancakeScreen {
 	width: 480px;
 	height: 270px;

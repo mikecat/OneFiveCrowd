@@ -680,7 +680,7 @@ function commandVIDEO(args) {
 		// 本家では動作異常を起こすが、無視する
 	} else if (config === 0) {
 		// 非表示
-		// TODO
+		mainScreen.classList.add("disabled");
 	} else {
 		const newVideoZoom = config <= 8 ? 1 << ((config - 1) >>> 1) : 8;
 		const newVideoInvert = (config & 1) === 0;
@@ -692,6 +692,7 @@ function commandVIDEO(args) {
 		if (newVideoZoom !== videoZoom) commandCLS();
 		videoZoom = newVideoZoom;
 		videoInvert = newVideoInvert;
+		mainScreen.classList.remove("disabled");
 	}
 	// TODO: クロックダウン設定の反映
 }

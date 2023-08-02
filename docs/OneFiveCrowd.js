@@ -1133,6 +1133,7 @@ async function resetSystem() {
 	SCREEN_HEIGHT = RAW_SCREEN_HEIGHT;
 	mainScreen.setAttribute("width", "512");
 	mainScreen.setAttribute("height", "384");
+	mainScreen.classList.remove("disabled");
 	uartPrintToScreen = true;
 	uartPrintToSerial = true;
 	uartPrintControl = true;
