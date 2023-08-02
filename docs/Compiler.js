@@ -343,7 +343,7 @@ const basicCommands = {
 	"UART"   : {func: commandUART, minArg: 1, maxArg: 2},
 	"OK"     : {func: commandOK, minArg: 0, maxArg: 1},
 	"IoT.OUT": null,
-	"SWITCH" : null,
+	"SWITCH" : {func: commandSWITCH, minArg: 0, maxArg: 2},
 	"DRAW"   : {func: commandDRAW, minArg: 2, maxArg: 5},
 	"WS.LED" : null,
 	"SEC.PUBKEY" : {func: commandSEC_PUBKEY, minArg: 2, maxArg: 2},

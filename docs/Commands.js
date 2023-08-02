@@ -685,8 +685,10 @@ function commandVIDEO(args) {
 		const newVideoZoom = config <= 8 ? 1 << ((config - 1) >>> 1) : 8;
 		const newVideoInvert = (config & 1) === 0;
 		if (videoInvert !== newVideoInvert) videoConfigUpdated = true;
-		SCREEN_WIDTH = RAW_SCREEN_WIDTH / newVideoZoom;
-		SCREEN_HEIGHT = RAW_SCREEN_HEIGHT / newVideoZoom;
+		if (!lcdMode) {
+			SCREEN_WIDTH = RAW_SCREEN_WIDTH / newVideoZoom;
+			SCREEN_HEIGHT = RAW_SCREEN_HEIGHT / newVideoZoom;
+		}
 		if (newVideoZoom !== videoZoom) commandCLS();
 		videoZoom = newVideoZoom;
 		videoInvert = newVideoInvert;
@@ -763,6 +765,23 @@ function commandUART(args) {
 function commandOK(args) {
 	// メッセージの表示モードを設定する
 	okMode = args.length > 0 ? args[0] : 1;
+}
+
+function commandSWITCH(args) {
+	// ビデオモードと液晶モードを切り替える
+	const newLcdMode = args.length > 0 ? args[0] !== 0 : !lcdMode;
+	mainScreen.setAttribute("width", newLcdMode ? "256" : "512");
+	mainScreen.setAttribute("height", newLcdMode ? "128" : "384");
+	if (newLcdMode) {
+		SCREEN_WIDTH = 16;
+		SCREEN_HEIGHT = 8;
+	} else {
+		SCREEN_WIDTH = RAW_SCREEN_WIDTH / videoZoom;
+		SCREEN_HEIGHT = RAW_SCREEN_HEIGHT / videoZoom;
+	}
+	// TODO: 液晶の濃さの設定
+	lcdMode = newLcdMode;
+	commandCLS();
 }
 
 function commandDRAW(args) {

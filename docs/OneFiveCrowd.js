@@ -384,6 +384,8 @@ Object.keys(romanMap).forEach(function(romanKey) {
 let videoZoom = 1;
 // 画面反転
 let videoInvert = false;
+// 液晶モード
+let lcdMode = false;
 // 拡大を考慮した画面サイズ
 let SCREEN_WIDTH = RAW_SCREEN_WIDTH, SCREEN_HEIGHT = RAW_SCREEN_HEIGHT;
 
@@ -723,8 +725,10 @@ function updateScreen() {
 			mainScreenContext.filter = "invert(0%)";
 			mainScreen.style.borderColor = "black";
 		}
+		const videoZoom2 = lcdMode ? 1 : videoZoom;
+		mainScreenContext.imageSmoothingEnabled = false;
 		mainScreenContext.drawImage(screenBuffer,
-			0, 0, screenBuffer.width / videoZoom, screenBuffer.height / videoZoom,
+			0, 0, screenBuffer.width / videoZoom2, screenBuffer.height / videoZoom2,
 			0, 0, screenBuffer.width, screenBuffer.height);
 	}
 }
@@ -763,7 +767,6 @@ async function initSystem() {
 	// canvasの初期化
 	mainScreen = document.getElementById("mainScreen");
 	mainScreenContext = mainScreen.getContext("2d");
-	mainScreenContext.imageSmoothingEnabled = false;
 
 	// テキスト操作UIの初期化
 	const textInputArea = document.getElementById("textInputArea");
@@ -1125,8 +1128,11 @@ async function resetSystem() {
 	okMode = 1;
 	videoZoom = 1;
 	videoInvert = false;
+	lcdMode = false;
 	SCREEN_WIDTH = RAW_SCREEN_WIDTH;
 	SCREEN_HEIGHT = RAW_SCREEN_HEIGHT;
+	mainScreen.setAttribute("width", "512");
+	mainScreen.setAttribute("height", "384");
 	uartPrintToScreen = true;
 	uartPrintToSerial = true;
 	uartPrintControl = true;
