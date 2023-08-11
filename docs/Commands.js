@@ -1001,7 +1001,7 @@ async function commandPC_MSCORE(args) {
 		if (res.length >= 2) return res;
 		return "0" + res;
 	}).join(" ");
-	await sendToUart("PC MUSIC SCORE " + argString + " " + mml);
+	await sendToUart("PC MUSIC SCORE " + argString + " " + mml + "\n");
 }
 
 async function commandPC_MPLAY(args) {
