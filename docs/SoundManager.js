@@ -53,12 +53,29 @@ var soundManager = (function() {
 	});
 
 	// 初期化前の場合は、初期化が完了するまで待機する
-	const getPlayerNode = async function() {
+	const waitForPlayerInitialization = async function() {
 		if (playerNode === null && !playerError) {
 			await new Promise(function(resolve, reject) {
 				playerWaiter.push(resolve);
 			});
 		}
+	};
+
+	const addWorkletModule = async function(moduleFileName) {
+		await waitForPlayerInitialization();
+		await audioContext.audioWorklet.addModule(moduleFileName);
+	};
+
+	const addWorkletNode = async function(workletName) {
+		await waitForPlayerInitialization();
+		if (!gainNode) return null;
+		const node = new AudioWorkletNode(audioContext, workletName);
+		node.connect(gainNode);
+		return node;
+	};
+
+	const getPlayerNode = async function() {
+		await waitForPlayerInitialization();
 		return playerNode;
 	};
 
@@ -259,6 +276,8 @@ var soundManager = (function() {
 	};
 
 	return {
+		"addWorkletModule": addWorkletModule,
+		"addWorkletNode": addWorkletNode,
 		"beep": beep,
 		"play": play,
 		"stop": stop,

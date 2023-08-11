@@ -18,6 +18,29 @@ const virtualPanCake = (function() {
 	const PANCAKE_SPRITE_WIDTH = 8, PANCAKE_SPRITE_HEIGHT = 8;
 	const SPRITE_MAX = 32, USER_SPRITE_ID_START = 0xf0;
 
+	const soundCommandQueue = [];
+	let soundPlayerNode = null, soundPlayerError = false;
+	(async function() {
+		await soundManager.addWorkletModule("VirtualPanCakeSoundPlayer.js");
+		soundPlayerNode = await soundManager.addWorkletNode("VirtualPanCakeSoundPlayer");
+		if (soundPlayerNode === null) soundPlayerError = true;
+	})().catch(function(error) {
+		soundPlayerError = true;
+		console.error(error);
+	});
+
+	const sendSoundCommand = function(command) {
+		if (soundPlayerError) return;
+		if (soundPlayerNode) {
+			while (soundCommandQueue.length > 0) {
+				soundPlayerNode.port.postMessage(soundCommandQueue.shift());
+			}
+			soundPlayerNode.port.postMessage(command);
+		} else {
+			soundCommandQueue.push(command);
+		}
+	}
+
 	const sprites = [];
 	for (let i = 0; i < SPRITE_MAX; i++) {
 		sprites.push({
@@ -139,6 +162,20 @@ const virtualPanCake = (function() {
 			sb[i] = img ? img[i] : 0;
 		}
 	}
+	// デフォルトのMMLをセットする
+	for (let i = 0; i < 4; i++) {
+		const mml = getResourceMML(i);
+		if (mml !== null) {
+			sendSoundCommand({
+				"type": "score",
+				"channel": i,
+				"playNow": 0,
+				"timbre": mml.timbre & 0x3,
+				"tempo": mml.tempo,
+				"mml": mml.mml,
+			});
+		}
+	}
 
 	const DEVICE_BPS_DEFAULT = 115200;
 	let uartConnected = false, isFirstConnection = true;
@@ -160,6 +197,12 @@ const virtualPanCake = (function() {
 			"img": virtualPanCakeResource.sprites[id],
 			"transparent": id < virtualPanCakeResource.spriteTransparentColors.length ? virtualPanCakeResource.spriteTransparentColors[id] : 0xff,
 		};
+	}
+
+	function getResourceMML(id) {
+		if (typeof virtualPanCakeResource === "undefined") return null;
+		if (id < 0 || virtualPanCakeResource.preparedMMLs.length <= id) return null;
+		return virtualPanCakeResource.preparedMMLs[id];
 	}
 
 	function getSprite(id) {
@@ -460,6 +503,100 @@ const virtualPanCake = (function() {
 		}
 	}
 
+	function sound(args) {
+		if (args.length < 8) return;
+		const command  = {
+			"type": "sound",
+			"channels": [],
+		};
+		for (let i = 0; i < 8; i += 2) {
+			command.channels.push({
+				"timbre": (args[i + 1] >> 4) & 0x3,
+				"sound": ((args[i] & 0x7) << 4) | (args[i + 1] & 0xf),
+			});
+		}
+		sendSoundCommand(command);
+	}
+
+	function sound1(args) {
+		if (args.length < 3) return;
+		sendSoundCommand({
+			"type": "sound1",
+			"channel": args[0] & 0x3,
+			"timbre": (args[2] >> 4) & 0x3,
+			"sound": ((args[1] & 0x7) << 4) | (args[2] & 0xf),
+		});
+	}
+
+	const mmlNoteMap = {
+		"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11, "N": 0xe, "R": 0xf,
+	};
+	function musicScore(args, commandStr) {
+		if (args.length < 3) return;
+		const mml = [];
+		if (commandStr === null) {
+			// バイナリコマンド → データをそのまま入れる
+			for (let i = 3; i < args.length; i++) mml.push(args[i]);
+		} else {
+			// テキストコマンド → MMLを解析する
+			const mmlText = commandStr.replace(/^([^0-9a-f]*[0-9a-f]){6}[^0-9a-f ]* ?/i, "");
+			let octave = 4;
+			for (let i = 0; i < mmlText.length; i++) {
+				const c = mmlText.charAt(i);
+				if (c in mmlNoteMap) {
+					let noteOctave = octave;
+					let note = mmlNoteMap[c];
+					if (note <= 0xb && i + 1 < mmlText.length) {
+						const c2 = mmlText.charAt(i + 1);
+						if (c2 === "+") {
+							if (note < 0xb) {
+								note++;
+							} else if (noteOctave < 7) {
+								noteOctave++;
+								note = 0;
+							}
+							i++;
+						} else if (c2 === "-") {
+							if (note > 0) {
+								note--;
+							} else if (noteOctave > 0) {
+								noteOctave--;
+								note = 0xb;
+							}
+							i++;
+						}
+					}
+					mml.push((noteOctave << 4) | note);
+				} else {
+					switch (c) {
+						case "~": mml.push(0xfd); break;
+						case ">": octave = (octave + 1) & 7; break;
+						case "<": octave = (octave - 1) & 7; break;
+						case "$": mml.push(0xfe); break;
+						default: mml.push(0x0f); break;
+					}
+				}
+			}
+		}
+		sendSoundCommand({
+			"type": "score",
+			"channel": args[0] & 0x3,
+			"playNow": args[1],
+			"timbre": args[2] & 0x3,
+			"tempo": (args[2] >> 4) & 0xf,
+			"mml": mml,
+		});
+	}
+
+	function musicPlay(args) {
+		if (args.length < 1) return;
+		sendSoundCommand({
+			"type": "play",
+			"play": args[0],
+			"channel": args.length < 2 ? -1 : (args[1] & 0x3),
+		});
+	}
+
 	function reset() {
 		// 初期化するもの
 		// ・ダブルバッファリングの状態 (WBUF)
@@ -486,6 +623,7 @@ const virtualPanCake = (function() {
 			sprites[i].flip = false;
 			sprites[i].rotate = 0;
 		}
+		sendSoundCommand({"type": "reset"});
 		updateCanvas(true);
 	}
 
@@ -594,6 +732,32 @@ const virtualPanCake = (function() {
 		updateCanvas();
 	}
 
+	function musicLoad(args) {
+		if (args.length < 2) return;
+		if (args[1] === 0xff) {
+			sendSoundCommand({
+				"type": "score",
+				"channel": args[0] & 0x3,
+				"playNow": 0,
+				"timbre": 0,
+				"tempo": 0,
+				"mml": [],
+			});
+		} else {
+			const mml = getResourceMML(args[1]);
+			if (mml !== null) {
+				sendSoundCommand({
+					"type": "score",
+					"channel": args[0] & 0x3,
+					"playNow": 0,
+					"timbre": mml.timbre & 0x3,
+					"tempo": mml.tempo,
+					"mml": mml.mml,
+				});
+			}
+		}
+	}
+
 	function wbuf(args) {
 		if (args.length < 1) return;
 		const newEnable = args[0] !== 0;
@@ -616,6 +780,10 @@ const virtualPanCake = (function() {
 		"SPRITE START": spriteStart,
 		"SPRITE CREATE": spriteCreate,
 		"SPRITE MOVE": spriteMove,
+		"SOUND": sound,
+		"SOUND1": sound1,
+		"MUSIC SCORE": musicScore,
+		"MUSIC PLAY": musicPlay,
 		"RESET": reset,
 		"CIRCLE": circle,
 		"SPRITE FLIP": spriteFlip,
@@ -623,6 +791,7 @@ const virtualPanCake = (function() {
 		"SPRITE USER": spriteUser,
 		"BPS": bps,
 		"STAMPS": stamps,
+		"MUSIC LOAD": musicLoad,
 		"WBUF": wbuf,
 	};
 	const functionTableBinary = {
@@ -635,6 +804,10 @@ const virtualPanCake = (function() {
 		0x06: spriteStart,
 		0x07: spriteCreate,
 		0x08: spriteMove,
+		0x09: sound,
+		0x0A: sound1,
+		0x0B: musicScore,
+		0x0C: musicPlay,
 		0x0D: reset,
 		0x0E: circle,
 		0x10: spriteFlip,
@@ -642,6 +815,7 @@ const virtualPanCake = (function() {
 		0x12: spriteUser,
 		0x13: bps,
 		0x14: stamps,
+		0x15: musicLoad,
 		0x17: wbuf,
 	};
 
