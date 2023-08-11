@@ -145,8 +145,23 @@ function lexer(str, firstAddr = 0) {
 			result.push(createTokenInfo("label", str.substring(labelStart, i), firstAddr + labelStart));
 		} else {
 			// その他のトークン
-			const tokenInfo = getTokenInfo(str, i);
+			let tokenInfo = getTokenInfo(str, i);
 			if (tokenInfo !== null) {
+				// 1文字の変数と認識していて、前が16進数の場合、補正を試みる
+				if (tokenInfo.token.length === 1 && /^[A-Z]$/i.test(tokenInfo.token) &&
+				result.length > 0 && result[result.length - 1].kind === "number" && result[result.length - 1].token.charAt(0) === "#") {
+					const prevTokenIdx = result[result.length - 1].address - firstAddr;
+					// 16進数の最後のアルファベットの部分を遡る
+					for (let j = i - 1; j > prevTokenIdx && /^[A-F ]$/i.test(str.charAt(j)); j--) {
+						const tokenCandidate = getTokenInfo(str, j);
+						if (tokenCandidate.token.length > 1 && tokenCandidate.nextIndex > i) {
+							// 複数文字からなり、現在の位置にまでまたがるキーワードが見つかったら、採用する
+							result[result.length - 1].token = str.substring(prevTokenIdx, j).replace(/ /g, "");
+							tokenInfo = tokenCandidate;
+							break;
+						}
+					}
+				}
 				// 登録されているキーワード
 				result.push(createTokenInfo("keyword", tokenInfo.token, firstAddr + i));
 				i = tokenInfo.nextIndex;
