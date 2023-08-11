@@ -2034,37 +2034,43 @@ async function doInteractive() {
 		return [currentLine, currentPositionInLine];
 	}
 	await putString(String.fromCharCode(key), true);
-	if (key === OVERWRITE_TOGGLE_CHAR) {
-		isOverwriteMode = !isOverwriteMode;
-	}
-	if (key === ROMAN_TOGGLE_CHAR) {
-		isRomanMode = !isRomanMode;
-	}
-	if (key === 0x0a && cursorY > 0) {
-		const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
-		let start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
-		if (cursorX === 0 && start > 0 && vramView[start] === 0 && vramView[start - 1] !== 0) {
-			start--;
+	if (cursorY >= 0) {
+		if (key === OVERWRITE_TOGGLE_CHAR) {
+			isOverwriteMode = !isOverwriteMode;
 		}
-		let end = start;
-		if (vramView[start] !== 0) {
-			while (start > 0 && vramView[start - 1] !== 0) start--;
-			while (end < limit && vramView[end] !== 0) end++;
-			if (vramView[start] !== 0x27) {
-				if (end - start <= CMD_MAX) {
-					for (let i = start; i < end; i++) {
-						cmdView[i - start] = vramView[i];
+		if (key === ROMAN_TOGGLE_CHAR) {
+			isRomanMode = !isRomanMode;
+		}
+	}
+	if (key === 0x0a) {
+		if (cursorY > 0) {
+			const limit = SCREEN_HEIGHT * SCREEN_WIDTH;
+			let start = (cursorY - 1) * SCREEN_WIDTH + cursorX;
+			if (cursorX === 0 && start > 0 && vramView[start] === 0 && vramView[start - 1] !== 0) {
+				start--;
+			}
+			let end = start;
+			if (vramView[start] !== 0) {
+				while (start > 0 && vramView[start - 1] !== 0) start--;
+				while (end < limit && vramView[end] !== 0) end++;
+				if (vramView[start] !== 0x27) {
+					if (end - start <= CMD_MAX) {
+						for (let i = start; i < end; i++) {
+							cmdView[i - start] = vramView[i];
+						}
+						cmdView[end - start] = 0;
+						const compilationResult = compileLine(CMD_ADDR, 0, true);
+						if (compilationResult !== null) {
+							programs[0] = compilationResult;
+							return [0, 0];
+						}
+					} else {
+						throw "Line too long";
 					}
-					cmdView[end - start] = 0;
-					const compilationResult = compileLine(CMD_ADDR, 0, true);
-					if (compilationResult !== null) {
-						programs[0] = compilationResult;
-						return [0, 0];
-					}
-				} else {
-					throw "Line too long";
 				}
 			}
+		} else if (cursorY < 0) {
+			cursorY = 0;
 		}
 	}
 	return [currentLine, currentPositionInLine];
