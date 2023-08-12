@@ -23,6 +23,7 @@
 		<script src="Functions.js"></script>
 		<script src="Compiler.js"></script>
 		<script src="Usr.js"></script>
+		<script src="IO.js"></script>
 		<script src="Uart.js"></script>
 		<script src="VirtualEeprom.js"></script>
 		<script src="VirtualMixJuice.js"></script>
@@ -175,6 +176,23 @@
 							<input type="checkbox" id="virtualPanCakeConnectCheckbox"><label
 							for="virtualPanCakeConnectCheckbox">仮想PanCake</label>
 						</div>
+					</fieldset>
+					<fieldset id="ioPortField">
+						<legend>I/Oポート</legend>
+						<details>
+							<summary>各ポートの状態</summary>
+							<table id="ioPortTable">
+								<thead>
+									<tr>
+										<th>ポート</th>
+										<th>出力</th>
+										<th>詳細</th>
+									</tr>
+								</thead>
+								<tbody id="ioPortTableBody">
+								</tbody>
+							</table>
+						</details>
 					</fieldset>
 				</div>
 				<div id="systemForm">

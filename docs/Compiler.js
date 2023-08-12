@@ -352,7 +352,7 @@ const basicCommands = {
 	"PWM"    : null,
 	"DAC"    : null,
 	"BPS"    : null,
-	"CLO"    : null,
+	"CLO"    : {func: commandCLO, minArg: 0, maxArg: 0},
 	"SRND"   : {func: commandSRND, minArg: 1, maxArg: 1},
 	"COPY"   : {func: commandCOPY, minArg: 3, maxArg: 3},
 	"UART"   : {func: commandUART, minArg: 1, maxArg: 2},

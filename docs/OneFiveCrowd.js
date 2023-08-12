@@ -1138,6 +1138,9 @@ async function initSystem() {
 		await virtualEepromManager.addTemporal(virtualEepromData);
 	}
 
+	// I/Oポートを設定する
+	ioManager.initialize();
+
 	// 各種初期化を行う
 	await resetSystem();
 
@@ -1195,6 +1198,7 @@ async function resetSystem() {
 	commandCLV();
 	commandCLK();
 	commandCLT();
+	commandCLO();
 	commandNEW();
 	// プログラムの初期化
 	programs = new Object();
@@ -2206,4 +2210,9 @@ function commandCLP() {
 function commandCLT() {
 	// TICK() の時刻を0にする
 	tickOrigin = performance.now();
+}
+
+async function commandCLO() {
+	// I/Oポートを初期化する
+	await ioManager.reset();
 }

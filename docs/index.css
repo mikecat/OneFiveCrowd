@@ -451,3 +451,91 @@ label[for="volumeSwitch"] {
 #virtualUartDevicesArea {
 	margin-top: 0.5em;
 }
+
+#ioPortField {
+	margin-top: 0.5em;
+	width: 540px;
+	box-sizing: border-box;
+}
+
+#ioPortTable {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+#ioPortTable th {
+	text-align: center;
+}
+
+#ioPortTable th:not(:last-child), #ioPortTable td:not(:last-child) {
+	width: min-content;
+	white-space: nowrap;
+}
+
+#ioPortTable th:last-child, #ioPortTable td:last-child {
+	width: 100%;
+}
+
+#ioPortTable th, #ioPortTable td {
+	border: 1px solid black;
+	padding: 0.2em 0.3em;
+}
+
+#ioPortTable td {
+	height: 1.7em;
+}
+
+#ioPortTable button {
+	padding: 0.1em 0.3em;
+	margin-right: 0.25em;
+}
+
+td.ioPortOutputCell {
+	text-align: center;
+}
+
+tr.output .ioPortInputInfo {
+	display: none;
+}
+
+tr:not(.output) .ioPortOutputInfo {
+	display: none;
+}
+
+.ioPortOutputInfo:not(.binary) .ioPortOutputInfoBinary {
+	display: none;
+}
+
+.ioPortOutputInfo:not(.binaryHigh) .ioPortOutputInfoBinaryHigh {
+	display: none;
+}
+
+.ioPortOutputInfo.binaryHigh .ioPortOutputInfoBinaryLow {
+	display: none;
+}
+
+.ioPortOutputInfo:not(.pwm) .ioPortOutputInfoPwm {
+	display: none;
+}
+
+.ioPortOutputInfo:not(.analog) .ioPortOutputInfoAnalog {
+	display: none;
+}
+
+.ioPortInputInfo:not(.device) .ioPortInputInfoDevice {
+	display: none;
+}
+
+.ioPortInputInfo.device .ioPortInputUI {
+	display: none;
+}
+
+.ioPortInputUI {
+	display: flex;
+	white-space: nowrap;
+	align-items: center;
+}
+
+.ioPortInputUI input[type="range"] {
+	width: 100%;
+}
