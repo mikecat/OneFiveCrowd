@@ -326,7 +326,7 @@ const ioManager = (function() {
 		await setPortStatus(resetQuery);
 	}
 
-    // ポートの状態や出力を設定する
+    // ポートの状態や出力を設定し、周辺機器に通知する
 	// infoList : 以下の要素を持つオブジェクト、またはその配列 (ID以外、設定しない要素は省略可)
 	//   id          : 設定するポートのID
 	//   status      : 設定する状態
@@ -335,13 +335,12 @@ const ioManager = (function() {
 	//   pwmPeriod   : 設定するPWM周期
 	//   analogValue : 設定するアナログ出力値
 	async function setPortStatus(infoList) {
-		const notifyDataList = [];
+		const notifyDataSet = {};
 		(Array.isArray(infoList) ? infoList : [infoList]).forEach(function(query) {
 			if (query.id in portStatus) {
 				const info = portStatus[query.id];
 				const newStatus = "status" in query ? query.status : info.status;
 				const notifyData = {
-					"id": query.id,
 					"status": newStatus,
 				};
 				if ("binaryValue" in query) info.binaryValue = query.binaryValue;
@@ -361,11 +360,11 @@ const ioManager = (function() {
 						break;
 				}
 				portDomObjects[query.id].setPortStatus(notifyData);
-				notifyDataList.push(notifyData);
+				notifyDataSet[query.id] = notifyData;
 			}
 		});
 		for (let i = 0; i < deviceList.length; i++) {
-			await deviceList[i].statusCallback(notifyDataList);
+			await deviceList[i].statusCallback(notifyDataSet);
 		}
 	}
 
