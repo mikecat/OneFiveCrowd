@@ -87,15 +87,13 @@ async function commandINPUT(prompt, varIdx) {
 	}
 }
 
-function commandLED(args) {
+async function commandLED(args) {
 	// LEDの点灯/消灯を切り替える
-	const isOn = args[0] !== 0;
-	const ledElement = document.getElementById("ledPane");
-	if (isOn) {
-		ledElement.classList.add("lighting");
-	} else {
-		ledElement.classList.remove("lighting");
-	}
+	await ioManager.setPortStatus({
+		"id": "led",
+		"status": "output_binary",
+		"binaryValue": args[0] !== 0 ? 1 : 0,
+	});
 }
 
 async function commandWAIT(args) {

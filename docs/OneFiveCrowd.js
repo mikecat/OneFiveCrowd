@@ -1139,6 +1139,19 @@ async function initSystem() {
 	}
 
 	// I/Oポートを設定する
+	{
+		const ledElement = document.getElementById("ledPane");
+		ioManager.registerDevice("LED", function(notifyDataSet) {
+			if ("led" in notifyDataSet) {
+				const ledData = notifyDataSet.led;
+				if (ledData.status === "output_binary" && ledData.binaryValue) {
+					ledElement.classList.add("lighting");
+				} else {
+					ledElement.classList.remove("lighting");
+				}
+			}
+		}, null);
+	}
 	ioManager.initialize();
 
 	// 各種初期化を行う
