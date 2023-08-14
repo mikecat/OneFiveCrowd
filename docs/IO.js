@@ -322,13 +322,18 @@ const ioManager = (function() {
 	// selectedPort: 選択するポートのID (省略可)
 	function createPortSelect(forInput, forOutput, selectedPort = "") {
 		const result = document.createElement("select");
+		const emptyOption = document.createElement("option");
+		emptyOption.setAttribute("value", "");
+		if (selectedPort === "") option.setAttribute("selected", "selected");
+		emptyOption.appendChild(document.createTextNode("-"));
+		result.appendChild(emptyOption);
 		portInfo.forEach(function(port) {
 			if (forInput || forOutput) {
 				if (!((forInput && port.canInput) || (forOutput && port.canOutput))) return;
 			}
 			const option = document.createElement("option");
 			option.setAttribute("value", port.id);
-			if (port.id === selectedPort) option.setAttribute("selected", "selected");
+			if (selectedPort === port.id) option.setAttribute("selected", "selected");
 			option.appendChild(document.createTextNode(port.name));
 			result.appendChild(option);
 		});
