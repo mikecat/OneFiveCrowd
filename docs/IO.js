@@ -5,19 +5,21 @@ const ioManager = (function() {
 	// id            : 操作対象のポートをプログラムから指定する用の文字列
 	// name          : 表示用の文字列
 	// defaultStatus : リセット時のstatus (null: リセット時に設定しない、周辺機器用)
+	// canInput      : 入力ポートとして使えるかを示す真理値
+	// canOutput     : 出力ポートとして使えるかを示す真理値
 	const portInfo = [
-		{"id": "in1", "name": "IN1/OUT8", "defaultStatus": "input_pullup"},
-		{"id": "in2", "name": "IN2/OUT9", "defaultStatus": "input"},
-		{"id": "in3", "name": "IN3/OUT10", "defaultStatus": "input"},
-		{"id": "in4", "name": "IN4/OUT11", "defaultStatus": "input_pullup"},
-		{"id": "out1", "name": "OUT1/IN5", "defaultStatus": "output_binary"},
-		{"id": "out2", "name": "OUT2/IN6", "defaultStatus": "output_binary"},
-		{"id": "out3", "name": "OUT3/IN7", "defaultStatus": "output_binary"},
-		{"id": "out4", "name": "OUT4/IN8", "defaultStatus": "output_binary"},
-		{"id": "out5", "name": "OUT5/IN10", "defaultStatus": "output_binary"},
-		{"id": "out6", "name": "OUT6/IN11", "defaultStatus": "output_binary"},
-		{"id": "btn", "name": "BTN/IN9", "defaultStatus": "input"},
-		{"id": "led", "name": "LED/OUT7", "defaultStatus": "output_binary"},
+		{"id": "in1", "name": "IN1/OUT8", "defaultStatus": "input_pullup", "canInput": true, "canOutput": true},
+		{"id": "in2", "name": "IN2/OUT9", "defaultStatus": "input", "canInput": true, "canOutput": true},
+		{"id": "in3", "name": "IN3/OUT10", "defaultStatus": "input", "canInput": true, "canOutput": true},
+		{"id": "in4", "name": "IN4/OUT11", "defaultStatus": "input_pullup", "canInput": true, "canOutput": true},
+		{"id": "out1", "name": "OUT1/IN5", "defaultStatus": "output_binary", "canInput": true, "canOutput": true},
+		{"id": "out2", "name": "OUT2/IN6", "defaultStatus": "output_binary", "canInput": true, "canOutput": true},
+		{"id": "out3", "name": "OUT3/IN7", "defaultStatus": "output_binary", "canInput": true, "canOutput": true},
+		{"id": "out4", "name": "OUT4/IN8", "defaultStatus": "output_binary", "canInput": true, "canOutput": true},
+		{"id": "out5", "name": "OUT5/IN10", "defaultStatus": "output_binary", "canInput": true, "canOutput": true},
+		{"id": "out6", "name": "OUT6/IN11", "defaultStatus": "output_binary", "canInput": true, "canOutput": true},
+		{"id": "btn", "name": "BTN/IN9", "defaultStatus": "input", "canInput": true, "canOutput": false},
+		{"id": "led", "name": "LED/OUT7", "defaultStatus": "output_binary", "canInput": false, "canOutput": true},
 	];
 	// 現在のポートの状態
 	const portStatus = {};
@@ -55,12 +57,16 @@ const ioManager = (function() {
 	//   name          : ポート名 (表示用)
 	//   defaultStatus : リセット時のstatus (省略・null可)
 	//   status        : status (省略・null可)
+	//   canInput      : 入力ポートとして使えるかを示す真理値
+	//   canOutput     : 出力ポートとして使えるかを示す真理値
 	function addPorts(portList) {
 		portList.forEach(function(port) {
 			portInfo.push({
 				"id": port.id,
 				"name": port.name,
 				"defaultStatus": "defaultStatus" in port ? port.defaultStatus : null,
+				"canInput": port.canInput,
+				"canOutput": port.canOutput,
 			});
 			portStatus[port.id] = {
 				"name": info.name,
@@ -308,6 +314,27 @@ const ioManager = (function() {
 		});
 	}
 
+	// ポートを選択するためのselect要素を作成して返す
+	// forInputとforOutputが両方trueの場合は、入力ポート「または」出力ポートとして使えるポートを候補とする
+	// forInputとforOutputが両方falseの場合は、登録されているすべてのポートを候補とする
+	// forInput: 入力ポート (周辺機器から信号を渡す) として使いたいかを表す真理値
+	// forOutput: 出力ポート (周辺機器が信号を受け取る) として使いたいかを表す真理値
+	// selectedPort: 選択するポートのID (省略可)
+	function createPortSelect(forInput, forOutput, selectedPort = "") {
+		const result = document.createElement("select");
+		portInfo.forEach(function(port) {
+			if (forInput || forOutput) {
+				if (!((forInput && port.canInput) || (forOutput && port.canOutput))) return;
+			}
+			const option = document.createElement("option");
+			option.setAttribute("value", port.id);
+			if (port.id === selectedPort) option.setAttribute("selected", "selected");
+			option.appendChild(document.createTextNode(port.name));
+			result.appendChild(option);
+		});
+		return result;
+	}
+
 	// ポートの状態をデフォルトに戻す
 	async function reset() {
 		const resetQuery = [];
@@ -406,6 +433,7 @@ const ioManager = (function() {
 		"getPortList": getPortList,
 		"getPortStatus": getPortStatus,
 		"initialize": initialize,
+		"createPortSelect": createPortSelect,
 		"reset": reset,
 		"setPortStatus": setPortStatus,
 		"queryIn": queryIn,
