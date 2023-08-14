@@ -59,6 +59,10 @@ const ioManager = (function() {
 	//   status        : status (省略・null可)
 	//   canInput      : 入力ポートとして使えるかを示す真理値
 	//   canOutput     : 出力ポートとして使えるかを示す真理値
+	//   binaryValue   : output_binary 用の出力値 (省略可)
+	//   pwmValue      : output_pwm 用のパルス幅 (省略可)
+	//   pwmPeriod     : output_pwm 用のパルス周期 (省略可)
+	//   analogValue   : output_analog 用の出力値 (省略可)
 	function addPorts(portList) {
 		portList.forEach(function(port) {
 			portInfo.push({
@@ -69,12 +73,12 @@ const ioManager = (function() {
 				"canOutput": port.canOutput,
 			});
 			portStatus[port.id] = {
-				"name": info.name,
+				"name": port.name,
 				"status": "status" in port && port.status !== null ? port.status : ("defaultStatus" in port && port.defaultStatus !== null ? port.defaultStatus : "input"),
-				"binaryValue": 0,
-				"pwmValue": 0,
-				"pwmPeriod": 2000,
-				"analogValue": 0,
+				"binaryValue": "binaryValue" in port ? port.binaryValue : 0,
+				"pwmValue": "pwmValue" in port ? port.pwmValue : 0,
+				"pwmPeriod": "pwmPeriod" in port ? port.pwmPeriod : 2000,
+				"analogValue": "analogValue" in port ? analogValue : 0,
 			};
 		});
 	}
