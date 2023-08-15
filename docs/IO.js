@@ -336,6 +336,7 @@ const ioManager = (function() {
 						}
 					},
 				};
+				portDomObjects[port.id].setPortStatus(portStatus[port.id]);
 			});
 		});
 	}
