@@ -17,6 +17,7 @@ const virtualPanCake = (function() {
 	const PANCAKE_SCREEN_WIDTH = 80, PANCAKE_SCREEN_HEIGHT = 45;
 	const PANCAKE_SPRITE_WIDTH = 8, PANCAKE_SPRITE_HEIGHT = 8;
 	const SPRITE_MAX = 32, USER_SPRITE_ID_START = 0xf0;
+	const PORT_ID_PREFIX = "virtual-pancake-out";
 
 	const soundCommandQueue = [];
 	let soundPlayerNode = null, soundPlayerError = false;
@@ -608,6 +609,7 @@ const virtualPanCake = (function() {
 		// ・通信速度 (BPS)
 		// ・起動時に表示されていない画面バッファ
 		// ・スプライトの画像データ (SPRITE USER)
+		// ・OUTコマンドの出力データ
 		currentScreenBuffer = 0;
 		enableDoubleBuffering = false;
 		spriteEnabled = false;
@@ -652,6 +654,26 @@ const virtualPanCake = (function() {
 			prev_pos = pos;
 		}
 		updateCanvas();
+	}
+
+	const outQueryQueue = [];
+	function out(args) {
+		if (args.length < 1) return;
+		const query = [];
+		for (let i = 1; i <= 8; i++) {
+			query.push({
+				"id": PORT_ID_PREFIX + i,
+				"status": "output_binary",
+				"binaryValue": (args[0] >> (i - 1)) & 1,
+			});
+		}
+		const startQueueProcess = outQueryQueue.length === 0;
+		outQueryQueue.push(async function() {
+			await ioManager.setPortStatus(query);
+			outQueryQueue.shift();
+			if (outQueryQueue.length > 0) outQueryQueue[0]();
+		});
+		if (startQueueProcess) outQueryQueue[0]();
 	}
 
 	function spriteFlip(args) {
@@ -786,6 +808,7 @@ const virtualPanCake = (function() {
 		"MUSIC PLAY": musicPlay,
 		"RESET": reset,
 		"CIRCLE": circle,
+		"OUT": out,
 		"SPRITE FLIP": spriteFlip,
 		"SPRITE ROTATE": spriteRotate,
 		"SPRITE USER": spriteUser,
@@ -810,6 +833,7 @@ const virtualPanCake = (function() {
 		0x0C: musicPlay,
 		0x0D: reset,
 		0x0E: circle,
+		0x0F: out,
 		0x10: spriteFlip,
 		0x11: spriteRotate,
 		0x12: spriteUser,
@@ -824,6 +848,19 @@ const virtualPanCake = (function() {
 		canvasContext = canvas.getContext("2d", {"alpha": false});
 		imageData = canvasContext.createImageData(PANCAKE_SCREEN_WIDTH, PANCAKE_SCREEN_HEIGHT);
 		updateCanvas();
+	}
+
+	function initializePorts() {
+		const ports = [];
+		for (let i = 1; i <= 8; i++) {
+			ports.push({
+				"id": PORT_ID_PREFIX + i,
+				"name": "PC-OUT" + i,
+				"status": "output_binary",
+				"binaryValue": 0,
+			});
+		}
+		ioManager.addPorts("仮想PanCake", ports);
 	}
 
 	function setUartConnected(conn) {
@@ -910,6 +947,7 @@ const virtualPanCake = (function() {
 
 	return {
 		"setCanvas": setCanvas,
+		"initializePorts": initializePorts,
 		"setUartConnected": setUartConnected,
 		"rx": rx,
 	};

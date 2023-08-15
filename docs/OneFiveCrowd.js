@@ -1139,6 +1139,7 @@ async function initSystem() {
 	}
 
 	// I/Oポートを設定する
+	virtualPanCake.initializePorts();
 	{
 		const ledElement = document.getElementById("ledPane");
 		ioManager.registerDevice("LED", function(notifyDataSet) {
