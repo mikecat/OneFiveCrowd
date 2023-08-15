@@ -458,34 +458,34 @@ label[for="volumeSwitch"] {
 	box-sizing: border-box;
 }
 
-#ioPortTable {
+table.ioPortTable {
 	border-collapse: collapse;
 	width: 100%;
 }
 
-#ioPortTable th {
+table.ioPortTable th {
 	text-align: center;
 }
 
-#ioPortTable th:not(:last-child), #ioPortTable td:not(:last-child) {
+table.ioPortTable th:not(:last-child), table.ioPortTable td:not(:last-child) {
 	width: min-content;
 	white-space: nowrap;
 }
 
-#ioPortTable th:last-child, #ioPortTable td:last-child {
+table.ioPortTable th:last-child, table.ioPortTable td:last-child {
 	width: 100%;
 }
 
-#ioPortTable th, #ioPortTable td {
+table.ioPortTable th, table.ioPortTable td {
 	border: 1px solid black;
 	padding: 0.2em 0.3em;
 }
 
-#ioPortTable td {
+table.ioPortTable td {
 	height: 1.7em;
 }
 
-#ioPortTable button {
+table.ioPortTable button {
 	padding: 0.1em 0.3em;
 	margin-right: 0.25em;
 }
