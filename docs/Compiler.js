@@ -16,7 +16,7 @@ const getTokenInfo = (function(tokens) {
 			if (!(c in node)) {
 				const newNode = {};
 				for (let k = 0; k < blankChars.length; k++) {
-					newNode[blankChars.charCodeAt(i)] = newNode;
+					newNode[blankChars.charCodeAt(k)] = newNode;
 				}
 				node[c] = newNode;
 				node[token.charAt(j).toUpperCase().charCodeAt(0)] = newNode;
