@@ -720,6 +720,66 @@ async function commandRESET() {
 	return [currentLine, currentPositionInLine];
 }
 
+const outPorts = [
+	"out1", "out2", "out3", "out4", "out5", "out6", "led", "in1", "in2", "in3", "in4",
+];
+
+async function commandOUT(args) {
+	// I/Oポートの出力を設定する
+	if (args.length === 1 || args[0] === 0) {
+		const bits = args.length === 1 ? args[0] : args[1];
+		const query = [];
+		const portStatus = ioManager.getPortStatus();
+		for (let i = 0; i < outPorts.length; i++) {
+			if (portStatus[outPorts[i]].status === "output_binary") {
+				query.push({
+					"id": outPorts[i],
+					"status": "output_binary",
+					"binaryValue": (bits >> i) & 1,
+				});
+			}
+		}
+		if (query.length > 0) {
+			await ioManager.setPortStatus(query);
+		}
+	} else if (1 <= args[0] && args[0] <= outPorts.length) {
+		const portId = outPorts[args[0] - 1];
+		if (args[1] < 0 && portId !== "led") {
+			await ioManager.setPortStatus({
+				"id": portId,
+				"status": args[1] === -2 ? "input_pullup" : "input",
+			});
+		} else if (args[1] >= 0) {
+			await ioManager.setPortStatus({
+				"id": portId,
+				"status": "output_binary",
+				"binaryValue": args[1] === 0 ? 0 : 1,
+			});
+		}
+	}
+}
+
+async function commandPWM(args) {
+	if (1 <= args[0] && args[0] <= outPorts.length) {
+		await ioManager.setPortStatus({
+			"id": outPorts[args[0] - 1],
+			"status": "output_pwm",
+			"pwmValue": args[1],
+			"pwmPeriod": args.length > 2 ? args[2] : 2000,
+		});
+	}
+}
+
+async function commandDAC(args) {
+	if (1 <= args[0] && args[0] <= outPorts.length) {
+		await ioManager.setPortStatus({
+			"id": outPorts[args[0] - 1],
+			"status": "output_analog",
+			"analogValue": args[1] < 0 ? 0 : (args[1] > 1023 ? 1023 : args[1]),
+		});
+	}
+}
+
 function commandSRND(args) {
 	// 乱数の種を設定する
 	randomSeeded = true;

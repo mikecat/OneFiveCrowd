@@ -197,6 +197,55 @@ function functionPEEK(args) {
 	return readVirtualMem(args[0]);
 }
 
+const inPorts = [
+	"in1", "in2", "in3", "in4", "out1", "out2", "out3", "out4", "btn", "out5", "out6",
+];
+
+async function functionIN(args) {
+	const portIdx = args.length > 0 ? args[0] : 0;
+	const portStatus = ioManager.getPortStatus();
+	if (portIdx === 0) {
+		const portQuery = [];
+		for (let i = 0; i < inPorts.length; i++) {
+			if (portStatus[inPorts[i]].status.substring(0, 5) === "input") {
+				portQuery.push(inPorts[i]);
+			}
+		}
+		const inData = await ioManager.queryIn(portQuery, false);
+		let result = 0;
+		for (let i = 0; i < inPorts.length; i++) {
+			if (inPorts[i] in inData && inData[inPorts[i]] !== 0) {
+				result |= 1 << i;
+			}
+		}
+		return result;
+	} else if (1 <= portIdx && portIdx <= inPorts.length) {
+		const portId = inPorts[portIdx - 1];
+		if (portStatus[portId].status.substring(0, 5) === "input") {
+			const inData = await ioManager.queryIn([portId], false);
+			return portId in inData && inData[portId] !== 0 ? 1 : 0;
+		} else {
+			return 0;
+		}
+	}
+}
+
+async function functionANA(args) {
+	const portIdx = args.length > 0 && args[0] !== 0 ? args[0] : 9;
+	if (1 <= portIdx && portIdx <= inPorts.length) {
+		const portId = inPorts[portIdx - 1];
+		const portStatus = ioManager.getPortStatus();
+		if (portStatus[portId].status.substring(0, 5) === "input") {
+			const inData = await ioManager.queryIn([portId], true);
+			if (portId in inData) {
+				const rawValue = inData[portId];
+				return rawValue < 0 ? 0 : (rawValue > 1023 ? 1023 : rawValue);
+			}
+		}
+	}
+	return 0;
+}
+
 async function functionUSR(args) {
 	// マシン語を実行する
 	const startVirtualAddress = args[0];
