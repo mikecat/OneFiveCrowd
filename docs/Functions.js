@@ -92,7 +92,7 @@ function modifierSTR(args) {
 	return ret;
 }
 
-function functionBTN(args) {
+async function functionBTN(args) {
 	// ボタンの状態を取得する
 	const btnId = args.length > 0 ? args[0] : 0;
 	if (btnId < 0) {
@@ -100,7 +100,10 @@ function functionBTN(args) {
 	} else {
 		switch (btnId) {
 			case 0: // 本体ボタン
-				return 0;
+				{
+					const btnStatus = await ioManager.queryIn(["btn"], false);
+					return "btn" in btnStatus && btnStatus["btn"] === 0 ? 1 : 0;
+				}
 			case 28: // ←
 				return btnStatus & 1;
 			case 29: // →
