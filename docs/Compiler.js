@@ -351,7 +351,7 @@ const basicCommands = {
 	"OUT"    : {func: commandOUT, minArg: 1, maxArg: 2},
 	"PWM"    : {func: commandPWM, minArg: 2, maxArg: 3},
 	"DAC"    : {func: commandDAC, minArg: 2, maxArg: 2},
-	"BPS"    : null,
+	"BPS"    : {func: commandBPS, minArg: 1, maxArg: 2},
 	"CLO"    : {func: commandCLO, minArg: 0, maxArg: 0},
 	"SRND"   : {func: commandSRND, minArg: 1, maxArg: 1},
 	"COPY"   : {func: commandCOPY, minArg: 3, maxArg: 3},

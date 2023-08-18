@@ -478,3 +478,50 @@ const ioManager = (function() {
 		"queryIn": queryIn,
 	};
 })();
+
+const i2cManager = (function() {
+	// 以下の仕様の関数の配列
+	// 引数
+	//   address     : I2C 7bitアドレス
+	//   dataWrite   : デバイスに送るデータが入ったUint8Array (0要素以上)
+	//   numDataRead : デバイスから読み込むデータのバイト数を表す非負整数
+	//   speedBps    : 通信速度 (bps)
+	// 返り値
+	//   デバイスが通信を処理した場合は、読み込んだデータが入ったUint8Array (0要素以上)
+	//   デバイスが通信を処理しなかった場合 (NAK) は、null
+	const i2cDevices = [];
+	// 通信速度 (bps)
+	let i2cSpeedBps = 400000;
+
+	// デバイスを追加する
+	function addDevice(device) {
+		i2cDevices.push(device);
+	}
+
+	// 通信速度を設定する
+	function setSpeedBps(speedBps) {
+		i2cSpeedBps = speedBps;
+	}
+
+	// I2C通信を行う (まずデバイスにデータを送り、続いてデバイスからデータを読み込む)
+	// 引数
+	//   address     : I2C 7bitアドレス
+	//   dataWrite   : デバイスに送るデータが入ったUint8Array (0要素以上)
+	//   numDataRead : デバイスから読み込むデータのバイト数を表す非負整数
+	// 返り値
+	//   正常に通信を行えた場合は、読み込んだデータが入ったUint8Array (0要素以上)
+	//   通信に失敗した場合 (NAK) は、null
+	async function performI2C(address, dataWrite, numDataRead) {
+		for (let i = 0; i < i2cDevices.length; i++) {
+			const ret = await i2cDevices[i](address, dataWrite, numDataRead, i2cSpeedBps);
+			if (ret !== null) return ret;
+		}
+		return null;
+	}
+
+	return {
+		"addDevice": addDevice,
+		"setSpeedBps": setSpeedBps,
+		"performI2C": performI2C,
+	};
+})();

@@ -55,7 +55,8 @@ function setSelectByValue(selectElement, value) {
 const RAW_SCREEN_WIDTH = 32;
 const RAW_SCREEN_HEIGHT = 24;
 
-const DEFAULT_BPS = 115200;
+const DEFAULT_UART_BPS = 115200;
+const DEFAULT_I2C_BPS = 400000;
 
 const ARRAY_SIZE_JAM = 102;
 const ARRAY_SIZE_CAKE = 358;
@@ -1201,7 +1202,8 @@ async function resetSystem() {
 	uartNoInput = false;
 	uartNoStopOnEsc = false;
 	uartInputCrAsLf = false;
-	await uartManager.setBps(DEFAULT_BPS);
+	await uartManager.setBps(DEFAULT_UART_BPS);
+	i2cManager.setSpeedBps(DEFAULT_I2C_BPS);
 	isOverwriteMode = false;
 	isExecutingInput = false;
 	isCaseSwapMode = false;

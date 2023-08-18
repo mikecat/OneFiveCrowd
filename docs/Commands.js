@@ -780,6 +780,26 @@ async function commandDAC(args) {
 	}
 }
 
+async function commandBPS(args) {
+	const uartSpeed = args[0];
+	const i2cSpeed = args.length > 1 ? args[1] : 400;
+	await uartManager.setBps((function() {
+		switch (uartSpeed) {
+			case 0: return 115200;
+			case -1: return 57600;
+			case -2: return 38400;
+			default:
+				if (uartSpeed < 0) return -uartSpeed * 100;
+				else return uartSpeed;
+		}
+	})());
+	i2cManager.setSpeedBps((function() {
+		if (i2cSpeed === 0) return 400000;
+		else if (i2cSpeed < 0) return 366;
+		else return i2cSpeed * 1000;
+	})());
+}
+
 function commandSRND(args) {
 	// 乱数の種を設定する
 	randomSeeded = true;
