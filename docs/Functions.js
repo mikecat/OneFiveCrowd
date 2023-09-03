@@ -249,6 +249,111 @@ async function functionANA(args) {
 	return 0;
 }
 
+async function functionI2CR(args) {
+	// I2Cの送受信を行う
+	const deviceAddress = args[0] & 0x7f;
+	let writeAddress = 0, writeSize = 0, writeData = -1, readAddress = 0, readSize = 0;
+	switch (args.length) {
+		case 3: // (デバイス7bitアドレス, 受信アドレス, 受信サイズ)
+			readAddress = args[1];
+			readSize = args[2];
+			break;
+		case 4: // (デバイス7bitアドレス, 送信データ, 受信アドレス, 受信サイズ)
+			writeData = args[1] & 0xff;
+			readAddress = args[2];
+			readSize = args[3];
+			break;
+		case 5: // (デバイス7bitアドレス, 送信アドレス, 送信サイズ, 受信アドレス, 受信サイズ)
+			writeAddress = args[1];
+			writeSize = args[2];
+			readAddress = args[3];
+			readSize = args[4];
+			break;
+	}
+	// 引数のチェックと送信データの読み取り
+	const writeDataArray = [];
+	if (writeData >= 0) writeDataArray.push(writeData);
+	if (writeSize !== 0) {
+		if (writeSize < 0 || writeAddress < VIRTUAL_RAM_OFFSET || VIRTUAL_MEM_MAX < writeAddress + writeSize) {
+			throw "Illegal Argument";
+		}
+		for (let i = 0; i < writeSize; i++) {
+			writeDataArray.push(readVirtualMem(writeAddress + i));
+		}
+	}
+	if (readSize !== 0) {
+		if (readSize < 0 || readAddress < VIRTUAL_RAM_OFFSET || VIRTUAL_MEM_MAX < readAddress + readSize) {
+			throw "Illegal Argument";
+		}
+	}
+	// 送受信の実行
+	// 実機で送信と受信の間にストップコンディションが入るのの再現のため、送信と受信のAPI呼び出しを分ける
+	if (writeDataArray.length > 0) {
+		const res = await i2cManager.performI2C(deviceAddress, new Uint8Array(writeDataArray), 0);
+		if (res === null) return 1;
+	}
+	if (writeDataArray.length === 0 || readSize > 0) {
+		const res = await i2cManager.performI2C(deviceAddress, new Uint8Array(0), readSize);
+		if (res === null) return 1;
+		for (let i = 0; i < readSize && i < res.length; i++) {
+			writeVirtualMem(readAddress + i, res[i]);
+		}
+	}
+	return 0;
+}
+
+async function functionI2CW(args) {
+	// I2Cの送信を行う
+	const deviceAddress = args[0] & 0x7f;
+	let writeAddress1 = 0, writeSize1 = 0, writeData1 = -1, writeAddress2 = 0, writeSize2 = 0;
+	switch (args.length) {
+		case 2: // (デバイス7bitアドレス, 送信データ1)
+			writeData1 = args[1] & 0xff;
+			break;
+		case 3: // (デバイス7bitアドレス, 送信アドレス2, 送信サイズ2)
+			writeAddress2 = args[1];
+			writeSize2 = args[2];
+			break;
+		case 4: // (デバイス7bitアドレス, 送信データ1, 送信アドレス2, 送信サイズ2)
+			writeData1 = args[1] & 0xff;
+			writeAddress2 = args[2];
+			writeSize2 = args[3];
+			break;
+		case 5: // (デバイス7bitアドレス, 送信アドレス1, 送信サイズ1, 送信アドレス2, 送信サイズ2)
+			writeAddress1 = args[1];
+			writeSize1 = args[2];
+			writeAddress2 = args[3];
+			writeSize2 = args[4];
+			break;
+	}
+	// 引数のチェックと送信データの読み取り
+	// データ1とデータ2の間にストップコンディションは入らないので、まとめてよい
+	const writeDataArray = [];
+	if (writeData1 >= 0) writeDataArray.push(writeData1);
+	if (writeSize1 !== 0) {
+		if (writeSize1 < 0 || writeAddress1 < VIRTUAL_RAM_OFFSET || VIRTUAL_MEM_MAX < writeAddress1 + writeSize1) {
+			throw "Illegal Argument";
+		}
+		for (let i = 0; i < writeSize1; i++) {
+			writeDataArray.push(readVirtualMem(writeAddress1 + i));
+		}
+	}
+	if (writeSize2 !== 0) {
+		if (writeSize2 < 0 || writeAddress2 < VIRTUAL_RAM_OFFSET || VIRTUAL_MEM_MAX < writeAddress2 + writeSize2) {
+			throw "Illegal Argument";
+		}
+		for (let i = 0; i < writeSize2; i++) {
+			writeDataArray.push(readVirtualMem(writeAddress2 + i));
+		}
+	}
+	// 送受信の実行
+	if (writeDataArray.length > 0) {
+		const res = await i2cManager.performI2C(deviceAddress, new Uint8Array(writeDataArray), 0);
+		if (res === null) return 1;
+	}
+	return 0;
+}
+
 async function functionUSR(args) {
 	// マシン語を実行する
 	const startVirtualAddress = args[0];
