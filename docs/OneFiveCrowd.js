@@ -65,7 +65,7 @@ const PRG_MAX_CAKE = 0x1000;
 const KEY_MAX = 126;
 const CMD_MAX = 200; // 本体の長さ。終端の0でさらに1バイト使う。
 const VIRTUAL_MEM_MAX_JAM = 0x1180;
-const VIRTUAL_MEM_MAX_CAKE = 0x1f7f;
+const VIRTUAL_MEM_MAX_CAKE = 0x1f80;
 let ARRAY_SIZE = ARRAY_SIZE_JAM;
 let VIRTUAL_MEM_MAX = VIRTUAL_MEM_MAX_JAM;
 
