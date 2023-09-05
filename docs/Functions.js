@@ -389,6 +389,17 @@ function functionLEN(args) {
 	}
 }
 
+async function functionIoT_IN() {
+	// IoTモジュールから4バイト受信する
+	const sendRes = await i2cManager.performI2C(0x4f, new Uint8Array([0x30, 0x00, 0x30]), 0);
+	if (sendRes === null) return 0;
+	const receive = await i2cManager.performI2C(0x4f, new Uint8Array(0), 21);
+	// 通信失敗 / 短すぎ / エラー → 0を返す
+	if (receive === null || recieve.length < 5 || receive[0] === 5) return 0;
+	const resultValue = receive[4] | ((receive.length >= 6 ? receive[5] : 0) << 8);
+	return resultValue & 0x8000 ? resultValue - 0x10000 : resultValue;
+}
+
 function functionRND(args) {
 	// 0以上第一引数未満の乱数を返す
 	const max = args[0];

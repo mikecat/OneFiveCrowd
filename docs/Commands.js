@@ -846,6 +846,52 @@ function commandOK(args) {
 	okMode = args.length > 0 ? args[0] : 1;
 }
 
+async function commandIoT_OUT(args) {
+	// IoTモジュールにデータを送信する
+	if (args.length === 1) {
+		// 4バイト即時送信
+		const sendData = new Uint8Array(13);
+		sendData[0] = 0x21;
+		sendData[1] = 0x0a;
+		sendData[2] = 0x00;
+		sendData[3] = 0x69;
+		sendData[4] = args[0] & 0xff;
+		sendData[5] = (args[0] >> 8) & 0xff;
+		sendData[6] = sendData[7] = args[0] & 0x8000 ? 0xff : 0;
+		sendData[12] = 0;
+		for (let i = 0; i < 12; i++) sendData[12] ^= sendData[i];
+		const sendRes = await i2cManager.performI2C(0x4f, sendData, 0);
+		if (sendRes === null) return;
+		await i2cManager.performI2C(0x4f, new Uint8Array(0), 3);
+	} else {
+		// データを8バイトずつ送信キューに入れる
+		const dataAddress = args[0], dataLength = args[1];
+		const sendFlag = args.length > 2 ? args[2] : 1;
+		if (dataLength < 0 || dataLength % 8 !== 0 || dataLength > 0x100) throw "Illegal argument";
+		if (dataAddress < 0 && dataLength > 0) throw "Complex expression";
+		const sendData = new Uint8Array(13);
+		sendData[0] = 0x20;
+		sendData[1] = 0x0a;
+		sendData[2] = 0x01;
+		sendData[3] = 0x62;
+		for (let i = 0; i < dataLength; i += 8) {
+			for (let j = 0; j < 8; j++) {
+				sendData[4 + j] = readVirtualMem(dataAddress + i + j);
+			}
+			sendData[12] = 0;
+			for (let j = 0; j < 12; j++) sendData[12] ^= sendData[j];
+			const sendRes = await i2cManager.performI2C(0x4f, sendData, 0);
+			if (sendRes === null) return;
+		}
+		// 送信キューの中身を送信する
+		if (sendFlag !== 0) {
+			const sendRes = await i2cManager.performI2C(0x4f, new Uint8Array([0x24, 0x00, 0x24]), 0);
+			if (sendRes === null) return;
+			await i2cManager.performI2C(0x4f, new Uint8Array(0), 3);
+		}
+	}
+}
+
 function commandSWITCH(args) {
 	// ビデオモードと液晶モードを切り替える
 	const newLcdMode = args.length > 0 ? args[0] !== 0 : !lcdMode;
