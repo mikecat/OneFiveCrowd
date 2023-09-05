@@ -554,7 +554,6 @@ const wsLedManager = (function() {
 	// 返り値
 	//   なし
 	async function sendColors(data, numRepeat, ports) {
-		console.log(data, numRepeat, ports);
 		const devicePromises = [];
 		for (let i = 0; i < wsLedDevices.length; i++) {
 			const deviceFunction = wsledDevicees[i];

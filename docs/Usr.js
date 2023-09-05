@@ -180,7 +180,6 @@ const apiMap = {
 		"tableAddr": 0xEE,
 		"returnsValue": false,
 		"func": async function(env, countrepeat, data, gpiomask) {
-			console.log(countrepeat, data.toString(16), gpiomask.toString(16));
 			// 出力先のポートを取得する
 			const gpioMaskUpper = (gpiomask >>> 16) & 0xffff, gpioMaskLower = gpiomask & 0xffff;
 			if (!(gpioMaskUpper in wsLedPorts) || gpioMaskLower >= 0x4000) return;
