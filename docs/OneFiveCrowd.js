@@ -1393,7 +1393,7 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 			else if (0x77 <= keyCode && keyCode <= 0x7a) keyCode += 0x80 - 0x77;
 			else if (keyCode === 0x7e) keyCode = 0x40;
 		}
-		if (shiftKey && keyCode == 0x20) keyCode = 0x0e;
+		if (shiftKey && keyCode === 0x20) keyCode = 0x0e;
 		keyRomanInput(keyCode);
 	} else if (!altKey) {
 		if (key === "Enter") {
@@ -1446,7 +1446,7 @@ function keyUp(key) {
 	else if (key === "ArrowUp") btnStatus &= ~4;
 	else if (key === "ArrowDown") btnStatus &= ~8;
 	else if (key === " ") btnStatus &= ~0x10;
-	else if (key === "x" || key == "X") btnStatus &= ~0x20;
+	else if (key === "x" || key === "X") btnStatus &= ~0x20;
 	ramBytes[BTN_ADDR] = btnStatus;
 }
 
@@ -1514,7 +1514,7 @@ function putChar(c, isInsert = false) {
 	if (cursorX < 0 || SCREEN_WIDTH <= cursorX || cursorY < 0 || SCREEN_HEIGHT <= cursorY) return;
 	switch (c) {
 	case 0x08: // Backspace
-		if (cursorX > 0 || (cursorY > 0 && vramView[cursorY * SCREEN_WIDTH - 1] != 0)) {
+		if (cursorX > 0 || (cursorY > 0 && vramView[cursorY * SCREEN_WIDTH - 1] !== 0)) {
 			const limit = SCREEN_HEIGHT * SCREEN_WIDTH - 1;
 			const start = cursorY * SCREEN_WIDTH + cursorX - 1;
 			let stop;
@@ -1732,7 +1732,7 @@ function putChar(c, isInsert = false) {
 				for (; start > 0 && vramView[start - 1] !== 0; start--);
 			}
 			for (; stop < limit && vramView[stop] !== 0; stop++);
-			if (start == stop) break;
+			if (start === stop) break;
 			for (let i = start; i < stop; i++) {
 				vramView[i] = 0;
 			}
@@ -1917,7 +1917,7 @@ function editProgram(lineno, str) {
 	}
 	// 必要に応じてデータを移動する
 	let newLastPos = lastPos;
-	if (replaceSize != addSize) {
+	if (replaceSize !== addSize) {
 		const moveSrc = replacePos + replaceSize;
 		const moveDest = replacePos + addSize;
 		const moveSize = lastPos - moveSrc;

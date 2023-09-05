@@ -209,7 +209,7 @@ const virtualMixJuice = (function() {
 	function rx(data, dataBps) {
 		if (!uartConnected || dataBps !== deviceBps) return;
 		for (let i = 0; i < data.length; i++) {
-			if (data[i] == 0x0A) {
+			if (data[i] === 0x0A) {
 				enqueueLine(lineBuffer);
 				lineBuffer = "";
 			} else {

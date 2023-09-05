@@ -419,20 +419,20 @@ const basicFunctions = {
 };
 
 const expr7_ops = {
-	"OR" : function(a, b) { return a != 0 || b != 0 ? 1 : 0; },
-	"||" : function(a, b) { return a != 0 || b != 0 ? 1 : 0; }
+	"OR" : function(a, b) { return a !== 0 || b !== 0 ? 1 : 0; },
+	"||" : function(a, b) { return a !== 0 || b !== 0 ? 1 : 0; }
 };
 
 const expr6_ops = {
-	"AND": function(a, b) { return a != 0 && b != 0 ? 1 : 0; },
-	"&&" : function(a, b) { return a != 0 && b != 0 ? 1 : 0; }
+	"AND": function(a, b) { return a !== 0 && b !== 0 ? 1 : 0; },
+	"&&" : function(a, b) { return a !== 0 && b !== 0 ? 1 : 0; }
 };
 
 const expr5_ops = {
-	"="  : function(a, b) { return a == b ? 1 : 0; },
-	"==" : function(a, b) { return a == b ? 1 : 0; },
-	"<>" : function(a, b) { return a != b ? 1 : 0; },
-	"!=" : function(a, b) { return a != b ? 1 : 0; },
+	"="  : function(a, b) { return a === b ? 1 : 0; },
+	"==" : function(a, b) { return a === b ? 1 : 0; },
+	"<>" : function(a, b) { return a !== b ? 1 : 0; },
+	"!=" : function(a, b) { return a !== b ? 1 : 0; },
 	"<"  : function(a, b) { return a < b ? 1 : 0; },
 	">"  : function(a, b) { return a > b ? 1 : 0; },
 	"<=" : function(a, b) { return a <= b ? 1 : 0; },
@@ -448,15 +448,15 @@ const expr4_ops = {
 const expr3_ops = {
 	"*"  : function(a, b) { return arithWrap(a * b); },
 	"/"  : function(a, b) {
-		if (b == 0) throw "Divide by 0";
+		if (b === 0) throw "Divide by 0";
 		return arithWrap(a / b);
 	},
 	"%"  : function(a, b) {
-		if (b == 0) throw "Divide by 0";
+		if (b === 0) throw "Divide by 0";
 		return arithWrap(a % b);
 	},
 	"MOD": function(a, b) {
-		if (b == 0) throw "Divide by 0";
+		if (b === 0) throw "Divide by 0";
 		return arithWrap(a % b);
 	},
 	"<<" : function(a, b) { return (b & 0xff) >= 16 ? 0 : arithWrap(a << (b & 15)); },
@@ -468,8 +468,8 @@ const expr3_ops = {
 const expr2_ops = {
 	"-"  : function(a) { return arithWrap(-a); },
 	"~"  : function(a) { return arithWrap(~a); },
-	"!"  : function(a) { return a == 0 ? 1 : 0; },
-	"NOT": function(a) { return a == 0 ? 1 : 0; }
+	"!"  : function(a) { return a === 0 ? 1 : 0; },
+	"NOT": function(a) { return a === 0 ? 1 : 0; }
 };
 
 const basicConstants = {
@@ -977,7 +977,7 @@ var compiler = (function() {
 					if (nstr.charAt(0) === "#") {
 						nstr = nstr.substr(1);
 						delta = 16;
-					} else if (nstr.charAt(0) == "`") {
+					} else if (nstr.charAt(0) === "`") {
 						nstr = nstr.substr(1);
 						delta = 2;
 					}

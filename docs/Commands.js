@@ -940,7 +940,7 @@ function commandDRAW(args) {
 		const wx = sx >= dx ? sx - dx : dx - sx, wy = sy >= dy ? sy - dy : dy - sy;
 		const xmode = wx >= wy;
 		let x = sx, y = sy, gosa = 0;
-		while (x != dx || y != dy) {
+		while (x !== dx || y !== dy) {
 			drawPoint(x, y);
 			if (xmode) {
 				if (sx < dx) x++; else x--;

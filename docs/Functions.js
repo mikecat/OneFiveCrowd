@@ -384,7 +384,7 @@ function functionLEN(args) {
 	let ptr = args[0];
 	for (;;) {
 		const c = readVirtualMem(ptr + count);
-		if (c == 0 || c == 0x22) return count;
+		if (c === 0 || c === 0x22) return count;
 		count++;
 	}
 }
