@@ -453,7 +453,7 @@ label[for="volumeSwitch"] {
 }
 
 #ioPortField {
-	margin-top: 0.5em;
+	margin-bottom: 0.5em;
 	width: 540px;
 	box-sizing: border-box;
 }
