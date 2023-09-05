@@ -100,29 +100,29 @@ const apiMap = {
 	0x2118: { // out
 		"tableAddr": 0xD8,
 		"returnsValue": false,
-		"func": function(env, port, n) {
-			throw "Not implemented: OUT";
+		"func": async function(env, port, n) {
+			await commandOUT([port, n]);
 		},
 	},
 	0x211A: { // in
 		"tableAddr": 0xDA,
 		"returnsValue": true,
-		"func": function() {
-			throw "Not implemented: IN";
+		"func": async function() {
+			return await functionIN([]);
 		},
 	},
 	0x211C: { // pwm
 		"tableAddr": 0xDC,
 		"returnsValue": false,
-		"func": function(env, port, n, m) {
-			throw "Not implemented: PWM";
+		"func": async function(env, port, n, m) {
+			await commandPWM([port, n, m]);
 		},
 	},
 	0x211E: { // ana
 		"tableAddr": 0xDE,
 		"returnsValue": true,
-		"func": function(env, port) {
-			throw "Not implemented: ANA";
+		"func": async function(env, port) {
+			return await functionANA([port]);
 		},
 	},
 	0x2120: { // uputc
