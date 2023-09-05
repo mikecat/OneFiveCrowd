@@ -360,7 +360,7 @@ const basicCommands = {
 	"IoT.OUT": {func: commandIoT_OUT, minArg: 1, maxArg: 3},
 	"SWITCH" : {func: commandSWITCH, minArg: 0, maxArg: 2},
 	"DRAW"   : {func: commandDRAW, minArg: 2, maxArg: 5},
-	"WS.LED" : null,
+	"WS.LED" : {func: commandWS_LED, minArg: 1, maxArg: 2},
 	"SEC.PUBKEY" : {func: commandSEC_PUBKEY, minArg: 2, maxArg: 2},
 	"SEC.SIGN"   : {func: commandSEC_SIGN, minArg: 4, maxArg: 4},
 	"PC.CLEAR"   : {func: commandPC_CLEAR, minArg: 1, maxArg: 1},

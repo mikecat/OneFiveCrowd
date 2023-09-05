@@ -526,3 +526,51 @@ const i2cManager = (function() {
 		"performI2C": performI2C,
 	};
 })();
+
+const wsLedManager = (function() {
+	// 以下の仕様の関数(非同期可)の配列
+	// 引数
+	//   data      : 色データ (3要素の配列の、1要素以上の配列)
+	//               各要素となる配列は、色を表す0～255の値を前(先に送信する)から順に格納する
+	//               WS2812では緑、赤、青 (GRB) の順
+	//   numRepeat : 繰り返し回数 (1以上の整数)
+	//   ports     : 出力対象のポートID (文字列) の配列
+	// 返り値
+	//   ドントケア
+	const wsLedDevices = [];
+
+	// デバイスを追加する
+	function addDevice(device) {
+		wsLedDevices.push(device);
+	}
+
+	// LEDの色情報を送信する
+	// 引数
+	//   data      : 色データ (3要素の配列の、1要素以上の配列)
+	//               各要素となる配列は、色を表す0～255の値を前(先に送信する)から順に格納する
+	//               WS2812では緑、赤、青 (GRB) の順
+	//   numRepeat : 繰り返し回数 (1以上の整数)
+	//   ports     : 出力対象のポートID (文字列) の配列
+	// 返り値
+	//   なし
+	async function sendColors(data, numRepeat, ports) {
+		console.log(data, numRepeat, ports);
+		const devicePromises = [];
+		for (let i = 0; i < wsLedDevices.length; i++) {
+			const deviceFunction = wsledDevicees[i];
+			devicePromises.push(new Promise(async function(resolve, reject) {
+				try {
+					resolve(await deviceFunction(data, numRepeat, ports));
+				} catch (error) {
+					reject(error);
+				}
+			}));
+		}
+		await Promise.allSettled(devicePromises);
+	}
+
+	return {
+		"addDevice": addDevice,
+		"sendColors": sendColors,
+	};
+})();

@@ -993,6 +993,17 @@ function commandDRAW(args) {
 	}
 }
 
+async function commandWS_LED(args) {
+	// フルカラーLED用の色情報を送信する
+	const numLED = args[0], numRepeat = args.length > 1 ? args[1] : 1;
+	if (numLED <= 0 || numRepeat <= 0 || numLED * 3 > ARRAY_SIZE) return;
+	const colorData = [];
+	for (let i = 0; i < numLED; i++) {
+		colorData.push([readArray(i * 3 + 0) & 0xff, readArray(i * 3 + 1) & 0xff, readArray(i * 3 + 2) & 0xff]);
+	}
+	await wsLedManager.sendColors(colorData, numRepeat, ["led"]);
+}
+
 async function commandSEC_PUBKEY(args) {
 	// Ed25519の秘密鍵から公開鍵を求める
 	// args[0] : 公開鍵(出力)の仮想アドレス

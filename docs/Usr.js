@@ -1,5 +1,10 @@
 "use strict";
 
+const wsLedPorts = {
+	0x5000: [null, null, null, null, null, "in3", "in4", null, null, null, "in1", "in2"],
+	0x5001: ["out1", "out2", "out3", "out4", null, "led", null, null, "out5", "out6"],
+};
+
 const apiMap = {
 	0x2100: { // rnd
 		"tableAddr": 0xC0,
@@ -174,8 +179,37 @@ const apiMap = {
 	0x212E: { // ws_led
 		"tableAddr": 0xEE,
 		"returnsValue": false,
-		"func": function(env, countrepeat, data, gpiomask) {
-			throw "Not implemented: WS_LED";
+		"func": async function(env, countrepeat, data, gpiomask) {
+			console.log(countrepeat, data.toString(16), gpiomask.toString(16));
+			// 出力先のポートを取得する
+			const gpioMaskUpper = (gpiomask >>> 16) & 0xffff, gpioMaskLower = gpiomask & 0xffff;
+			if (!(gpioMaskUpper in wsLedPorts) || gpioMaskLower >= 0x4000) return;
+			const portStatus = ioManager.getPortStatus();
+			const portList = wsLedPorts[gpioMaskUpper];
+			const portsToOutput = [];
+			for (let i = 0; i < portList.length; i++) {
+				if ((gpioMaskLower >> (2 + i)) & 1) {
+					const port = portList[i];
+					if (port in portStatus && portStatus[port].status === "output_binary") {
+						portsToOutput.push(port);
+					}
+				}
+			}
+			if (portsToOutput.length === 0) return;
+			// 出力するデータを取得する
+			// TODO
+			// ・端数のデータも出力する
+			// ・短い間に連続して呼ばれた場合、切らずに前回の続きとして出力する
+			const colorData = [];
+			for (let i = 0; i < countrepeat - 2; i += 3) {
+				const colorElement = [0, 0, 0];
+				for (let j = 0; j < 3; j++) {
+					colorElement[j] = env.readMemory((data + i + j) >>> 0, 1, false);
+				}
+				colorData.push(colorElement);
+			}
+			// 出力する
+			await wsLedManager.sendColors(colorData, 1, portsToOutput);
 		},
 	},
 };
