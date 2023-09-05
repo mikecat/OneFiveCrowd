@@ -406,6 +406,7 @@ const ioManager = (function() {
 			if (query.id in portStatus) {
 				const info = portStatus[query.id];
 				const newStatus = "status" in query ? query.status : info.status;
+				info.status = newStatus;
 				const notifyData = {
 					"status": newStatus,
 				};
