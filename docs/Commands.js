@@ -671,6 +671,35 @@ async function commandLRUN(args) {
 	}
 }
 
+async function commandSLEEP() {
+	// ボタンが離されている状態から押されるまで待機し、プログラム0を実行する
+	// ボタンが離されるまで待機する
+	for (;;) {
+		const status = await ioManager.queryIn(["btn"], false);
+		if (status.btn) break;
+		await new Promise(function(resolve, reject) {
+			setTimeout(resolve, 10);
+		});
+	}
+	// 入出力ポートを全てHi-Z (プルアップなし入力) にする
+	const portIDs = ["in1", "in2", "in3", "in4", "out1", "out2", "out3", "out4", "out5", "out6", "btn", "led"];
+	const portCommand = portIDs.map((id) => ({"id": id, "status": "input"}));
+	await ioManager.setPortStatus(portCommand);
+	// 画面出力を切る
+	mainScreen.classList.add("disabled");
+	// ボタンが押されるまで待機する
+	for (;;) {
+		const status = await ioManager.queryIn(["btn"], false);
+		if (status.btn === 0) break;
+		await new Promise(function(resolve, reject) {
+			setTimeout(resolve, 10);
+		});
+	}
+	// リセットし、プログラム0を実行する
+	await resetSystem();
+	return commandLRUN([0]);
+}
+
 function commandVIDEO(args) {
 	// 画面の表示設定を変更する
 	const config = args[0];

@@ -342,7 +342,7 @@ const basicCommands = {
 	"CONT"   : {func: commandCONT, minArg: 0, maxArg: 0},
 	"RENUM"  : {func: commandRENUM, minArg: 0, maxArg: 2},
 	"LRUN"   : {func: commandLRUN, minArg: 0, maxArg: 2},
-	"SLEEP"  : null,
+	"SLEEP"  : {func: commandSLEEP, minArg: 0, maxArg: 999},
 	"VIDEO"  : {func: commandVIDEO, minArg: 1, maxArg: 2},
 	"POKE"   : {func: commandPOKE, minArg: 2, maxArg: 999},
 	"CLP"    : {func: commandCLP, minArg: 0, maxArg: 0},
