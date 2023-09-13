@@ -33,7 +33,7 @@
 	<body onload="initSystem();" onkeydown="keyDownEvent();" onkeyup="keyUpEvent();">
 		<h1 id="mainTitle">OneFiveCrowd</h1>
 		<p id="screenArea">
-			<canvas id="mainScreen" width="512" height="384">
+			<canvas id="mainScreen" width="512" height="384" data-t9n-en="Unsupported in this browser.">
 				非対応のブラウザです。
 			</canvas>
 			<canvas id="pancakeScreen" width="80" height="45"></canvas>
@@ -87,108 +87,121 @@
 					<textarea id="textInputArea" rows="5"></textarea><br>
 					<div id="textControlButtonAreaWrapper">
 						<div id="textControlButtonArea">
-							<button id="textInputButton" type="button">テキスト<br>入力</button>
-							<button id="programExportButton" type="button">プログラム<br>エクスポート</button>
-							<button id="screenExportButton" type="button">画面<br>エクスポート</button>
+							<button id="textInputButton" type="button">
+								<span data-t9n-en="Input">テキスト</span><br>
+								<span data-t9n-en="text">入力</span>
+							</button>
+							<button id="programExportButton" type="button">
+								<span data-t9n-en="Export">プログラム</span><br>
+								<span data-t9n-en="program">エクスポート</span>
+							</button>
+							<button id="screenExportButton" type="button">
+								<span data-t9n-en="Export">画面</span><br>
+								<span data-t9n-en="screen">エクスポート</span>
+							</button>
 						</div>
 					</div>
 					<fieldset id="virtualEepromArea">
-						<legend>仮想EEPROM</legend>
+						<legend data-t9n-en="Virtual EEPROM">仮想EEPROM</legend>
 						<div id="virtualEepromControlArea">
 							<input type="checkbox" id="virtualEepromConnectCheckbox" class="virtualEepromElements"><label
-							for="virtualEepromConnectCheckbox">接続</label><button
-							id="virtualEepromCreateButton" type="button" class="virtualEepromElements">新規作成</button><button
-							id="virtualEepromImportButton" type="button" class="virtualEepromElements">インポート</button><span
+							for="virtualEepromConnectCheckbox" data-t9n-en="Connect">接続</label><button
+							id="virtualEepromCreateButton" type="button" class="virtualEepromElements" data-t9n-en="Create">新規作成</button><button
+							id="virtualEepromImportButton" type="button" class="virtualEepromElements" data-t9n-en="Import">インポート</button><span
 							id="virtualEepromTemporalIndicator" class="virtualEepromElements">
-								一時参照中
-								<button id="virtualEepromSaveButton" type="button" class="virtualEepromElements">ブラウザに保存</button>
+								<span data-t9n-en="Temporary referencing">一時参照中</span>
+								<button id="virtualEepromSaveButton" type="button" class="virtualEepromElements" data-t9n-en="Save">ブラウザに保存</button>
 							</span>
 						</div>
 						<div id="virtualEepromSelectArea">
 							<select id="virtualEepromSelect" class="virtualEepromElements">
 							</select>
-							<button id="virtualEepromRenameButton" type="button" class="virtualEepromElements">名前の変更</button>
-							<button id="virtualEepromExportButton" type="button" class="virtualEepromElements">エクスポート</button>
-							<button id="virtualEepromDeleteButton" type="button" class="virtualEepromElements">削除</button>
+							<button id="virtualEepromRenameButton" type="button" class="virtualEepromElements" data-t9n-en="Rename">名前の変更</button>
+							<button id="virtualEepromExportButton" type="button" class="virtualEepromElements" data-t9n-en="Export">エクスポート</button>
+							<button id="virtualEepromDeleteButton" type="button" class="virtualEepromElements" data-t9n-en="Delete">削除</button>
 						</div>
 						<div id="virtualEepromHelperArea">
 							<input type="file" id="virtualEepromFileSelector" accept=".json,application/json" class="virtualEepromElements">
 							<a id="virtualEepromDownloadLink" class="virtualEepromElements"></a>
+							<span id="virtualEepromImportFailureMessage" class="virtualEepromElements" data-t9n-en="Failed to import.">インポートに失敗しました。</span>
+							<span id="virtualEepromRenamePromptMessage" class="virtualEepromElements" data-t9n-en="Please enter the new name.">新しい名前を入力してください。</span>
+							<span id="virtualEepromDeleteConfirmMessage1" class="virtualEepromElements" data-t9n-en='Are you sure to delete your virtual EEPROM "'>仮想EEPROM「</span>
+							<span id="virtualEepromDeleteConfirmMessage2" class="virtualEepromElements" data-t9n-en='"?&#10;(recovery is impossible after deleting)'>」を削除しますか？&#10;(削除すると復元できません)</span>
 						</div>
 					</fieldset>
 					<fieldset id="urlExportArea">
-						<legend>URLで共有</legend>
+						<legend data-t9n-en="Share via URL">URLで共有</legend>
 						<span class="checkSet">
 							<input type="checkbox" id="urlExportText"><label
-							for="urlExportText">テキスト入力</label>
+							for="urlExportText" data-t9n-en="Input text">テキスト入力</label>
 						</span>
 						<span class="checkSet">
 							<input type="checkbox" id="urlExportProgram" checked><label
-							for="urlExportProgram">プログラム領域</label>
+							for="urlExportProgram" data-t9n-en="Program on RAM">プログラム領域</label>
 						</span>
 						<span class="checkSet">
 							<input type="checkbox" id="urlExportVirtualEeprom"><label
-							for="urlExportVirtualEeprom">選択中の仮想EEPROM</label>
+							for="urlExportVirtualEeprom" data-t9n-en="Selected virtual EEPROM">選択中の仮想EEPROM</label>
 						</span>
 						<fieldset id="urlExportConfigArea">
-							<legend>動作設定</legend>
+							<legend data-t9n-en="Behavior Settings">動作設定</legend>
 							<span class="checkSet">
 								<input type="checkbox" id="urlExportConfigFont"><label
-								for="urlExportConfigFont">フォント</label>
+								for="urlExportConfigFont" data-t9n-en="Font">フォント</label>
 							</span>
 							<span class="checkSet">
 								<input type="checkbox" id="urlExportConfigMMLMode"><label
-								for="urlExportConfigMMLMode">MML解釈</label>
+								for="urlExportConfigMMLMode" data-t9n-en="MML Interpretation">MML解釈</label>
 							</span>
 							<span class="checkSet">
 								<input type="checkbox" id="urlExportConfigDrawAlgorithm"><label
-								for="urlExportConfigDrawAlgorithm">線分の描画方法</label>
+								for="urlExportConfigDrawAlgorithm" data-t9n-en="Line Drawing Method">線分の描画方法</label>
 							</span>
 							<span class="checkSet">
 								<input type="checkbox" id="urlExportConfigMachineLanguage"><label
-								for="urlExportConfigMachineLanguage">マシン語</label>
+								for="urlExportConfigMachineLanguage" data-t9n-en="Machine Language">マシン語</label>
 							</span>
 							<span class="checkSet">
 								<input type="checkbox" id="urlExportConfigMemory"><label
-								for="urlExportConfigMemory">メモリモード</label>
+								for="urlExportConfigMemory" data-t9n-en="Memory Mode">メモリモード</label>
 							</span>
 						</fieldset>
-						<button id="urlExportButton" type="button">URL作成</button>
-						※表示中のページのURLが変更されます
+						<button id="urlExportButton" type="button" data-t9n-en="Generate URL">URL作成</button>
+						<span data-t9n-en="※URL of current page will be altered.">※表示中のページのURLが変更されます</span>
 					</fieldset>
 				</div>
 				<div id="ioForm">
 					<fieldset id="ioPortField">
-						<legend>I/Oポート</legend>
+						<legend data-t9n-en="I/O Ports">I/Oポート</legend>
 						<div id="ioPortTableArea">
 						</div>
 					</fieldset>
 					<fieldset>
 						<legend>UART</legend>
 						<div id="phisicalUartArea">
-							物理ポート：
-							<span class="uartNotConnectedMessage">未接続</span>
-							<span class="uartConnectedMessage">接続済</span>
-							<span class="webSerialUnsupportedMessage">(Web Serial 未対応)</span>
+							<span data-t9n-en="Physical port">物理ポート</span>：
+							<span class="uartNotConnectedMessage" data-t9n-en="Not connected">未接続</span>
+							<span class="uartConnectedMessage" data-t9n-en="Connected">接続済</span>
+							<span class="webSerialUnsupportedMessage" data-t9n-en="(no Web Serial support)">(Web Serial 未対応)</span>
 							<button id="phisicalUartPortSwitchButton" type="button">
-								<span class="uartNotConnectedMessage">接続</span>
-								<span class="uartConnectedMessage">切断</span>
+								<span class="uartNotConnectedMessage" data-t9n-en="Connect">接続</span>
+								<span class="uartConnectedMessage" data-t9n-en="Disconnect">切断</span>
 							</button>
 						</div>
 						<div id="virtualUartDevicesArea">
 							<input type="checkbox" id="virtualMixJuiceConnectCheckbox"><label
-							for="virtualMixJuiceConnectCheckbox">仮想MixJuice</label>
+							for="virtualMixJuiceConnectCheckbox" data-t9n-en="Virtual MixJuice">仮想MixJuice</label>
 							<input type="checkbox" id="virtualPanCakeConnectCheckbox"><label
-							for="virtualPanCakeConnectCheckbox">仮想PanCake</label>
+							for="virtualPanCakeConnectCheckbox" data-t9n-en="Virtual PanCake">仮想PanCake</label>
 						</div>
 					</fieldset>
 				</div>
 				<div id="systemForm">
 					<fieldset>
-						<legend>動作設定</legend>
+						<legend data-t9n-en="Behavior Settings">動作設定</legend>
 						<span class="configField">
 							<span class="configRow">
-								<span class="configName">フォント</span>
+								<span class="configName" data-t9n-en="Font">フォント</span>
 								<span class="configValue"><select id="systemFontSelect">
 									<option value="1_1">1.1.1</option>
 									<option value="1_2">1.2</option>
@@ -196,28 +209,28 @@
 								</select></span>
 							</span>
 							<span class="configRow">
-								<span class="configName">MML解釈</span>
+								<span class="configName" data-t9n-en="MML Interpretation">MML解釈</span>
 								<span class="configValue"><select id="systemMMLInterpretationSelect">
-									<option value="old">旧 (1.1.1)</option>
-									<option value="new" selected>新 (1.2.0)</option>
+									<option value="old" data-t9n-en="Old (1.1.1)">旧 (1.1.1)</option>
+									<option value="new" selected data-t9n-en="New (1.2.0)">新 (1.2.0)</option>
 								</select></span>
 							</span>
 							<span class="configRow">
-								<span class="configName">線分の描画方法</span>
+								<span class="configName" data-t9n-en="Line Drawing Method">線分の描画方法</span>
 								<span class="configValue"><select id="systemDrawAlgorithmSelect">
-									<option value="bresenham" selected>高品質 (ブレゼンハム)</option>
-									<option value="linear">互換 (線形補間)</option>
+									<option value="bresenham" selected data-t9n-en="High quality (Bresenham)">高品質 (ブレゼンハム)</option>
+									<option value="linear" data-t9n-en="Compatible (Linear)">互換 (線形補間)</option>
 								</select></span>
 							</span>
 							<span class="configRow">
-								<span class="configName">マシン語</span>
+								<span class="configName" data-t9n-en="Machine Language">マシン語</span>
 								<span class="configValue"><select id="systemMachineLanguageSelect">
-									<option value="m0" selected>M0 (従来)</option>
-									<option value="rv32c">RV32C (R系)</option>
+									<option value="m0" selected data-t9n-en="M0 (traditional)">M0 (従来)</option>
+									<option value="rv32c" data-t9n-en="RV32C (R series)">RV32C (R系)</option>
 								</select></span>
 							</span>
 							<span class="configRow">
-								<span class="configName">メモリモード</span>
+								<span class="configName" data-t9n-en="Memory Mode">メモリモード</span>
 								<span class="configValue"><select id="systemMemorySelect">
 									<option value="jam" selected>Jam</option>
 									<option value="cake">Cake</option>
@@ -226,21 +239,28 @@
 						</span>
 					</fieldset>
 					<fieldset id="environmentConfiguration">
-						<legend>環境設定</legend>
+						<legend data-t9n-en="Environment Settings">環境設定</legend>
 						<span class="configField">
 							<span class="configRow">
-								<span class="configName">スクリーンキーボード</span>
-								<span class="configValue"><select id="systemKeyboardLayoutSelect">
-									<option value="0">英語配列</option>
-									<option value="1" selected>日本語配列</option>
+								<span class="configName" data-t9n-en="UI Language">表示言語</span>
+								<span class="configValue"><select id="uiLanguageSelect">
+									<option value="ja" selected>日本語 / Japanese</option>
+									<option value="en">英語 / English</option>
 								</select></span>
 							</span>
 							<span class="configRow">
-								<span class="configName">クリップボード</span>
+								<span class="configName" data-t9n-en="Screen Keyboard">スクリーンキーボード</span>
+								<span class="configValue"><select id="systemKeyboardLayoutSelect">
+									<option value="0" data-t9n-en="English layout">英語配列</option>
+									<option value="1" selected data-t9n-en="Japanese layout">日本語配列</option>
+								</select></span>
+							</span>
+							<span class="configRow">
+								<span class="configName" data-t9n-en="Clipboard">クリップボード</span>
 								<span class="configValue">
 									<input type="checkbox" id="pasteByCtrlVCheckbox"
-									><label for="pasteByCtrlVCheckbox">Ctrl+V で貼り付け入力</label>
-									<span id="pasteNotSupportedIndicator">(未対応の環境です)</span>
+									><label for="pasteByCtrlVCheckbox" data-t9n-en="Ctrl+V to paste">Ctrl+V で貼り付け入力</label>
+									<span id="pasteNotSupportedIndicator" data-t9n-en="(not supported)">(未対応の環境です)</span>
 								</span>
 							</span>
 						</span>
@@ -249,10 +269,10 @@
 			</div>
 		</div>
 		<p>
-			OneFiveCrowd: <a href="https://creativecommons.org/licenses/by/4.0/deed.ja" target="_blank">CC BY 4.0</a> by みけCAT (仮想PanCakeは<a href="https://creativecommons.org/licenses/by-nc/4.0/deed.ja" target="_blank">CC BY-NC 4.0</a>)<br>
+			OneFiveCrowd: <a href="https://creativecommons.org/licenses/by/4.0/deed.ja" data-t9n-en-href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a> by <span data-t9n-en="MikeCAT">みけCAT</span> (<span data-t9n-en="Virtual PanCake: ">仮想PanCakeは</span><a href="https://creativecommons.org/licenses/by-nc/4.0/deed.ja" data-t9n-en-href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a>)<br>
 			IchigoJam FONT: CC BY IchigoJam(<a href="http://ichigojam.net/" target="_blank">http://ichigojam.net/</a>)<br>
-			<a href="http://pancake.shizentai.jp/" target="_blank">PanCake</a>のリソース画像は<a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">クリエイティブ・コモンズ 表示 - 非営利 4.0 国際 ライセンス</a>の下に提供されています。<br>
-			「IchigoJam」はjig.jpの登録商標です。
+			<span data-t9n-en="Resource images of "></span><a href="http://pancake.shizentai.jp/" data-t9n-en-href="http://pancake.shizentai.jp/index_en.html" target="_blank">PanCake</a><span data-t9n-en=" are offered under ">のリソース画像は</span><a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" data-t9n-en="the creative commons-Attribution-NonCommercial 4.0 International">クリエイティブ・コモンズ 表示 - 非営利 4.0 国際 ライセンス</a><span data-t9n-en="">の下に提供されています。</span><br>
+			<span data-t9n-en='"IchigoJam" is a registered trademark of jig.jp.'>「IchigoJam」はjig.jpの登録商標です。</span>
 		</p>
 	</body>
 </html>

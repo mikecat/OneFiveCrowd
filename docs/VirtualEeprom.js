@@ -78,6 +78,7 @@ const virtualEepromManager = (function() {
 			// EEPROMが1件も無いため、接続と選択UIを無効化する
 			const option = document.createElement("option");
 			option.setAttribute("value","");
+			option.setAttribute("data-t9n-en","(No virtual EEPROM)");
 			option.appendChild(document.createTextNode("(仮想EEPROMがありません)"));
 			elements.virtualEepromSelect.appendChild(option);
 			elements.virtualEepromSelect.selectedIndex = 0;
@@ -92,6 +93,7 @@ const virtualEepromManager = (function() {
 			if (temporalList.length > 0) {
 				const group = document.createElement("optgroup");
 				group.setAttribute("label", "一時参照中 (未保存)");
+				group.setAttribute("data-t9n-en-label", "Temporary referencing (not saved)");
 				elements.virtualEepromSelect.appendChild(group);
 				temporalList.forEach(function(data) {
 					const option = document.createElement("option");
@@ -103,6 +105,7 @@ const virtualEepromManager = (function() {
 			if (savedList.length > 0) {
 				const group = document.createElement("optgroup");
 				group.setAttribute("label", "ブラウザに保存済み");
+				group.setAttribute("data-t9n-en-label", "Saved on your browser");
 				elements.virtualEepromSelect.appendChild(group);
 				savedList.forEach(function(data) {
 					const option = document.createElement("option");
@@ -137,6 +140,7 @@ const virtualEepromManager = (function() {
 				elements.virtualEepromSelect.selectedIndex = 0;
 			}
 		}
+		updateDisplayLanguage(elements.virtualEepromSelect);
 		eepromSelectChangeHandler();
 	}
 
@@ -214,7 +218,7 @@ const virtualEepromManager = (function() {
 			elements.virtualEepromConnectCheckbox.checked = true;
 		} catch (e) {
 			console.warn(e);
-			alert("インポートに失敗しました。");
+			alert(elements.virtualEepromImportFailureMessage.textContent);
 		}
 	}
 
@@ -258,7 +262,7 @@ const virtualEepromManager = (function() {
 			if (isNaN(id2)) return;
 			if (!(id2 in temporalEeproms)) return;
 			const target = temporalEeproms[id2];
-			const newName = prompt("新しい名前を入力してください。", target.name);
+			const newName = prompt(elements.virtualEepromRenamePromptMessage.textContent, target.name);
 			if (newName !== null) target.name = newName;
 		} else if (db && id.substring(0, SAVED_PREFIX.length) === SAVED_PREFIX) {
 			// DB上のEEPROMが対象
@@ -270,7 +274,7 @@ const virtualEepromManager = (function() {
 				const cursor = await requestAsPromise(os.openCursor(id2));
 				if (cursor !== null) {
 					const value = cursor.value;
-					const newName = prompt("新しい名前を入力してください。", value.name);
+					const newName = prompt(elements.virtualEepromRenamePromptMessage.textContent, value.name);
 					if (newName !== null) {
 						value.name = newName;
 						await requestAsPromise(cursor.update(value));
@@ -371,7 +375,7 @@ const virtualEepromManager = (function() {
 			if (isNaN(id2)) return;
 			if (!(id2 in temporalEeproms)) return;
 			const target = temporalEeproms[id2];
-			if (confirm("仮想EEPROM「" + target.name + "」を削除しますか？\n(削除すると復元できません)")) {
+			if (confirm(elements.virtualEepromDeleteConfirmMessage1.textContent + target.name + elements.virtualEepromDeleteConfirmMessage2.textContent)) {
 				delete temporalEeproms[id2];
 			}
 		} else if (db && id.substring(0, SAVED_PREFIX.length) === SAVED_PREFIX) {
@@ -385,7 +389,7 @@ const virtualEepromManager = (function() {
 				if (cursor !== null) {
 					const eepromId = cursor.key;
 					const value = cursor.value;
-					if (confirm("仮想EEPROM「" + value.name + "」を削除しますか？\n(削除すると復元できません)")) {
+					if (confirm(elements.virtualEepromDeleteConfirmMessage1.textContent + value.name + elements.virtualEepromDeleteConfirmMessage2.textContent)) {
 						// 仮想EEPROMのリストからこの仮想EEPROMを削除する
 						await requestAsPromise(cursor.delete());
 						// この仮想EEPROMに保存されているデータを削除する

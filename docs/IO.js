@@ -2,8 +2,9 @@
 
 const ioManager = (function() {
 	// ポートリスト
-	// groupName : グループ名
-	// ports     : 以下の要素を持つオブジェクトの配列
+	// groupName    : グループ名を表す文字列
+	// groupNameT9n : グループ名の訳を表す連想配列
+	// ports        : 以下の要素を持つオブジェクトの配列
 	//   id            : 操作対象のポートをプログラムから指定する用の文字列
 	//   name          : 表示用の文字列
 	//   defaultStatus : リセット時のstatus (null: リセット時に設定しない、周辺機器用)
@@ -11,7 +12,7 @@ const ioManager = (function() {
 	//   canOutput     : 出力ポートとして使えるかを示す真理値
 	const portInfo = [];
 	// 現在のポートの状態
-	// name        : 表示用の名前
+	// name        : 表示用の名前を表す文字列
 	// status      : 状態 (以下のいずれかの文字列)
 	//   "input"         : 入力 (プルアップなし)
 	//   "input_pullup"  : 入力 (プルアップあり)
@@ -31,7 +32,7 @@ const ioManager = (function() {
 	// queryIn        : 入力を取得する関数
 	const deviceList = [];
 
-	addPorts("本体", [
+	addPorts("本体", {"en": "Main"}, [
 		{"id": "in1", "name": "IN1/OUT8", "defaultStatus": "input_pullup", "canInput": true, "canOutput": true},
 		{"id": "in2", "name": "IN2/OUT9", "defaultStatus": "input", "canInput": true, "canOutput": true},
 		{"id": "in3", "name": "IN3/OUT10", "defaultStatus": "input", "canInput": true, "canOutput": true},
@@ -47,8 +48,9 @@ const ioManager = (function() {
 	]);
 
 	// ポートを追加する
-	// groupName : グループ名を表す文字列
-	// portList  : 以下の要素を持つオブジェクトの配列
+	// groupName    : グループ名を表す文字列
+	// groupNameT9n : グループ名の訳を表す連想配列
+	// portList     : 以下の要素を持つオブジェクトの配列
 	//   id            : ポートID (プログラム用)
 	//   name          : ポート名 (表示用)
 	//   defaultStatus : リセット時のstatus (省略・null可)
@@ -59,7 +61,7 @@ const ioManager = (function() {
 	//   pwmValue      : output_pwm 用のパルス幅 (省略可)
 	//   pwmPeriod     : output_pwm 用のパルス周期 (省略可)
 	//   analogValue   : output_analog 用の出力値 (省略可)
-	function addPorts(groupName, portList) {
+	function addPorts(groupName, groupNameT9n, portList) {
 		const ports = [];
 		portList.forEach(function(port) {
 			ports.push({
@@ -80,18 +82,21 @@ const ioManager = (function() {
 		});
 		portInfo.push({
 			"groupName": groupName,
+			"groupNameT9n": groupNameT9n,
 			"ports": ports,
 		});
 	}
 
 	// 周辺機器を追加する
-	// name           : 周辺機器の名前
+	// name           : 周辺機器の名前を表す文字列
+	// nameT9n        : 周辺機器の名前の訳を表す連想配列
 	// statusCallback : ポートの状態変化を通知する関数
 	// queryIn        : 入力を取得する関数
 	// 返り値 : この周辺機器が出力しているポートのリストを設定する関数
-	function registerDevice(name, statusCallback, queryIn) {
+	function registerDevice(name, nameT9n, statusCallback, queryIn) {
 		const deviceInfo = {
 			"name": name,
+			"nameT9n": nameT9n,
 			"statusCallback": statusCallback,
 			"providingIn": {},
 			"queryIn": queryIn,
@@ -108,14 +113,14 @@ const ioManager = (function() {
 			deviceInfo.providingIn = newProvidingIn;
 			// 各ポートが入力を得るデバイスを更新する
 			affectedPortList.forEach(function(affectedPort) {
-				let inputDeviceName = null;
+				let inputDevice = null;
 				for (let i = 0; i < deviceList.length; i++) {
 					if (affectedPort in deviceList[i].providingIn) {
-						inputDeviceName = deviceList[i].name;
+						inputDevice = deviceList[i];
 						break;
 					}
 				}
-				portDomObjects[affectedPort].setInputDevice(inputDeviceName);
+				portDomObjects[affectedPort].setInputDevice(inputDevice);
 			});
 		};
 	}
@@ -141,14 +146,24 @@ const ioManager = (function() {
 			ioPortTableArea.appendChild(portDetails);
 			const portSummary = document.createElement("summary");
 			portSummary.appendChild(document.createTextNode(portGroup.groupName));
+			Object.entries(portGroup.groupNameT9n).forEach(function(t9nData) {
+				portSummary.setAttribute("data-t9n-" + t9nData[0], t9nData[1]);
+			});
 			portDetails.appendChild(portSummary);
 			const portTable = document.createElement("table");
 			portTable.setAttribute("class", "ioPortTable");
 			const portTableHead = document.createElement("thead");
 			const portTableHeadRow = document.createElement("tr");
-			["ポート", "出力", "詳細"].forEach(function(item) {
+			[
+				["ポート", {"en": "Port"}],
+				["出力", {"en": "Out"}],
+				["詳細", {"en": "Details"}],
+			].forEach(function(item) {
 				const th = document.createElement("th");
-				th.appendChild(document.createTextNode(item));
+				th.appendChild(document.createTextNode(item[0]));
+				Object.entries(item[1]).forEach(function(t9nData) {
+					th.setAttribute("data-t9n-" + t9nData[0], t9nData[1]);
+				});
 				portTableHeadRow.appendChild(th);
 			});
 			portTableHead.appendChild(portTableHeadRow);
@@ -180,7 +195,10 @@ const ioManager = (function() {
 				outputDetailElement.setAttribute("class", "ioPortOutputInfo");
 				const outputDetailBinaryElement = document.createElement("span");
 				outputDetailBinaryElement.setAttribute("class", "ioPortOutputInfoBinary");
-				outputDetailBinaryElement.appendChild(document.createTextNode("デジタル出力 "));
+				const outputDetailBinaryLabelElement = document.createElement("span");
+				outputDetailBinaryLabelElement.setAttribute("data-t9n-en", "Digital output ");
+				outputDetailBinaryLabelElement.appendChild(document.createTextNode("デジタル出力 "));
+				outputDetailBinaryElement.appendChild(outputDetailBinaryLabelElement);
 				const outputDetailBinaryHighElement = document.createElement("span");
 				outputDetailBinaryHighElement.setAttribute("class", "ioPortOutputInfoBinaryHigh");
 				outputDetailBinaryHighElement.appendChild(document.createTextNode("HIGH"));
@@ -192,13 +210,19 @@ const ioManager = (function() {
 				outputDetailElement.appendChild(outputDetailBinaryElement);
 				const outputDetailPwmElement = document.createElement("span");
 				outputDetailPwmElement.setAttribute("class", "ioPortOutputInfoPwm");
-				outputDetailPwmElement.appendChild(document.createTextNode("PWM出力 "));
+				const outputDetailPwmLabelElement = document.createElement("span");
+				outputDetailPwmLabelElement.setAttribute("data-t9n-en", "PWM output ");
+				outputDetailPwmLabelElement.appendChild(document.createTextNode("PWM出力 "));
+				outputDetailPwmElement.appendChild(outputDetailPwmLabelElement);
 				const outputDetailPwmInfoElement = document.createElement("span");
 				outputDetailPwmElement.appendChild(outputDetailPwmInfoElement);
 				outputDetailElement.appendChild(outputDetailPwmElement);
 				const outputDetailAnalogElement = document.createElement("span");
 				outputDetailAnalogElement.setAttribute("class", "ioPortOutputInfoAnalog");
-				outputDetailAnalogElement.appendChild(document.createTextNode("アナログ出力 "));
+				const outputDetailAnalogLabelElement = document.createElement("span");
+				outputDetailAnalogLabelElement.setAttribute("data-t9n-en", "Analog output ");
+				outputDetailAnalogLabelElement.appendChild(document.createTextNode("アナログ出力 "));
+				outputDetailAnalogElement.appendChild(outputDetailAnalogLabelElement);
 				const outputDetailAnalogInfoElement = document.createElement("span");
 				outputDetailAnalogElement.appendChild(outputDetailAnalogInfoElement);
 				outputDetailElement.appendChild(outputDetailAnalogElement);
@@ -216,10 +240,12 @@ const ioManager = (function() {
 				inputDetailUI.appendChild(binaryToggleButton);
 				const binaryPushLowButton = document.createElement("button");
 				binaryPushLowButton.setAttribute("type", "button");
+				binaryPushLowButton.setAttribute("data-t9n-en", "Push L");
 				binaryPushLowButton.appendChild(document.createTextNode("押→L"));
 				inputDetailUI.appendChild(binaryPushLowButton);
 				const binaryPushHighButton = document.createElement("button");
 				binaryPushHighButton.setAttribute("type", "button");
+				binaryPushHighButton.setAttribute("data-t9n-en", "Push H");
 				binaryPushHighButton.appendChild(document.createTextNode("押→H"));
 				inputDetailUI.appendChild(binaryPushHighButton);
 				inputDetailUI.appendChild(document.createTextNode("L"));
@@ -320,12 +346,21 @@ const ioManager = (function() {
 						const b = 0x33 + (0x55 - 0x33) * outputPower;
 						outputElement.style.color = "rgb(" + r + " " + g + " " + b + ")";
 					},
-					"setInputDevice": function(deviceName) {
-						if (deviceName === null) {
+					"setInputDevice": function(device) {
+						if (device === null) {
 							inputDetailElement.classList.remove("device");
 						} else {
 							inputDetailElement.classList.add("device");
-							inputDetailDevice.textContent = deviceName;
+							inputDetailDevice.getAttributeNames().forEach(function(attrName) {
+								if (attrName.substring(0, 9) === "data-t9n-") {
+									inputDetailDevice.removeAttribute(attrName);
+								}
+							});
+							inputDetailDevice.textContent = device.name;
+							Object.entries(device.nameT9n).forEach(function(t9nData) {
+								inputDetailDevice.setAttribute("data-t9n-" + t9nData[0], t9nData[1]);
+							});
+							updateDisplayLanguage(inputDetailDevice);
 						}
 					},
 					"getValue": function(isAnalog) {
@@ -357,6 +392,9 @@ const ioManager = (function() {
 		portInfo.forEach(function(portGroup) {
 			const group = document.createElement("optgroup");
 			group.setAttribute("label", portGroup.groupName);
+			Object.entries(portGroup.groupNameT9n).forEach(function(t9nData) {
+				group.setAttribute("data-t9n-" + t9nData[0] + "-label", t9nData[1]);
+			});
 			portGroup.ports.forEach(function(port) {
 				if (forInput || forOutput) {
 					if (!((forInput && port.canInput) || (forOutput && port.canOutput))) return;

@@ -779,6 +779,39 @@ function toggleCursor() {
 	updateScreen();
 }
 
+// 表示言語を切り替える
+function updateDisplayLanguage(targetElement) {
+	const lang = document.getElementById("uiLanguageSelect").value;
+	const elements = (targetElement || document).querySelectorAll("*");
+	elements.forEach(function(element) {
+		element.getAttributeNames().forEach(function(attr) {
+			if (attr.substring(0, 9) === "data-t9n-") {
+				const attrData = attr.substring(9);
+				const barPos = attrData.indexOf("-");
+				const langName = barPos >= 0 ? attrData.substring(0, barPos) : attrData;
+				const targetName = barPos >= 0 ? attrData.substring(barPos + 1) : null;
+				// ja のデータが無ければ、現在のデータに設定する
+				const jaAttribute = "data-t9n-ja" + (targetName !== null ? "-" + targetName : "");
+				if (!(jaAttribute in element.attributes)) {
+					if (targetName === null) {
+						element.setAttribute(jaAttribute, element.textContent);
+					} else {
+						element.setAttribute(jaAttribute, element.getAttribute(targetName));
+					}
+				}
+				// 現在の言語設定と一致すれば、データを更新する
+				if (langName === lang) {
+					if (targetName === null) {
+						element.textContent = element.getAttribute(attr);
+					} else {
+						element.setAttribute(targetName, element.getAttribute(attr));
+					}
+				}
+			}
+		});
+	});
+}
+
 // 通常のBase64文字列をURL用のBase64文字列に変換する
 function base64ToURL(data) {
 	return data.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
@@ -1143,7 +1176,7 @@ async function initSystem() {
 	virtualPanCake.initializePorts();
 	{
 		const ledElement = document.getElementById("ledPane");
-		ioManager.registerDevice("LED", function(notifyDataSet) {
+		ioManager.registerDevice("LED", {}, function(notifyDataSet) {
 			if ("led" in notifyDataSet) {
 				const ledData = notifyDataSet.led;
 				if (ledData.status === "output_binary" && ledData.binaryValue) {
@@ -1155,6 +1188,18 @@ async function initSystem() {
 		}, null);
 	}
 	ioManager.initialize();
+
+	// 表示言語設定の初期化を行う
+	const uaLang = navigator.language.toLowerCase();
+	const langDefault = uaLang === "ja" || uaLang.substring(0, 3) === "ja-" ? "ja" : "en";
+	const lang = readLocalStorage("uiLanguage", langDefault);
+	const uiLanguageSelect = document.getElementById("uiLanguageSelect");
+	setSelectByValue(uiLanguageSelect, lang);
+	uiLanguageSelect.addEventListener("change", function() {
+		writeLocalStorage("uiLanguage", uiLanguageSelect.value);
+		updateDisplayLanguage();
+	});
+	updateDisplayLanguage();
 
 	// 各種初期化を行う
 	await resetSystem();

@@ -860,7 +860,7 @@ const virtualPanCake = (function() {
 				"binaryValue": 0,
 			});
 		}
-		ioManager.addPorts("仮想PanCake", ports);
+		ioManager.addPorts("仮想PanCake", {"en": "Virtual PanCake"}, ports);
 	}
 
 	function setUartConnected(conn) {
