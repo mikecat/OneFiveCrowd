@@ -220,9 +220,9 @@ const virtualPanCake = (function() {
 	function setCanvasEnabled(enabled) {
 		if (!canvas) return;
 		if (enabled) {
-			canvas.classList.add("enabled");
+			canvas.parentNode.classList.add("pancakeEnabled");
 		} else {
-			canvas.classList.remove("enabled");
+			canvas.parentNode.classList.remove("pancakeEnabled");
 		}
 	}
 

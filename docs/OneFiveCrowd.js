@@ -435,7 +435,7 @@ screenBuffer.setAttribute("width", "512");
 screenBuffer.setAttribute("height", "384");
 const screenBufferContext = screenBuffer.getContext("2d");
 
-let mainScreen, mainScreenContext;
+let screenArea, mainScreen, mainScreenContext;
 const fontImages = new Array(256);
 
 // フォントデータ
@@ -840,6 +840,7 @@ async function initSystem() {
 	};
 
 	// canvasの初期化
+	screenArea = document.getElementById("screenArea");
 	mainScreen = document.getElementById("mainScreen");
 	mainScreenContext = mainScreen.getContext("2d");
 
@@ -1082,9 +1083,9 @@ async function initSystem() {
 	const setVirtualPanCakeConnected = function(connected) {
 		virtualPanCake.setUartConnected(virtualPanCakeConnectCheckbox.checked);
 		if (connected) {
-			pancakeScreen.classList.add("connected");
+			screenArea.classList.add("pancakeConnected");
 		} else {
-			pancakeScreen.classList.remove("connected");
+			screenArea.classList.remove("pancakeConnected");
 		}
 	};
 	virtualPanCake.setCanvas(pancakeScreen);
@@ -1202,6 +1203,18 @@ async function initSystem() {
 	});
 	updateDisplayLanguage();
 
+	// フルスクリーン機能の初期化
+	const startFullScreenButton = document.getElementById("startFullscreenButton");
+	if (screenArea.requestFullscreen) {
+		startFullScreenButton.addEventListener("click", function() {
+			screenArea.requestFullscreen().catch(function(error) {
+				console.error(error);
+			});
+		});
+	} else {
+		startFullScreenButton.disabled = true;
+	}
+
 	// 各種初期化を行う
 	await resetSystem();
 
@@ -1237,7 +1250,8 @@ async function resetSystem() {
 	SCREEN_HEIGHT = RAW_SCREEN_HEIGHT;
 	mainScreen.setAttribute("width", "544");
 	mainScreen.setAttribute("height", "416");
-	mainScreen.classList.remove("disabled");
+	screenArea.classList.remove("mainDisabled");
+	screenArea.classList.remove("mainInvert");
 	uartPrintToScreen = true;
 	uartPrintToSerial = true;
 	uartPrintControl = true;
