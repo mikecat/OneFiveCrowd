@@ -768,9 +768,10 @@ function updateScreen() {
 		mainScreenContext.imageSmoothingEnabled = false;
 		mainScreenContext.fillStyle = "black";
 		mainScreenContext.fillRect(0, 0, mainScreen.width, mainScreen.height);
+		const bufferWidth = 16 * SCREEN_WIDTH, bufferHeight = 16 * SCREEN_HEIGHT;
 		mainScreenContext.drawImage(screenBuffer,
-			0, 0, screenBuffer.width / videoZoom2, screenBuffer.height / videoZoom2,
-			16, 16, screenBuffer.width, screenBuffer.height);
+			0, 0, bufferWidth, bufferHeight,
+			16, 16, bufferWidth * videoZoom2, bufferHeight * videoZoom2);
 	}
 }
 
