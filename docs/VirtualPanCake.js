@@ -147,6 +147,10 @@ const virtualPanCake = (function() {
 		},
 	];
 
+	const canvasBuffer = document.createElement("canvas");
+	canvasBuffer.setAttribute("width", "80");
+	canvasBuffer.setAttribute("height", "45");
+	const canvasBufferContext = canvasBuffer.getContext("2d", {"alpha": false});
 	let canvas = null, canvasContext = null, imageData = null;
 	const screenBuffers = [
 		new Uint8Array(PANCAKE_SCREEN_WIDTH * PANCAKE_SCREEN_HEIGHT),
@@ -233,7 +237,13 @@ const virtualPanCake = (function() {
 			imageData.data[4 * i + 2] = colorPalette[screenBuffer[i]][2];
 			imageData.data[4 * i + 3] = 255;
 		}
-		canvasContext.putImageData(imageData, 0, 0);
+		canvasBufferContext.putImageData(imageData, 0, 0);
+		canvasContext.imageSmoothingEnabled = false;
+		canvasContext.fillStyle = "black";
+		canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+		canvasContext.drawImage(canvasBuffer,
+			0, 0, canvasBuffer.width, canvasBuffer.height,
+			32, 73, 480, 270);
 	}
 
 	function getScreenBuffer() {

@@ -924,8 +924,8 @@ async function commandIoT_OUT(args) {
 function commandSWITCH(args) {
 	// ビデオモードと液晶モードを切り替える
 	const newLcdMode = args.length > 0 ? args[0] !== 0 : !lcdMode;
-	mainScreen.setAttribute("width", newLcdMode ? "256" : "512");
-	mainScreen.setAttribute("height", newLcdMode ? "128" : "384");
+	mainScreen.setAttribute("width", newLcdMode ? "288" : "544");
+	mainScreen.setAttribute("height", newLcdMode ? "160" : "416");
 	if (newLcdMode) {
 		SCREEN_WIDTH = 16;
 		SCREEN_HEIGHT = 8;

@@ -761,16 +761,16 @@ function updateScreen() {
 	if (videoUpdated) {
 		if (videoInvert) {
 			mainScreenContext.filter = "invert(100%)";
-			mainScreen.style.borderColor = "white";
 		} else {
 			mainScreenContext.filter = "invert(0%)";
-			mainScreen.style.borderColor = "black";
 		}
 		const videoZoom2 = lcdMode ? 1 : videoZoom;
 		mainScreenContext.imageSmoothingEnabled = false;
+		mainScreenContext.fillStyle = "black";
+		mainScreenContext.fillRect(0, 0, mainScreen.width, mainScreen.height);
 		mainScreenContext.drawImage(screenBuffer,
 			0, 0, screenBuffer.width / videoZoom2, screenBuffer.height / videoZoom2,
-			0, 0, screenBuffer.width, screenBuffer.height);
+			16, 16, screenBuffer.width, screenBuffer.height);
 	}
 }
 
@@ -1234,8 +1234,8 @@ async function resetSystem() {
 	lcdMode = false;
 	SCREEN_WIDTH = RAW_SCREEN_WIDTH;
 	SCREEN_HEIGHT = RAW_SCREEN_HEIGHT;
-	mainScreen.setAttribute("width", "512");
-	mainScreen.setAttribute("height", "384");
+	mainScreen.setAttribute("width", "544");
+	mainScreen.setAttribute("height", "416");
 	mainScreen.classList.remove("disabled");
 	uartPrintToScreen = true;
 	uartPrintToSerial = true;
