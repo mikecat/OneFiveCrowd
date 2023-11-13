@@ -31,8 +31,9 @@ const clickButton = (function() {
 		setSelectByValue(signalPressedSelect, "signalPressed" in configData ? configData.signalPressed : 0);
 		const setOutputPortList = ioManager.registerDevice("クリックボタン", {"en": "Click Button"}, function(){}, queryIn);
 		const updateOutputPortList = function() {
-			setOutputPortList(portToConnectSelect.value === "" ? [] : [portToConnectSelect.value]);
+			setOutputPortList(!connectedCheck.checked || portToConnectSelect.value === "" ? [] : [portToConnectSelect.value]);
 		};
+		connectedCheck.addEventListener("change", updateOutputPortList);
 		portToConnectSelect.addEventListener("change", updateOutputPortList);
 		updateOutputPortList();
 
