@@ -1191,6 +1191,10 @@ async function initSystem() {
 	}
 	ioManager.initialize();
 
+	// I/Oデバイスの初期化を行う
+	const configDataSet = {};
+	clickButton.initialize(configDataSet);
+
 	// 表示言語設定の初期化を行う
 	const uaLang = navigator.language.toLowerCase();
 	const langDefault = uaLang === "ja" || uaLang.substring(0, 3) === "ja-" ? "ja" : "en";

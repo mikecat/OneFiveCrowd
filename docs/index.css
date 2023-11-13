@@ -473,8 +473,11 @@ label[for="volumeSwitch"] {
 	margin-top: 0.5em;
 }
 
-#ioPortField {
+#ioForm > fieldset:not(:last-child) {
 	margin-bottom: 0.5em;
+}
+
+#ioPortField {
 	width: 540px;
 	box-sizing: border-box;
 }
@@ -559,4 +562,28 @@ tr:not(.output) .ioPortOutputInfo {
 
 .ioPortInputUI input[type="range"] {
 	width: 100%;
+}
+
+.ioDevicesArea summary > div {
+	display: inline-grid;
+	width: calc(100% - 2em);
+}
+
+.ioDevicesArea summary > div > div {
+	display: grid;
+	grid-template-columns: 1fr auto;
+}
+
+.ioDeviceConfigTable {
+	display: table;
+	margin: 0.5em 0;
+}
+
+.ioDeviceConfigTable > div {
+	display: table-row;
+}
+
+.ioDeviceConfigTable > div > div {
+	display: table-cell;
+	padding: 0.2em;
 }

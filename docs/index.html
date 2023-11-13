@@ -29,6 +29,7 @@
 		<script src="VirtualMixJuice.js"></script>
 		<script src="VirtualPanCakeResource.js"></script>
 		<script src="VirtualPanCake.js"></script>
+		<script src="VirtualIODevices.js"></script>
 	</head>
 	<body onload="initSystem();" onkeydown="keyDownEvent();" onkeyup="keyUpEvent();">
 		<h1 id="mainTitle">OneFiveCrowd</h1>
@@ -195,6 +196,39 @@
 							for="virtualMixJuiceConnectCheckbox" data-t9n-en="Virtual MixJuice">仮想MixJuice</label>
 							<input type="checkbox" id="virtualPanCakeConnectCheckbox"><label
 							for="virtualPanCakeConnectCheckbox" data-t9n-en="Virtual PanCake">仮想PanCake</label>
+						</div>
+					</fieldset>
+					<fieldset>
+						<legend data-t9n-en="Virtual I/O Devices">仮想I/Oデバイス</legend>
+						<div class="ioDevicesArea">
+							<details>
+								<summary>
+									<div><div>
+										<span data-t9n-en="Click Button">クリックボタン</span>
+										<span>
+											<label for="virtualIOClickButtonConnect">
+												<input type="checkbox" id="virtualIOClickButtonConnect">
+												<span data-t9n-en="connect">接続</span>
+											</label>
+										</span>
+									</div></div>
+								</summary>
+								<div class="ioDeviceConfigTable">
+									<div>
+										<div data-t9n-en="Port to connect">接続先ポート</div>
+										<div id="virtualIOClickButtonPortToConnectArea"></div>
+									</div>
+									<div>
+										<div data-t9n-en="Signal when pressed">押されたとき</div>
+										<div>
+											<select id="virtualIOClickButtonSignalPressed">
+												<option value="1">HIGH</option>
+												<option value="0" selected>LOW</option>
+											</select>
+										</div>
+									</div>
+								</div>
+							</details>
 						</div>
 					</fieldset>
 				</div>

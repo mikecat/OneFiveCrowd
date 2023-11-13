@@ -487,8 +487,8 @@ const ioManager = (function() {
 			const deviceQuery = [];
 			for (let i = 0; i < queryLeft.length; i++) {
 				if (queryLeft[i] in device.providingIn) {
-					deviceQuery.push(queryleft[i]);
-					queryleft.splice(i, 1);
+					deviceQuery.push(queryLeft[i]);
+					queryLeft.splice(i, 1);
 					i--;
 				}
 			}
