@@ -829,7 +829,7 @@ async function initSystem() {
 	// URLから情報を取得する
 	const params = new URLSearchParams(location.hash.substring(1));
 	const getHashParam = function(name, defaultValue) {
-		return params.has(name) ? parmams.get(name) : defaultValue;
+		return params.has(name) ? params.get(name) : defaultValue;
 	};
 	// 以下の優先順位でパラメータを取得する
 	// 1. URLによる設定
@@ -1074,6 +1074,13 @@ async function initSystem() {
 
 	const pancakeScreen = document.getElementById("pancakeScreen");
 	const virtualPanCakeConnectCheckbox = document.getElementById("virtualPanCakeConnectCheckbox");
+	const virtualPanCakeConnectConfig = getHashParam("virtualPanCake", null);
+	if (virtualPanCakeConnectConfig !== null) {
+		const configValue = parseInt(virtualPanCakeConnectConfig, 10);
+		if (!isNaN(configValue)) {
+			virtualPanCakeConnectCheckbox.checked = configValue;
+		}
+	}
 	const setVirtualPanCakeConnected = function(connected) {
 		virtualPanCake.setUartConnected(virtualPanCakeConnectCheckbox.checked);
 		if (connected) {
@@ -1118,6 +1125,9 @@ async function initSystem() {
 					}
 				}
 			}
+		}
+		if (urlExportElements.urlExportVirtualPanCake.checked) {
+			data.set("virtualPanCake", "1");
 		}
 		if (urlExportElements.urlExportConfigFont.checked) {
 			data.set("font", systemFontSelect.value);
