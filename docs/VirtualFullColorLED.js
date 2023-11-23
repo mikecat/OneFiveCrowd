@@ -157,10 +157,29 @@ const virtualFullColorLed = (function() {
 		}
 	}
 
-	function initialize() {
+	function initialize(dataString) {
 		ledBaseElement = document.getElementById("virtualFullColorLed");
 		configForm = document.getElementById("virtualFullColorLedConfigForm");
 		configArea = document.getElementById("virtualFullColorLedConfigArea");
+
+		const data = new URLSearchParams(dataString);
+		if (data.has("connect")) {
+			const connectParsed = parseInt(data.get("connect", 10));
+			if (!isNaN(connectParsed)) configForm.connect.checked = connectParsed;
+		}
+		if (data.has("type")) setRadioByValue(configForm.type, data.get("type"));
+		if (data.has("dataOrder")) setRadioByValue(configForm.dataOrder, data.get("dataOrder"));
+		if (data.has("matrixWidth")) configForm.matrixWidth.value = data.get("matrixWidth");
+		if (data.has("matrixHeight")) configForm.matrixHeight.value = data.get("matrixHeight");
+		if (data.has("matrixStart")) setRadioByValue(configForm.matrixStart, data.get("matrixStart"));
+		if (data.has("matrixDir")) setRadioByValue(configForm.matrixDir, data.get("matrixDir"));
+		if (data.has("matrixZigzag")) {
+			const zigzagParsed = parseInt(data.get("matrixZigzag", 10));
+			if (!isNaN(zigzagParsed)) configForm.matrixZigzag.checked = zigzagParsed;
+		}
+		if (data.has("ringSize")) configForm.ringSize.value = data.get("ringSize");
+		if (data.has("ringStart")) setRadioByValue(configForm.ringStart, data.get("ringStart"));
+		if (data.has("ringDir")) setRadioByValue(configForm.ringDir, data.get("ringDir"));
 
 		for (let i = 0; i < 256; i++) {
 			colorTable.push(Math.round(Math.pow(i / 255, 1 / 5) * 255));
@@ -181,7 +200,24 @@ const virtualFullColorLed = (function() {
 		renderLEDs();
 	}
 
+	function exportConfig() {
+		const data = new URLSearchParams();
+		data.append("connect", configForm.connect.checked ? 1 : 0);
+		data.append("type", configForm.type.value);
+		data.append("dataOrder", configForm.dataOrder.value);
+		data.append("matrixWidth", configForm.matrixWidth.value);
+		data.append("matrixHeight", configForm.matrixHeight.value);
+		data.append("matrixStart", configForm.matrixStart.value);
+		data.append("matrixDir", configForm.matrixDir.value);
+		data.append("matrixZigzag", configForm.matrixZigzag.value);
+		data.append("ringSize", configForm.ringSize.value);
+		data.append("ringStart", configForm.ringStart.value);
+		data.append("ringDir", configForm.ringDir.value);
+		return data.toString();
+	}
+
 	return {
 		"initialize": initialize,
+		"exportConfig": exportConfig,
 	};
 })();

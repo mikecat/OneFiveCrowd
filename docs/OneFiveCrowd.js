@@ -52,6 +52,19 @@ function setSelectByValue(selectElement, value) {
 	}
 }
 
+function setRadioByValue(radioElements, value) {
+	const valueStr = value.toString();
+	let isFirst = true;
+	for (let i = 0; i < radioElements.length; i++) {
+		if (radioElements[i].value === valueStr) {
+			radioElements[i].checked = isFirst;
+			isFirst = false;
+		} else {
+			radioElements[i].checked = false;
+		}
+	}
+}
+
 const RAW_SCREEN_WIDTH = 32;
 const RAW_SCREEN_HEIGHT = 24;
 
@@ -1129,6 +1142,9 @@ async function initSystem() {
 		if (urlExportElements.urlExportVirtualPanCake.checked) {
 			data.set("virtualPanCake", "1");
 		}
+		if (urlExportElements.urlExportVirtualFullColorLED.checked) {
+			data.set("virtualFullColorLED", virtualFullColorLed.exportConfig());
+		}
 		if (urlExportElements.urlExportConfigFont.checked) {
 			data.set("font", systemFontSelect.value);
 		}
@@ -1196,7 +1212,7 @@ async function initSystem() {
 	ioManager.initialize();
 
 	// 仮想フルカラーLEDの初期化を行う
-	virtualFullColorLed.initialize();
+	virtualFullColorLed.initialize(getHashParam("virtualFullColorLED", ""));
 
 	// I/Oデバイスの初期化を行う
 	const configDataSet = {};
