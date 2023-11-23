@@ -594,7 +594,7 @@ const wsLedManager = (function() {
 	async function sendColors(data, numRepeat, ports) {
 		const devicePromises = [];
 		for (let i = 0; i < wsLedDevices.length; i++) {
-			const deviceFunction = wsledDevicees[i];
+			const deviceFunction = wsLedDevices[i];
 			devicePromises.push(new Promise(async function(resolve, reject) {
 				try {
 					resolve(await deviceFunction(data, numRepeat, ports));

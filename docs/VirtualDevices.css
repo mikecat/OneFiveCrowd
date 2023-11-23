@@ -1,0 +1,16 @@
+.virtualFullColorLedMain {
+	position: relative;
+	background-color: gray;
+	margin: 1em;
+}
+
+.virtualFullColorLedMain .virtualFullColorLed {
+	position: absolute;
+	border: 1px solid black;
+	border-radius: 50%;
+	box-sizing: border-box;
+	width: 20px;
+	height: 20px;
+	transform: translate(-50%, -50%);
+	background-color: rgb(0, 0, 0);
+}

@@ -14,6 +14,7 @@
 		<meta name="twitter:card" content="summary"> 
 		<meta name="twitter:site" content="@mikecat_mixc">
 		<link href="index.css" rel="stylesheet">
+		<link href="VirtualDevices.css" rel="stylesheet">
 		<script src="ijfont.js"></script>
 		<script src="ed25519.js"></script>
 		<script src="SoundManager.js"></script>
@@ -29,6 +30,7 @@
 		<script src="VirtualMixJuice.js"></script>
 		<script src="VirtualPanCakeResource.js"></script>
 		<script src="VirtualPanCake.js"></script>
+		<script src="VirtualFullColorLED.js"></script>
 		<script src="VirtualIODevices.js"></script>
 	</head>
 	<body onload="initSystem();" onkeydown="keyDownEvent();" onkeyup="keyUpEvent();">
@@ -40,6 +42,7 @@
 				</canvas>
 				<canvas id="pancakeScreen" width="544" height="416"></canvas>
 			</span>
+			<span id="virtualFullColorLed" class="virtualFullColorLedMain"></span>
 		</p>
 		<div id="controlArea">
 			<input type="radio" class="controlRadio" name="controlSelect" id="controlRadioKey" value="key">
@@ -197,6 +200,143 @@
 							<input type="checkbox" id="virtualPanCakeConnectCheckbox"><label
 							for="virtualPanCakeConnectCheckbox" data-t9n-en="Virtual PanCake">仮想PanCake</label>
 						</div>
+					</fieldset>
+					<fieldset>
+						<legend data-t9n-en="Virtual Full-Color LED">仮想フルカラーLED</legend>
+						<form id="virtualFullColorLedConfigForm" onsubmit="return false;">
+							<div id="virtualFullColorLedTypeSelectArea">
+								<label for="virtualFullColorLedTypeSelectMatrix">
+									<input type="radio" name="type" value="matrix" id="virtualFullColorLedTypeSelectMatrix" checked="checked">
+									<span data-t9n-en="matrix">マトリックス</span>
+								</label>
+								<label for="virtualFullColorLedTypeSelectRing">
+									<input type="radio" name="type" value="ring" id="virtualFullColorLedTypeSelectRing">
+									<span data-t9n-en="ring">リング</span>
+								</label>
+							</div>
+							<label for="virtualFullColorLedConnect" id="virtualFullColorLedConnectLabel">
+								<input type="checkbox" name="connect" id="virtualFullColorLedConnect">
+								<span data-t9n-en="connect">接続</span>
+							</label>
+							<div id="virtualFullColorLedConfigArea">
+								<div class="ioDeviceConfigTable">
+									<div>
+										<div data-t9n-en="# of LEDs">要素数</div>
+										<div>
+											<div class="configForMatrix">
+												<span data-t9n-en="W">横</span>
+												<input name="matrixWidth" type="number" min="1" max="256" value="8" size="7">
+												<span data-t9n-en="× H">個 × 縦</span>
+												<input name="matrixHeight" type="number" min="1" max="256" value="1" size="7">
+												<span data-t9n-en="">個</span>
+											</div>
+											<div class="configForRing">
+												<input name="ringSize" type="number" min="1" max="65536" value="12" size="7">
+												<span data-t9n-en="">個</span>
+											</div>
+										</div>
+									</div>
+									<div>
+										<div data-t9n-en="Start from">始点</div>
+										<div>
+											<div class="configForMatrix">
+												<label for="virtualFullColorLedStartLeftTop">
+													<input type="radio" name="matrixStart" value="left_top" id="virtualFullColorLedStartLeftTop">
+													<span data-t9n-en="upper left">左上</span>
+												</label>
+												<label for="virtualFullColorLedStartRightTop">
+													<input type="radio" name="matrixStart" value="right_top" id="virtualFullColorLedStartRightTop">
+													<span data-t9n-en="upper right">右上</span>
+												</label>
+												<label for="virtualFullColorLedStartLeftDown">
+													<input type="radio" name="matrixStart" value="left_down" id="virtualFullColorLedStartLeftDown" checked="checked">
+													<span data-t9n-en="lower left">左下</span>
+												</label>
+												<label for="virtualFullColorLedStartRightDown">
+													<input type="radio" name="matrixStart" value="right_down" id="virtualFullColorLedStartLeftTop">
+													<span data-t9n-en="lower right">右下</span>
+												</label>
+											</div>
+											<div class="configForRing">
+												<label for="virtualFullColorLedStartLeft">
+													<input type="radio" name="ringStart" value="left" id="virtualFullColorLedStartLeft" checked="checked">
+													<span data-t9n-en="left">左</span>
+												</label>
+												<label for="virtualFullColorLedStartTop">
+													<input type="radio" name="ringStart" value="top" id="virtualFullColorLedStartTop">
+													<span data-t9n-en="top">上</span>
+												</label>
+												<label for="virtualFullColorLedStartRight">
+													<input type="radio" name="ringStart" value="right" id="virtualFullColorLedStartRight">
+													<span data-t9n-en="right">右</span>
+												</label>
+												<label for="virtualFullColorLedStartDown">
+													<input type="radio" name="ringStart" value="down" id="virtualFullColorLedStartDown">
+													<span data-t9n-en="bottom">下</span>
+												</label>
+											</div>
+										</div>
+									</div>
+									<div>
+										<div data-t9n-en="Direction">方向</div>
+										<div>
+											<div class="configForMatrix">
+												<label for="virtualFullColorLedDirectionHorizontal">
+													<input type="radio" name="matrixDir" value="horizontal" id="virtualFullColorLedDirectionHorizontal" checked="checked">
+													<span data-t9n-en="horizontal">横方向</span>
+												</label>
+												<label for="virtualFullColorLedDirectionVertical">
+													<input type="radio" name="matrixDir" value="vertical" id="virtualFullColorLedDirectionVertical">
+													<span data-t9n-en="vertical">縦方向</span>
+												</label>
+												<label for="virtualFullColorLedDirectionZigzag">
+													<input type="checkbox" name="matrixZigzag" id="virtualFullColorLedDirectionZigzag" checked="checked">
+													<span data-t9n-en="zig-zag">ジグザグ</span>
+												</label>
+											</div>
+											<div class="configForRing">
+												<label for="virtualFullColorLedDirectionClockwise">
+													<input type="radio" name="ringDir" value="clockwise" id="virtualFullColorLedDirectionClockwise" checked="checked">
+													<span data-t9n-en="clockwise">時計回り</span>
+												</label>
+												<label for="virtualFullColorLedDirectionAntiClockwise">
+													<input type="radio" name="ringDir" value="anticlockwise" id="virtualFullColorLedDirectionAntiClockwise">
+													<span data-t9n-en="anti-clockwise">反時計回り</span>
+												</label>
+											</div>
+										</div>
+									</div>
+									<div>
+										<div data-t9n-en="Data order">データ順序</div>
+										<div>
+											<label for="virtualFullColorLedDataOrderRGB">
+												<input type="radio" name="dataOrder" value="rgb" id="virtualFullColorLedDataOrderRGB">
+												RGB
+											</label>
+											<label for="virtualFullColorLedDataOrderRBG">
+												<input type="radio" name="dataOrder" value="rbg" id="virtualFullColorLedDataOrderRBG">
+												RBG
+											</label>
+											<label for="virtualFullColorLedDataOrderGRB">
+												<input type="radio" name="dataOrder" value="grb" id="virtualFullColorLedDataOrderGRB" checked="checked">
+												GRB
+											</label>
+											<label for="virtualFullColorLedDataOrderGBR">
+												<input type="radio" name="dataOrder" value="gbr" id="virtualFullColorLedDataOrderGBR">
+												GBR
+											</label>
+											<label for="virtualFullColorLedDataOrderBRG">
+												<input type="radio" name="dataOrder" value="brg" id="virtualFullColorLedDataOrderBRG">
+												BRG
+											</label>
+											<label for="virtualFullColorLedDataOrderBGR">
+												<input type="radio" name="dataOrder" value="bgr" id="virtualFullColorLedDataOrderBGR">
+												BGR
+											</label>
+										</div>
+								</div>
+							</div>
+						</form>
 					</fieldset>
 					<fieldset>
 						<legend data-t9n-en="Virtual I/O Devices">仮想I/Oデバイス</legend>

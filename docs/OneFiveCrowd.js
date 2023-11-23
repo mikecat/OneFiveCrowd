@@ -849,12 +849,6 @@ async function initSystem() {
 	const textInputButton = document.getElementById("textInputButton");
 	const programExportButton = document.getElementById("programExportButton");
 	const screenExportButton = document.getElementById("screenExportButton");
-	textInputArea.addEventListener("keydown", function(e) {
-		e.stopPropagation();
-	});
-	textInputArea.addEventListener("keyup", function(e) {
-		e.stopPropagation();
-	});
 	textInputButton.addEventListener("click", function() {
 		// 入力欄のテキストを入力する
 		keyInput(importText(textInputArea.value));
@@ -1191,6 +1185,9 @@ async function initSystem() {
 	}
 	ioManager.initialize();
 
+	// 仮想フルカラーLEDの初期化を行う
+	virtualFullColorLed.initialize();
+
 	// I/Oデバイスの初期化を行う
 	const configDataSet = {};
 	clickButton.initialize(configDataSet);
@@ -1480,6 +1477,11 @@ function keyDown(key, shiftKey, ctrlKey, altKey) {
 }
 
 function keyDownEvent() {
+	const tagNameRaw = event.target ? event.target.tagName : "";
+	const tagName = (typeof tagNameRaw === "string" ? tagNameRaw : "").toLowerCase();
+	if (tagName === "input" || tagName === "button" || tagName === "select" || tagName === "textarea") {
+		return;
+	}
 	event.preventDefault();
 	if (event.key === "Hiragana") {
 		isRomanMode = !isRomanMode;
