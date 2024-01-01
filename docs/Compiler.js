@@ -228,8 +228,9 @@ ASTノードオブジェクト
     print_modifier ::= modifier_name "(" function_arguments ")"
         if_command ::= "IF" expr "THEN"
                      | "IF" expr
-       for_command ::= "FOR" variable "=" expr "TO" expr
-                     | "FOR" variable "=" expr "TO" expr "STEP" expr
+       for_command ::= "FOR" variable for_separator expr "TO" expr
+                     | "FOR" variable for_separator expr "TO" expr "STEP" expr
+     for_separator ::= "=" | ","
      input_command ::= "INPUT" variable
                      | "INPUT" string "," variable
        let_command ::= "LET" variable "," argument_list
@@ -622,7 +623,7 @@ var parser = (function() {
 		if (checkToken(tokens, index, "FOR")) {
 			const vres = variable(tokens, index + 1);
 			if (vres === null) return null;
-			if (!checkToken(tokens, vres.nextIndex, "=")) return null;
+			if (!checkTokenSet(tokens, vres.nextIndex, {"=": true, ",": true})) return null;
 			const eres = expr(tokens, vres.nextIndex + 1);
 			if (eres === null) return null;
 			if (!checkToken(tokens, eres.nextIndex, "TO")) return null;
