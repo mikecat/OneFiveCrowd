@@ -865,6 +865,8 @@ async function initSystem() {
 	textInputButton.addEventListener("click", function() {
 		// 入力欄のテキストを入力する
 		keyInput(importText(textInputArea.value));
+		// フォーカスを外す (すぐに本体にキー入力できるようにする)
+		textInputButton.blur();
 	});
 	programExportButton.addEventListener("click", function() {
 		// 現在メモリ上にあるプログラムをテキスト形式で入力欄に書き出す
