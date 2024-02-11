@@ -1488,7 +1488,7 @@ async function functionUSR_RV32C(startVirtualAddress, startArgument) {
 									((opCode >> (31 - 12)) & 0x1000) |
 									((opCode >> (25 -  5)) & 0x07e0) |
 									((opCode >> ( 8 -  1)) & 0x001e) |
-									((opCode << (11 -  4)) & 0x0800), 13);
+									((opCode << (11 -  7)) & 0x0800), 13);
 								let cond = false;
 								switch ((opCode >> 12) & 7) {
 									case 0: // BEQ
