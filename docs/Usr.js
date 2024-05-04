@@ -222,10 +222,11 @@ function initializeApiTable(type) {
 }
 
 function signExtend(value, numBits) {
+	if (numBits < 32) value &= (1 << numBits) - 1;
 	if (value & (1 << (numBits - 1))) {
 		return -((value ^ ((1 << numBits) - 1)) + 1);
 	} else {
-		return value;
+		return value >> 0;
 	}
 }
 
