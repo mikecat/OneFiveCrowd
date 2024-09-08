@@ -2,14 +2,15 @@
 
 const blankChars = " ";
 // トークンがあれば[トークン, トークンの次の文字の位置]を、なければnullを返す
-const getTokenInfo = (function(tokens) {
+const getTokenInfo = (function(tokens, hacks) {
 	// トークンをまとめた木を構築する
 	const tokenTrie = {};
 	for (let i = 0; i < blankChars.length; i++) {
 		tokenTrie[blankChars.charCodeAt(i)] = tokenTrie;
 	}
-	for (let i = 0; i < tokens.length; i++) {
-		const token = tokens[i];
+	const tokensAndHacks = tokens.concat(Object.keys(hacks));
+	for (let i = 0; i < tokensAndHacks.length; i++) {
+		const token = tokensAndHacks[i];
 		let node = tokenTrie;
 		for (let j = 0; j < token.length; j++) {
 			const c = token.charAt(j).toLowerCase().charCodeAt(0);
@@ -47,6 +48,10 @@ const getTokenInfo = (function(tokens) {
 			lastTokenIndex = str.length
 		}
 		if (lastToken !== null) {
+			if (lastToken in hacks) {
+				lastToken = hacks[lastToken];
+				lastTokenIndex = start + lastToken.length;
+			}
 			return {"token": lastToken, "nextIndex": lastTokenIndex};
 		} else {
 			return null;
@@ -75,7 +80,12 @@ const getTokenInfo = (function(tokens) {
 	"&", "|", "^", "~", "!", "?", "'",
 	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
 	"N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
-]);
+], {
+	// CLOCATE は C と LOCATE だが、対策をしないと CLO が優先されてしまった
+	// そこで、これを強制的に C と認識させる
+	"CLOCATE": "C",
+	"CLOAD": "C",
+});
 
 // トークンとトークンの次の文字の位置を返す
 const getTokenByValidChars = function(str, validChars, start = 0) {
